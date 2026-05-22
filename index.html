@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dominó Pintintín</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+</head>
+<body>
+<div class="app-container">
+  <header>
+    <h1>🀰 Dominó Pintintín</h1>
+    <button id="btnAyuda" class="btn-ayuda-flotante" title="Ayuda">❓</button>
+    <div id="fechaMostrada" class="fecha-dia"></div>
+  </header>
+
+  <!-- Pantalla de inicio / configuración -->
+  <section id="vistaConfig" class="vista">
+    <h2>⚙️ Nueva Jornada</h2>
+    <label>📅 Fecha: <input type="date" id="fechaDia" required></label>
+    
+    <h3>👥 Ingresa los 4 valientes:</h3>
+    <div id="jugadoresInputsContainer" class="jugadores-inputs"></div>
+    
+    <div class="sorteo-buttons">
+      <button id="btnSortearEIniciar" class="sorteo-btn">🎲 Sortear sillas e iniciar</button>
+    </div>
+    
+    <div id="resultadoSorteo" class="resultado-sorteo"></div>
+    
+    <hr>
+    <div class="botones-secundarios">
+        <button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
+        <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
+        <div class="backup-buttons">
+            <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
+            <label for="importBackupInput" class="secundario" style="display: inline-block; text-align: center;">📂 Importar respaldo</label>
+            <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+        </div>
+    </div>
+    
+    <div class="creditos">
+      <p>🎲 Creado por <strong>Ricardo Castillo (Richard)</strong></p>
+      <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
+      <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
+    </div>
+  </section>
+
+  <!-- Pantalla de juego -->
+  <section id="vistaJuego" class="vista" style="display:none;">
+    <div class="marcador-mach">
+      <span>🏆 MACH #<span id="numMachActual">1</span></span>
+      <span id="ganadorMachMsg"></span>
+    </div>
+    <div id="jugadoresGrid" class="jugadores-grid"></div>
+    <div class="acciones-globales">
+      <button id="btnEmpate" class="empate">⚖️ Declarar empate</button>
+      <button id="btnCambiarJugador" class="secundario">🔄 Sustituir jugador</button>
+      <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
+      <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
+      <button id="btnCerrarDia" class="cerrar-dia">🚪 Cerrar día y guardar</button>
+    </div>
+    <div id="avisoEmpate" class="aviso"></div>
+  </section>
+
+  <!-- Pantalla de estadísticas globales -->
+  <section id="vistaEstadisticas" class="vista" style="display:none;">
+    <h2>📊 Estadísticas Globales</h2>
+    <div class="filtros">
+      <label>Desde: <input type="date" id="fechaDesde"></label>
+      <label>Hasta: <input type="date" id="fechaHasta"></label>
+      <button id="btnFiltrar">Filtrar</button>
+      <button id="btnExportarCSV">📎 Exportar CSV</button>
+      <button id="btnExportarPDF">🖨️ Exportar PDF</button>
+    </div>
+    <div id="resultadosStats">
+      <div class="stats-container"></div>
+    </div>
+    <button id="volverInicioStats" class="secundario">← Volver al juego</button>
+  </section>
+</div>
+
+<!-- Modal empate -->
+<div id="modalEmpate" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>🤝 Jugadores empatados</h3>
+    <div id="checkEmpate"></div>
+    <button id="confirmarEmpate">Aceptar</button>
+    <button id="cancelarEmpate">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal sorteo -->
+<div id="modalSorteo" class="modal" style="display:none;">
+  <div class="modal-content sorteo-modal">
+    <h3>🎲 ¡A tirar los dados!</h3>
+    <div id="dadosResultados" class="dados-resultados"></div>
+    <div id="sorteoResultados" class="sorteo-resultados"></div>
+    <button id="cerrarSorteo">Aceptar</button>
+  </div>
+</div>
+
+<!-- Modal de ayuda (Manual de usuario) -->
+<div id="modalAyuda" class="modal" style="display:none;">
+  <div class="modal-content modal-ayuda">
+    <div class="modal-ayuda-header">
+      <h3>📖 Manual de Usuario</h3>
+      <button id="cerrarAyuda" class="cerrar-modal">&times;</button>
+    </div>
+    <div id="contenidoAyuda" class="contenido-ayuda">
+      <div style="text-align:center; padding:2rem;">Cargando manual...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
