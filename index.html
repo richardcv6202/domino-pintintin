@@ -21,7 +21,7 @@
     <h2>⚙️ Nueva Jornada</h2>
     <label>📅 Fecha: <input type="date" id="fechaDia" required></label>
     
-    <h3>👥 Ingresa los 4 valientes:</h3>
+    <h3>👥 Ingresa los jugadores (mínimo 2):</h3>
     <div id="jugadoresInputsContainer" class="jugadores-inputs"></div>
     
     <div class="sorteo-buttons">
@@ -55,9 +55,11 @@
       <span id="ganadorMachMsg"></span>
     </div>
     <div id="jugadoresGrid" class="jugadores-grid"></div>
+
     <div class="acciones-globales">
       <button id="btnEmpate" class="empate">⚖️ Declarar empate</button>
-      <button id="btnCambiarJugador" class="secundario">🔄 Sustituir jugador</button>
+      <button id="btnGestionJugador" class="gestion-jugador">➕ Añadir jugador</button>
+      <button id="btnRetirarJugador" class="secundario" style="background:#dc2626;">➖ Salida de jugador</button>
       <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
       <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
       <button id="btnCerrarDia" class="cerrar-dia">🚪 Cerrar día y guardar</button>
@@ -74,6 +76,8 @@
       <button id="btnFiltrar">Filtrar</button>
       <button id="btnExportarCSV">📎 Exportar CSV</button>
       <button id="btnExportarPDF">🖨️ Exportar PDF</button>
+      <!-- Botón para intercambiar filas/columnas (modo transpuesto) -->
+      <button id="btnTransponer" class="btn-intercambiar">🔄 Intercambiar (columnas)</button>
     </div>
     <div id="resultadosStats">
       <div class="stats-container"></div>
@@ -92,17 +96,31 @@
   </div>
 </div>
 
-<!-- Modal sorteo -->
-<div id="modalSorteo" class="modal" style="display:none;">
-  <div class="modal-content sorteo-modal">
-    <h3>🎲 ¡A tirar los dados!</h3>
-    <div id="dadosResultados" class="dados-resultados"></div>
-    <div id="sorteoResultados" class="sorteo-resultados"></div>
-    <button id="cerrarSorteo">Aceptar</button>
+<!-- Modal forma de terminación -->
+<div id="modalTerminacion" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>🎯 ¿Cómo terminó la mano?</h3>
+    <div id="terminacionInfo" style="margin-bottom: 1rem; font-weight: bold;"></div>
+    <button id="terminacionCierre" class="secundario" style="background:#475569;">🚪 Cierre</button>
+    <button id="terminacionPegado" class="secundario" style="background:#475569;">🏃 Pegado</button>
+    <button id="terminacionCapicua" class="secundario" style="background:#8b5cf6;">🀰 Capicua (Vale 2)</button>
+    <button id="cancelarTerminacion" style="background:#475569; margin-top:0.5rem;">Cancelar</button>
   </div>
 </div>
 
-<!-- Modal de ayuda (Manual de usuario) -->
+<!-- Modal para seleccionar quién da AGUA -->
+<div id="modalAgua" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>💧 ¿Quién da AGUA?</h3>
+    <div id="checkAgua"></div>
+    <div style="display:flex; gap:0.5rem; margin-top:1rem; justify-content:center;">
+      <button id="confirmarAgua" class="secundario" style="background:#10b981;">✅ Aceptar</button>
+      <button id="cancelarAgua" class="secundario" style="background:#6b7280;">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de ayuda -->
 <div id="modalAyuda" class="modal" style="display:none;">
   <div class="modal-content modal-ayuda">
     <div class="modal-ayuda-header">
