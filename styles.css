@@ -75,6 +75,7 @@ button.cerrar-dia { background: #b91c1c; }
   flex-wrap: wrap;
 }
 .jugadores-inputs > div { flex: 1; min-width: 120px; }
+.jugadores-inputs input { background: white; }
 
 .resultado-sorteo {
   background: #e0e7ff;
@@ -98,7 +99,6 @@ button.cerrar-dia { background: #b91c1c; }
   background-color: #334155;
 }
 
-/* Estilos para los botones de backup (importar/exportar) */
 .backup-buttons {
   display: flex;
   gap: 0.5rem;
@@ -156,7 +156,7 @@ button.cerrar-dia { background: #b91c1c; }
 }
 .nombre { font-weight: bold; font-size: 1rem; margin-bottom: 0.2rem; }
 .patas { font-size: 1.6rem; font-weight: bold; margin: 0.2rem 0; }
-.stats-mini { font-size: 0.7rem; color: #4b5563; display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 0.4rem; }
+.stats-mini { font-size: 0.65rem; color: #4b5563; display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
 .botones-jugador { display: flex; gap: 0.3rem; }
 .botones-jugador button { padding: 0.4rem; font-size: 0.8rem; margin: 0; }
 .btn-pata { background: #059669; }
@@ -174,8 +174,8 @@ button.cerrar-dia { background: #b91c1c; }
 .aviso { font-size: 0.8rem; background: #fef3c7; padding: 0.4rem; border-radius: 0.8rem; text-align: center; }
 
 /* Tablas y modales */
-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.8rem; }
-th, td { border: 1px solid #cbd5e1; padding: 0.4rem; text-align: left; }
+table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.75rem; }
+th, td { border: 1px solid #cbd5e1; padding: 0.3rem; text-align: left; }
 th { background: #e2e8f0; }
 .modal {
   position: fixed; top:0; left:0; width:100%; height:100%;
@@ -185,7 +185,8 @@ th { background: #e2e8f0; }
 .modal-content {
   background: white; padding: 1rem; border-radius: 1.5rem; width: 90%; max-width: 350px;
 }
-.dados-resultados { margin: 0.5rem 0; }
+.modal-content button { margin-top: 0.3rem; }
+.dados-resultados { margin: 0.5rem 0; max-height: 200px; overflow-y: auto; }
 .dado-item { display: flex; justify-content: space-between; padding: 0.3rem; background: #f1f5f9; margin: 0.2rem 0; border-radius: 0.5rem; }
 .sorteo-resultados { background: #dcfce7; padding: 0.5rem; border-radius: 0.8rem; margin-top: 0.5rem; font-size: 0.8rem; text-align: center; }
 
@@ -289,50 +290,16 @@ th { background: #e2e8f0; }
   line-height: 1.5;
 }
 
-.contenido-ayuda h1 {
-  font-size: 1.2rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
+/* Botones de gestión */
+.gestion-jugador {
+  background: #8b5cf6;
+  transition: all 0.2s;
 }
-
-.contenido-ayuda h2 {
-  font-size: 1rem;
-  margin-top: 1rem;
-  border-left: 3px solid #8b5cf6;
-  padding-left: 0.5rem;
+.gestion-jugador.salida {
+  background: #dc2626;
 }
-
-.contenido-ayuda h3 {
-  font-size: 0.9rem;
-  margin-top: 0.8rem;
-}
-
-.contenido-ayuda table {
-  font-size: 0.75rem;
-}
-
-.contenido-ayuda ul, .contenido-ayuda ol {
-  padding-left: 1.2rem;
-  margin: 0.5rem 0;
-}
-
-.contenido-ayuda li {
-  margin: 0.2rem 0;
-}
-
-.contenido-ayuda code {
-  background: #f1f5f9;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-}
-
-.contenido-ayuda .footer {
-  font-size: 0.7rem;
-  text-align: center;
-  margin-top: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e2e8f0;
+.gestion-jugador:hover {
+  transform: scale(0.98);
 }
 
 @media (max-width: 640px) {
@@ -342,4 +309,5 @@ th { background: #e2e8f0; }
   .acciones-globales { flex-direction: column; }
   .backup-buttons { flex-direction: column; }
   .btn-ayuda-flotante { width: 32px; height: 32px; font-size: 1rem; top: 0.5rem; right: 0.5rem; }
+  th, td { font-size: 0.7rem; padding: 0.2rem; }
 }
