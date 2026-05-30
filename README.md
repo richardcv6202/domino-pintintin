@@ -1,6 +1,22 @@
 
 ---
 
+## 📈 Módulo de gráficas interactivas
+
+Accede desde el botón **📈 Gráficas interactivas** en la pantalla de inicio o de juego.
+
+| Característica | Descripción |
+|----------------|-------------|
+| **Filtros por fechas** | Carga automática primera/última fecha registrada |
+| **Selección de jugadores** | Orden prioritario (mismo que tablas de estadísticas) |
+| **Tipos de gráfico** | Barras (múltiples indicadores), Líneas, Radar, Pastel, Polar |
+| **Indicadores** | Todos los disponibles (Machs, Patas, Pollonas, etc.) |
+| **Gráfico de barras** | Permite seleccionar múltiples indicadores sin límite (defecto: Machs, Patas, Aguas) |
+| **Actualización** | Automática al cambiar cualquier filtro |
+| **Exportación** | PNG (imagen) y CSV (datos subyacentes) |
+
+---
+
 ## 🚀 Cómo instalar la app
 
 ### En tu móvil Android (recomendado)
@@ -36,7 +52,7 @@ Solo abre el enlace y comienza a jugar. La interfaz es responsive y se adapta al
 
 Cada jugador tiene una **tarjeta de color** con:
 
-- Su **posición y nombre**
+- Su **posición y nombre** (👑 corona para el último ganador, 🥈 medalla para el penúltimo)
 - **Patas actuales** (número grande)
 - Estadísticas resumidas: 🚪C 🏃P 🀰C 🐔P 🧤F 💧A 🎯D 📥R ⚖️E 🏆⚖️EG 🧩PPE
 - Tres botones: 🏆 Pata, 🧤 Forro, 🎯 Da PM
@@ -45,11 +61,12 @@ Cada jugador tiene una **tarjeta de color** con:
 
 | Botón | Función |
 |-------|---------|
-| ⚖️ Declarar empate | Marca un empate entre dos o más jugadores |
+| ⚖️ Declarar empate | Marca un empate entre dos o más jugadores (luego asigna agua automáticamente) |
 | ➕ Añadir jugador | Agrega un jugador en silla vacante |
 | ➖ Salida de jugador | Retira un jugador (mínimo 2 en mesa) |
 | 📊 Estadísticas del día | Muestra tabla del día actual |
 | 🌍 Estadísticas globales | Muestra todos los días (filtrable) |
+| 📈 Gráficas interactivas | Abre el módulo de gráficas (nuevo en v4.5) |
 | 🚪 Cerrar día y guardar | Finaliza la jornada y guarda respaldo |
 
 ### 4. Ayuda integrada
@@ -77,10 +94,10 @@ Accede a `admin.html` con contraseña `admin`
 ## 💾 Respaldo de datos (Backup)
 
 ### Automático
-Al cerrar un día, se genera un archivo llamado `Pinti_v40_lun.json` (según el día de la semana). Si se juega el mismo día de la semana, el archivo se **actualiza** (no se duplica).
+Al cerrar un día, se genera un archivo llamado `Pinti_v45_lun.json` (según el día de la semana). Si se juega el mismo día de la semana, el archivo se **actualiza** (no se duplica).
 
 ### Manual
-- **Exportar**: Toca 💾 Exportar respaldo (genera `Pinti_v40_ddmmyy.json`)
+- **Exportar**: Toca 💾 Exportar respaldo (genera `Pinti_v45_ddmmyy.json`)
 - **Importar**: Toca 📂 Importar respaldo y selecciona un archivo `.json`
 
 ---
@@ -103,6 +120,7 @@ Al cerrar un día, se genera un archivo llamado `Pinti_v40_lun.json` (según el 
 | JavaScript (Vanilla) | Lógica completa de la app |
 | localStorage | Almacenamiento de datos (sin servidor) |
 | Dexie.js | Capa de abstracción para IndexedDB (admin.html) |
+| Chart.js | Librería para gráficas interactivas (nuevo en v4.5) |
 | jsPDF + AutoTable | Exportación a PDF |
 | Service Worker | Funcionamiento offline e instalación como PWA |
 
@@ -113,9 +131,10 @@ Al cerrar un día, se genera un archivo llamado `Pinti_v40_lun.json` (según el 
 | Archivo | Descripción |
 |---------|-------------|
 | `index.html` | Estructura principal de la aplicación |
-| `admin.html` | Panel de administración (nuevo en v4.0) |
+| `admin.html` | Panel de administración |
+| `estadisticas_graficas.html` | Módulo de gráficas interactivas (nuevo en v4.5) |
 | `styles.css` | Estilos visuales y diseño responsive |
-| `app.js` | Toda la lógica del juego (v4.0) |
+| `app.js` | Toda la lógica del juego (v4.5) |
 | `manifest.json` | Configuración de la PWA (iconos, colores, nombre) |
 | `sw.js` | Service Worker para funcionamiento offline |
 | `manual_pintintin.html` | Manual de usuario completo |
@@ -131,7 +150,7 @@ Al cerrar un día, se genera un archivo llamado `Pinti_v40_lun.json` (según el 
 
 - **Desarrollador:** Ricardo Castillo (Richard)
 - **Ubicación:** La Demajagua, Isla de la Juventud, Cuba
-- **Versión:** 4.0 (Mayo 2026)
+- **Versión:** 4.5 (Mayo 2026)
 - **Email:** (opcional - pon tu correo si quieres)
 - **GitHub:** (opcional - pon tu perfil si quieres)
 
