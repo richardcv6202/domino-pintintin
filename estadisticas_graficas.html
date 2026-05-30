@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gráficas - Dominó Pintintín</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .graficas-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.6rem;
+            margin: 0.5rem 0;
+        }
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto 1fr;
+            gap: 0.5rem 0.8rem;
+            align-items: center;
+            margin-bottom: 0.4rem;
+        }
+        .filtro-etiqueta {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+        }
+        .filtro-control {
+            min-width: 140px;
+        }
+        .filtro-control select, .filtro-control input {
+            width: 100%;
+            padding: 0.3rem 0.4rem;
+            border: none;
+            border-bottom: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.75rem;
+            outline: none;
+        }
+        .indicadores-multi {
+            background: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 0.4rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .indicadores-multi strong {
+            font-size: 0.7rem;
+        }
+        .indicadores-multi label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            background: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            border: 1px solid #cbd5e1;
+        }
+        .selector-jugadores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            background: #f8fafc;
+            padding: 0.4rem;
+            border-radius: 0.75rem;
+            margin: 0.3rem 0 0.6rem 0;
+        }
+        .selector-jugadores label {
+            flex: 1 0 auto;
+            min-width: 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e2e8f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1.5rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            gap: 0.4rem;
+        }
+        .selector-jugadores label span {
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .selector-jugadores input {
+            margin: 0;
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+        .info-rango {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #475569;
+            margin-bottom: 0.3rem;
+        }
+        .canvas-grafica {
+            background: #fefce8;
+            border-radius: 1rem;
+            padding: 0.4rem;
+            margin: 0.3rem 0;
+        }
+        canvas {
+            max-height: 380px;
+            width: 100%;
+        }
+        .botones-grafica {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 640px) {
+            .filtros-grid {
+                grid-template-columns: auto 1fr;
+                gap: 0.3rem;
+            }
+            .selector-jugadores label {
+                min-width: 100%;
+            }
+            .indicadores-multi {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <header>
+        <h1>📈 Gráficas interactivas</h1>
+        <div class="fecha-dia">Compara indicadores entre jugadores</div>
+    </header>
+
+    <div class="graficas-container">
+        <div class="filtros-grid">
+            <span class="filtro-etiqueta">📅 Fecha desde</span>
+            <input type="date" id="fechaDesde" class="filtro-control">
+            <span class="filtro-etiqueta">📅 Fecha hasta</span>
+            <input type="date" id="fechaHasta" class="filtro-control">
+            
+            <span class="filtro-etiqueta">📐 Tipo gráfico</span>
+            <select id="tipoGrafico" class="filtro-control">
+                <option value="bar">📊 Barras (múltiples indicadores)</option>
+                <option value="line">📈 Líneas</option>
+                <option value="radar">🕸️ Radar</option>
+                <option value="pie">🥧 Pastel</option>
+                <option value="polarArea">🌀 Polar</option>
+            </select>
+        </div>
+
+        <div id="indicadorPanel" style="margin: 0.2rem 0 0.5rem 0;"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.2rem 0;">
+            <label style="font-size:0.7rem; font-weight:bold;">👥 Jugadores</label>
+            <label style="display: flex; align-items: center; gap: 0.3rem; font-size:0.65rem;">
+                <input type="checkbox" id="seleccionarTodos"> Seleccionar todos
+            </label>
+        </div>
+        <div id="jugadoresChecklist" class="selector-jugadores"></div>
+
+        <div id="infoRango" class="info-rango"></div>
+
+        <div class="canvas-grafica">
+            <canvas id="miGrafica" width="500" height="400"></canvas>
+        </div>
+
+        <div class="botones-grafica">
+            <button id="btnDescargarImagen" class="secundario">📸 Imagen PNG</button>
+            <button id="btnExportarCSV" class="secundario">📎 CSV de datos</button>
+            <button id="btnVolver" class="secundario">← Volver al juego</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 1. Cargar datos ----------
+    let jugadores = [];
+    let dias = [];
+    let participaciones = [];
+
+    function cargarDatosLocales() {
+        jugadores = JSON.parse(localStorage.getItem('pintintin_jugadores')) || [];
+        dias = JSON.parse(localStorage.getItem('pintintin_dias')) || [];
+        participaciones = JSON.parse(localStorage.getItem('pintintin_participaciones')) || [];
+        for (let p of participaciones) {
+            if (p.empatesParticipados === undefined) p.empatesParticipados = 0;
+            if (p.empatesGanados === undefined) p.empatesGanados = 0;
+            if (p.patasPorEmpate === undefined) p.patasPorEmpate = 0;
+        }
+    }
+
+    // ---------- 2. Fechas ----------
+    function obtenerMinFecha() {
+        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
+        return fechas[0] || obtenerFechaActual();
+    }
+    function obtenerMaxFecha() {
+        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
+        return fechas[fechas.length - 1] || obtenerFechaActual();
+    }
+    function obtenerFechaActual() {
+        const hoy = new Date();
+        return hoy.toISOString().slice(0,10);
+    }
+
+    function inicializarFechas() {
+        const min = obtenerMinFecha();
+        const max = obtenerMaxFecha();
+        document.getElementById('fechaDesde').value = min;
+        document.getElementById('fechaHasta').value = max;
+    }
+
+    // ---------- 3. Panel de indicadores (múltiple para barras, simple para otros) ----------
+    let indicadoresMulti = [];
+
+    const TODOS_INDICADORES = [
+        { key: 'machsGanados', label: '🏆 Machs' },
+        { key: 'patasNetas', label: '🦶 Patas netas' },
+        { key: 'pollonas', label: '🐔 Pollonas' },
+        { key: 'capicuas', label: '🀰 Capicuas' },
+        { key: 'cierres', label: '🚪 Cierres' },
+        { key: 'pegado', label: '🏃 Pegados' },
+        { key: 'forros', label: '🧤 Forros' },
+        { key: 'aguas', label: '💧 Aguas' },
+        { key: 'paseManoDados', label: '🎯 PM Dados' },
+        { key: 'paseManoRecibidos', label: '📥 PM Recibidos' },
+        { key: 'empatesParticipados', label: '⚖️ Empates' },
+        { key: 'empatesGanados', label: '🏆⚖️ E. Ganados' },
+        { key: 'patasPorEmpate', label: '🧩 Patas por Empate' }
+    ];
+
+    function actualizarPanelIndicador() {
+        const tipo = document.getElementById('tipoGrafico').value;
+        const panel = document.getElementById('indicadorPanel');
+        if (tipo === 'bar') {
+            // Modo múltiple: se muestran todos los checkboxes, SIN límite de selección
+            panel.innerHTML = `<div class="indicadores-multi"><strong>📊 Selecciona los indicadores a comparar:</strong>`;
+            TODOS_INDICADORES.forEach(ind => {
+                panel.innerHTML += `<label><input type="checkbox" value="${ind.key}" class="check-indicador"> ${ind.label}</label>`;
+            });
+            panel.innerHTML += `</div>`;
+            const checks = document.querySelectorAll('.check-indicador');
+            // Por defecto: Machs, Patas netas, Aguas
+            checks.forEach(cb => {
+                const val = cb.value;
+                if (val === 'machsGanados' || val === 'patasNetas' || val === 'aguas') {
+                    cb.checked = true;
+                } else {
+                    cb.checked = false;
+                }
+            });
+            indicadoresMulti = Array.from(document.querySelectorAll('.check-indicador:checked')).map(cb => cb.value);
+            document.querySelectorAll('.check-indicador').forEach(cb => cb.addEventListener('change', () => {
+                indicadoresMulti = Array.from(document.querySelectorAll('.check-indicador:checked')).map(cb => cb.value);
+                dibujarGrafico();
+            }));
+        } else {
+            // Modo simple: selector único
+            panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
+                <span class="filtro-etiqueta">📊 Indicador</span>
+                <select id="indicadorUnico" class="filtro-control">
+                    ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}">${ind.label}</option>`).join('')}
+                </select>
+            </div>`;
+            document.getElementById('indicadorUnico').addEventListener('change', () => dibujarGrafico());
+        }
+    }
+
+    // ---------- 4. Orden de jugadores (mismo criterio que app.js) ----------
+    function ordenarJugadoresPorPrioridad(jugadoresArray) {
+        const statsMap = new Map();
+        for (let p of participaciones) {
+            const jug = jugadoresArray.find(j => j.id === p.jugadorId);
+            if (!jug) continue;
+            if (!statsMap.has(jug.id)) {
+                statsMap.set(jug.id, {
+                    id: jug.id,
+                    nombre: jug.nombre,
+                    machs: 0,
+                    patas: 0,
+                    pollonas: 0,
+                    capicuas: 0,
+                    pegado: 0,
+                    paseManoDados: 0,
+                    empatesParticipados: 0,
+                    empatesGanados: 0,
+                    forros: 0,
+                    aguas: 0
+                });
+            }
+            const s = statsMap.get(jug.id);
+            s.machs += p.machsGanados || 0;
+            s.patas += p.patasNetas || 0;
+            s.pollonas += p.pollonas || 0;
+            s.capicuas += p.capicuas || 0;
+            s.pegado += p.pegado || 0;
+            s.paseManoDados += p.paseManoDados || 0;
+            s.empatesParticipados += p.empatesParticipados || 0;
+            s.empatesGanados += p.empatesGanados || 0;
+            s.forros += p.forros || 0;
+            s.aguas += p.aguas || 0;
+        }
+        const jugadoresConStats = Array.from(statsMap.values());
+        jugadoresConStats.sort((a, b) => {
+            if (a.machs !== b.machs) return b.machs - a.machs;
+            if (a.patas !== b.patas) return b.patas - a.patas;
+            if (a.pollonas !== b.pollonas) return b.pollonas - a.pollonas;
+            if (a.capicuas !== b.capicuas) return b.capicuas - a.capicuas;
+            if (a.pegado !== b.pegado) return b.pegado - a.pegado;
+            if (a.paseManoDados !== b.paseManoDados) return b.paseManoDados - a.paseManoDados;
+            if (a.empatesParticipados !== b.empatesParticipados) return b.empatesParticipados - a.empatesParticipados;
+            if (a.empatesGanados !== b.empatesGanados) return b.empatesGanados - a.empatesGanados;
+            if (a.forros !== b.forros) return a.forros - b.forros;
+            if (a.aguas !== b.aguas) return a.aguas - b.aguas;
+            return a.nombre.localeCompare(b.nombre);
+        });
+        return jugadoresConStats.map(s => ({ id: s.id, nombre: s.nombre }));
+    }
+
+    function renderizarChecklistJugadores() {
+        const container = document.getElementById('jugadoresChecklist');
+        if (!container) return;
+        container.innerHTML = '';
+        if (jugadores.length === 0) {
+            container.innerHTML = '<p style="color:gray">No hay jugadores registrados</p>';
+            return;
+        }
+        const jugadoresOrdenados = ordenarJugadoresPorPrioridad(jugadores);
+        jugadoresOrdenados.forEach((j, idx) => {
+            const label = document.createElement('label');
+            label.innerHTML = `<span>${idx+1}º ${escapeHtml(j.nombre)}</span><input type="checkbox" value="${j.id}" class="check-jugador">`;
+            container.appendChild(label);
+        });
+        const checks = document.querySelectorAll('.check-jugador');
+        checks.forEach(cb => cb.checked = true);
+        actualizarCheckTodos();
+        checks.forEach(cb => cb.addEventListener('change', () => {
+            actualizarCheckTodos();
+            dibujarGrafico();
+        }));
+    }
+
+    function actualizarCheckTodos() {
+        const checks = document.querySelectorAll('.check-jugador');
+        const checkTodos = document.getElementById('seleccionarTodos');
+        if (!checkTodos) return;
+        const todosMarcados = checks.length > 0 && Array.from(checks).every(cb => cb.checked);
+        checkTodos.checked = todosMarcados;
+    }
+
+    function seleccionarTodos(estado) {
+        const checks = document.querySelectorAll('.check-jugador');
+        checks.forEach(cb => cb.checked = estado);
+        actualizarCheckTodos();
+        dibujarGrafico();
+    }
+
+    // ---------- 5. Datos ----------
+    function filtrarParticipacionesPorFecha(desde, hasta) {
+        if (!desde && !hasta) return participaciones;
+        let diasFiltrados = dias;
+        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
+        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
+        const idsDias = new Set(diasFiltrados.map(d => d.id));
+        return participaciones.filter(p => idsDias.has(p.diaId));
+    }
+
+    function obtenerDatosPorJugador(idsJugadores, indicadorKey, desde, hasta) {
+        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
+        const mapa = new Map();
+        for (let id of idsJugadores) {
+            const jug = jugadores.find(j => j.id == id);
+            if (jug) mapa.set(id, { nombre: jug.nombre, total: 0 });
+        }
+        for (let p of participacionesFiltradas) {
+            if (mapa.has(p.jugadorId)) {
+                mapa.get(p.jugadorId).total += (p[indicadorKey] || 0);
+            }
+        }
+        return Array.from(mapa.values());
+    }
+
+    function obtenerDatosMultiIndicador(idsJugadores, indicadoresKeys, desde, hasta) {
+        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
+        const mapa = new Map();
+        for (let id of idsJugadores) {
+            const jug = jugadores.find(j => j.id == id);
+            if (jug) mapa.set(id, { nombre: jug.nombre, valores: {} });
+        }
+        for (let p of participacionesFiltradas) {
+            if (mapa.has(p.jugadorId)) {
+                const entry = mapa.get(p.jugadorId);
+                for (let key of indicadoresKeys) {
+                    entry.valores[key] = (entry.valores[key] || 0) + (p[key] || 0);
+                }
+            }
+        }
+        return Array.from(mapa.values());
+    }
+
+    // ---------- 6. Colores ----------
+    const coloresBase = [
+        { bg: 'rgba(239, 68, 68, 0.7)', border: 'rgb(220, 38, 38)' },
+        { bg: 'rgba(59, 130, 246, 0.7)', border: 'rgb(37, 99, 235)' },
+        { bg: 'rgba(16, 185, 129, 0.7)', border: 'rgb(5, 150, 105)' },
+        { bg: 'rgba(245, 158, 11, 0.7)', border: 'rgb(217, 119, 6)' },
+        { bg: 'rgba(139, 92, 246, 0.7)', border: 'rgb(124, 58, 237)' },
+        { bg: 'rgba(236, 72, 153, 0.7)', border: 'rgb(219, 39, 119)' },
+        { bg: 'rgba(20, 184, 166, 0.7)', border: 'rgb(13, 148, 136)' },
+        { bg: 'rgba(249, 115, 22, 0.7)', border: 'rgb(234, 88, 12)' }
+    ];
+
+    // ---------- 7. Gráfico automático ----------
+    let chartInstance = null;
+    const ctx = document.getElementById('miGrafica').getContext('2d');
+
+    function actualizarInfoRango(desde, hasta) {
+        const info = document.getElementById('infoRango');
+        if (desde === hasta) info.innerText = `📅 Datos del ${desde}`;
+        else info.innerText = `📅 Datos desde ${desde} hasta ${hasta}`;
+    }
+
+    async function dibujarGrafico() {
+        const desde = document.getElementById('fechaDesde').value;
+        const hasta = document.getElementById('fechaHasta').value;
+        actualizarInfoRango(desde, hasta);
+        
+        const tipo = document.getElementById('tipoGrafico').value;
+        const checksJugadores = document.querySelectorAll('.check-jugador:checked');
+        const idsJugadores = Array.from(checksJugadores).map(cb => parseInt(cb.value));
+        if (idsJugadores.length === 0) {
+            if (chartInstance) chartInstance.destroy();
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.fillStyle = '#ccc';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Selecciona al menos un jugador', 10, 50);
+            return;
+        }
+
+        if (tipo === 'bar') {
+            if (indicadoresMulti.length === 0) {
+                alert('Selecciona al menos un indicador para el gráfico de barras.');
+                return;
+            }
+            const datosMulti = obtenerDatosMultiIndicador(idsJugadores, indicadoresMulti, desde, hasta);
+            const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
+            const datosOrdenados = jugadoresOrden.map(nom => datosMulti.find(d => d.nombre === nom)).filter(d => d);
+            
+            const datasets = indicadoresMulti.map((key, idx) => {
+                const color = coloresBase[idx % coloresBase.length];
+                const label = TODOS_INDICADORES.find(i => i.key === key).label;
+                return {
+                    label: label,
+                    data: datosOrdenados.map(j => j.valores[key] || 0),
+                    backgroundColor: color.bg,
+                    borderColor: color.border,
+                    borderWidth: 1
+                };
+            });
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: jugadoresOrden,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } }
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
+            };
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, config);
+            return;
+        }
+        
+        // Modo un solo indicador
+        const indicadorUnico = document.getElementById('indicadorUnico');
+        if (!indicadorUnico) return;
+        const indicadorKey = indicadorUnico.value;
+        const datos = obtenerDatosPorJugador(idsJugadores, indicadorKey, desde, hasta);
+        const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
+        const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
+        const datosOrdenados = jugadoresOrden.map(nom => datos.find(d => d.nombre === nom)?.total || 0);
+        
+        let config;
+        if (tipo === 'line') {
+            config = {
+                type: 'line',
+                data: {
+                    labels: jugadoresOrden,
+                    datasets: [{
+                        label: nombreIndicador,
+                        data: datosOrdenados,
+                        borderColor: 'rgb(79, 70, 229)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        fill: false,
+                        tension: 0.2,
+                        pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border),
+                        pointBorderColor: '#fff',
+                        pointRadius: 5
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } } }
+            };
+        } else if (tipo === 'radar') {
+            config = {
+                type: 'radar',
+                data: {
+                    labels: jugadoresOrden,
+                    datasets: [{
+                        label: nombreIndicador,
+                        data: datosOrdenados,
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        borderColor: 'rgb(79, 70, 229)',
+                        borderWidth: 2,
+                        pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border)
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true } } }
+            };
+        } else if (tipo === 'pie' || tipo === 'polarArea') {
+            config = {
+                type: tipo,
+                data: {
+                    labels: jugadoresOrden,
+                    datasets: [{
+                        data: datosOrdenados,
+                        backgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].bg),
+                        borderColor: '#fff'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right' } } }
+            };
+        }
+        
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, config);
+    }
+
+    // ---------- 8. Utilidades ----------
+    function descargarImagen() {
+        if (!chartInstance) return alert('Primero genera un gráfico');
+        const canvas = document.getElementById('miGrafica');
+        const link = document.createElement('a');
+        link.download = `pintintin_grafico_${new Date().toISOString().slice(0,19)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    function exportarCSV() {
+        const desde = document.getElementById('fechaDesde').value;
+        const hasta = document.getElementById('fechaHasta').value;
+        const checks = document.querySelectorAll('.check-jugador:checked');
+        const ids = Array.from(checks).map(cb => parseInt(cb.value));
+        if (ids.length === 0) return;
+        const tipo = document.getElementById('tipoGrafico').value;
+        if (tipo === 'bar') {
+            const datosMulti = obtenerDatosMultiIndicador(ids, indicadoresMulti, desde, hasta);
+            let csv = `"Jugador",${indicadoresMulti.map(k => `"${TODOS_INDICADORES.find(i=>i.key===k).label}"`).join(',')}\n`;
+            datosMulti.forEach(j => {
+                csv += `"${j.nombre}",${indicadoresMulti.map(k => j.valores[k] || 0).join(',')}\n`;
+            });
+            const blob = new Blob([csv], {type: 'text/csv'});
+            saveAs(blob, `pintintin_datos_multi_${new Date().toISOString().slice(0,19)}.csv`);
+        } else {
+            const indicadorKey = document.getElementById('indicadorUnico').value;
+            const datos = obtenerDatosPorJugador(ids, indicadorKey, desde, hasta);
+            const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
+            let csv = `"Jugador","${nombreIndicador}"\n`;
+            datos.forEach(d => { csv += `"${d.nombre}",${d.total}\n`; });
+            const blob = new Blob([csv], {type: 'text/csv'});
+            saveAs(blob, `pintintin_datos_${indicadorKey}_${new Date().toISOString().slice(0,19)}.csv`);
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ---------- 9. Inicialización ----------
+    function iniciarModulo() {
+        cargarDatosLocales();
+        if (jugadores.length === 0) {
+            document.querySelector('.graficas-container').innerHTML = '<p class="mensaje-carga">⚠️ No hay datos. Inicia un día en la app principal primero.</p>';
+            return;
+        }
+        inicializarFechas();
+        renderizarChecklistJugadores();
+        actualizarPanelIndicador();
+        
+        document.getElementById('fechaDesde').addEventListener('change', dibujarGrafico);
+        document.getElementById('fechaHasta').addEventListener('change', dibujarGrafico);
+        document.getElementById('tipoGrafico').addEventListener('change', () => {
+            actualizarPanelIndicador();
+            dibujarGrafico();
+        });
+        document.getElementById('seleccionarTodos').addEventListener('change', (e) => seleccionarTodos(e.target.checked));
+        
+        document.getElementById('btnDescargarImagen').addEventListener('click', descargarImagen);
+        document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
+        document.getElementById('btnVolver').addEventListener('click', () => { window.location.href = 'index.html'; });
+        
+        dibujarGrafico();
+    }
+
+    window.onload = iniciarModulo;
+</script>
+</body>
+</html>
