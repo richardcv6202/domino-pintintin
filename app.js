@@ -1,7 +1,10 @@
-// ==================== DOMINÓ PINTINTÍN - VERSIÓN 4.0 FINAL ====================
+// ==================== DOMINÓ PINTINTÍN - VERSIÓN 4.5 FINAL ====================
 // Creado por Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba
-// CORRECCIONES: Manual completo en ayuda, botón superior "Volver al juego" en estadísticas
-console.log("🎲 Dominó Pintintín - Versión 4.0 FINAL: Manual completo, botón superior en estadísticas");
+// CORRECCIONES FINALES: 
+// - patasPorEmpate ahora guarda el total de patas ganadas (no solo extras)
+// - Después de empate, se asigna agua automáticamente (o modal si hay varios candidatos)
+// - Se muestra corona 👑 al último ganador y 🥈 al penúltimo, actualizándose correctamente en cada pata
+console.log("🎲 Dominó Pintintín - Versión 4.5 FINAL: patasPorEmpate corregido, agua tras empate, identificación de ganadores actualizada en cada pata");
 
 // --- CONFIGURACIÓN INICIAL ---
 let diaActivo = null;
@@ -10,6 +13,10 @@ let estadoMachActual = { numero: 1, patasActuales: new Map(), empatePendiente: n
 let almacenamiento = { jugadores: [], dias: [], participaciones: [], machs: [] };
 let ganadorPendiente = null;
 let ultimaJugadaFueAgua = false;
+
+// Identificación de último y penúltimo ganador
+let ultimoGanadorId = null;
+let penultimoGanadorId = null;
 
 // Preferencia para tablas transpuestas (false = normal, true = transpuesta)
 let tablaTranspuesta = false;
@@ -24,6 +31,8 @@ function guardarTodoEnLocalStorage() {
     localStorage.setItem('pintintin_participaciones', JSON.stringify(almacenamiento.participaciones));
     localStorage.setItem('pintintin_machs', JSON.stringify(almacenamiento.machs));
     localStorage.setItem('pintintin_preferencia', JSON.stringify({ tablaTranspuesta: tablaTranspuesta }));
+    localStorage.setItem('pintintin_ultimoGanador', ultimoGanadorId);
+    localStorage.setItem('pintintin_penultimoGanador', penultimoGanadorId);
 }
 
 function cargarTodoDesdeLocalStorage() {
@@ -40,6 +49,9 @@ function cargarTodoDesdeLocalStorage() {
         if (p.empatesAcumulados === undefined) p.empatesAcumulados = 0;
         if (p.patasPorEmpate === undefined) p.patasPorEmpate = 0;
     }
+    
+    ultimoGanadorId = parseInt(localStorage.getItem('pintintin_ultimoGanador')) || null;
+    penultimoGanadorId = parseInt(localStorage.getItem('pintintin_penultimoGanador')) || null;
 }
 
 function guardarSesionCompleta() {
@@ -51,7 +63,9 @@ function guardarSesionCompleta() {
             patasActuales: Array.from(estadoMachActual.patasActuales.entries()),
             empatePendiente: estadoMachActual.empatePendiente,
             historialManos: estadoMachActual.historialManos
-        }
+        },
+        ultimoGanadorId: ultimoGanadorId,
+        penultimoGanadorId: penultimoGanadorId
     };
     localStorage.setItem('sesionPintintinV2', JSON.stringify(sesion));
 }
@@ -71,11 +85,17 @@ function cargarSesionCompleta() {
         empatePendiente: data.estadoMachActual.empatePendiente,
         historialManos: data.estadoMachActual.historialManos
     };
+    ultimoGanadorId = data.ultimoGanadorId || null;
+    penultimoGanadorId = data.penultimoGanadorId || null;
     return true;
 }
 
 function limpiarSesionCompleta() {
     localStorage.removeItem('sesionPintintinV2');
+    localStorage.removeItem('pintintin_ultimoGanador');
+    localStorage.removeItem('pintintin_penultimoGanador');
+    ultimoGanadorId = null;
+    penultimoGanadorId = null;
 }
 
 // --- RESPALDO AUTOMÁTICO ---
@@ -97,7 +117,7 @@ async function guardarBackupAutomatico() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v40_${getDiaSemanaAbreviatura()}.json`;
+    const nombreArchivo = `Pinti_v45_${getDiaSemanaAbreviatura()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -109,7 +129,7 @@ async function exportarBackupManual() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v40_${formatearFechaParaNombre()}.json`;
+    const nombreArchivo = `Pinti_v45_${formatearFechaParaNombre()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -339,7 +359,7 @@ async function retirarJugador() {
     }
 }
 
-// ==================== PASE DE MANO AUTOMÁTICO (con sillas vacantes) ====================
+// ==================== PASE DE MANO AUTOMÁTICO ====================
 function obtenerJugadorQueRecibePM(jugadorQueDaId) {
     const jugadorQueDa = jugadoresActuales.find(j => j.jugadorId === jugadorQueDaId);
     if (!jugadorQueDa) return null;
@@ -389,6 +409,18 @@ async function registrarForro(jugadorId) {
     ultimaJugadaFueAgua = false;
     renderizarJugadores();
     guardarSesionCompleta();
+}
+
+// --- ACTUALIZACIÓN DE GANADORES (CORREGIDO) ---
+function actualizarGanadores(ganadorId) {
+    if (ganadorId === null) return;
+    // El penúltimo se pierde (pasa a null)
+    // El último pasa a penúltimo
+    // El nuevo ganador pasa a último
+    penultimoGanadorId = ultimoGanadorId;
+    ultimoGanadorId = ganadorId;
+    guardarSesionCompleta();
+    renderizarJugadores();
 }
 
 // --- FUNCIÓN PARA ALTERNAR TABLAS TRANSPUESTAS ---
@@ -501,6 +533,8 @@ async function sortearEIniciar() {
         estadoMachActual = { numero:1, patasActuales: new Map(), empatePendiente: null, historialManos:[] };
         jugadoresActuales.forEach(j => { if(j.jugadorId) estadoMachActual.patasActuales.set(j.jugadorId, 0); });
         ultimaJugadaFueAgua = false;
+        ultimoGanadorId = null;
+        penultimoGanadorId = null;
         guardarTodoEnLocalStorage();
         guardarSesionCompleta();
         actualizarColorBotonSorteo();
@@ -588,6 +622,8 @@ async function sortearEIniciar() {
     estadoMachActual = { numero:1, patasActuales: new Map(), empatePendiente: null, historialManos:[] };
     jugadoresActuales.forEach(j => { if(j.jugadorId) estadoMachActual.patasActuales.set(j.jugadorId, 0); });
     ultimaJugadaFueAgua = false;
+    ultimoGanadorId = null;
+    penultimoGanadorId = null;
     guardarTodoEnLocalStorage();
     guardarSesionCompleta();
     actualizarColorBotonSorteo();
@@ -630,9 +666,18 @@ function renderizarJugadores() {
         let empatesGan = part ? (part.empatesGanados || 0) : 0;
         let patasPorEmpate = part ? (part.patasPorEmpate || 0) : 0;
         let color = coloresPosicion[(j.posicion-1) % coloresPosicion.length];
+        
+        // Determinar icono de último/penúltimo ganador
+        let iconoGanador = '';
+        if (j.jugadorId === ultimoGanadorId && ultimoGanadorId !== null) {
+            iconoGanador = '👑 ';
+        } else if (j.jugadorId === penultimoGanadorId && penultimoGanadorId !== null) {
+            iconoGanador = '🥈 ';
+        }
+        
         let div = document.createElement('div'); div.className = 'tarjeta-jugador'; div.style.borderLeftColor = color;
         if(j.jugadorId) {
-            div.innerHTML = `<div class="nombre" style="color:${color};">🪑 ${j.posicion} - ${j.nombre}</div>
+            div.innerHTML = `<div class="nombre" style="color:${color};">${iconoGanador}🪑 ${j.posicion} - ${j.nombre}</div>
                 <div class="patas">${patas} 🦶</div>
                 <div class="stats-mini">🚪${cierresDia} 🏃${pegadoDia} 🀰${capicuasDia} 🐔${pollonasDia} 🧤${forrosDia} 💧${aguasDia} 🎯${paseManoDados} 📥${paseManoRecibidos} ⚖️${empatesPart} 🏆⚖️${empatesGan} 🧩${patasPorEmpate}</div>
                 <div class="botones-jugador">
@@ -726,11 +771,10 @@ function mostrarModalAgua(jugadoresCandidatos, ganadorId, formaTerminacion, pata
 function finalizarPataConAgua(ganadorId, forma, patasAApuntar, empatesAcumulados, jugadorAguaId) {
     let partGanador = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === ganadorId);
     
+    // patasPorEmpate: guarda el total de patas ganadas
     if (empatesAcumulados > 0 && partGanador) {
         partGanador.empatesGanados = (partGanador.empatesGanados || 0) + 1;
-        let patasBase = (forma === 'capicua') ? 2 : 1;
-        let patasExtra = patasAApuntar - patasBase;
-        partGanador.patasPorEmpate = (partGanador.patasPorEmpate || 0) + patasExtra;
+        partGanador.patasPorEmpate = (partGanador.patasPorEmpate || 0) + patasAApuntar;
     }
     
     if (estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) {
@@ -748,14 +792,12 @@ function finalizarPataConAgua(ganadorId, forma, patasAApuntar, empatesAcumulados
         else if (forma === 'pegado') partGanador.pegado = (partGanador.pegado || 0) + 1; 
     }
     
-    // Registrar agua
     let partAgua = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorAguaId);
     if (partAgua) {
         partAgua.aguas = (partAgua.aguas || 0) + 1;
     }
     estadoMachActual.historialManos.push({ tipo: 'agua', jugadorId: jugadorAguaId, patasAfectadas: 0, timestamp: new Date().toISOString() });
     
-    // Reiniciar empates acumulados
     for (let part of almacenamiento.participaciones.filter(p => p.diaId === diaActivo.id)) {
         part.empatesAcumulados = 0;
     }
@@ -764,6 +806,10 @@ function finalizarPataConAgua(ganadorId, forma, patasAApuntar, empatesAcumulados
     
     guardarTodoEnLocalStorage();
     renderizarJugadores();
+    
+    // *** ACTUALIZAR GANADORES DESPUÉS DE REGISTRAR LA PATA ***
+    actualizarGanadores(ganadorId);
+    
     let tempGanador = ganadorId;
     ganadorPendiente = null;
     verificarFinMach(tempGanador);
@@ -866,7 +912,87 @@ async function verificarFinMach(ganadorId) {
         if(fechaMostrada) fechaMostrada.innerText = `📅 ${diaActivo.fecha}  |  Mach #${estadoMachActual.numero}`;
         setTimeout(() => { if(ganadorMachMsg) ganadorMachMsg.innerText = ''; }, 4000);
     }
+    
+    // NOTA: La actualización de ganadores YA NO se hace aquí. Se hace en finalizarPataConAgua.
+    // Esto evita que la corona se actualice solo al completar mach y no en cada pata.
+    
     guardarSesionCompleta();
+}
+
+// --- FUNCIÓN PARA ASIGNAR AGUA DESPUÉS DEL EMPATE ---
+function asignarAguaDespuesDeEmpate(jugadoresEmpatadosIds) {
+    const jugadoresActivos = jugadoresActuales.filter(j => j.jugadorId !== null);
+    const jugadoresNoEmpatados = jugadoresActivos.filter(j => !jugadoresEmpatadosIds.includes(j.jugadorId));
+    
+    if (jugadoresNoEmpatados.length === 0) {
+        alert("💧 Como todos los jugadores están empatados, el agua se comparte (no se asigna a nadie).");
+        return;
+    }
+    
+    if (jugadoresNoEmpatados.length === 1) {
+        const jugadorAgua = jugadoresNoEmpatados[0];
+        let partAgua = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorAgua.jugadorId);
+        if (partAgua) {
+            partAgua.aguas = (partAgua.aguas || 0) + 1;
+            guardarTodoEnLocalStorage();
+            alert(`💧 Agua asignada automáticamente a: ${jugadorAgua.nombre}`);
+        }
+        return;
+    }
+    
+    mostrarModalAguaDespuesEmpate(jugadoresNoEmpatados);
+}
+
+function mostrarModalAguaDespuesEmpate(jugadoresCandidatos) {
+    if (!checkAguaDiv) {
+        console.error("No se encontró el elemento checkAgua");
+        return;
+    }
+    checkAguaDiv.innerHTML = '<p style="margin-bottom:0.5rem;">⚠️ Selecciona quién da AGUA (revolvió las fichas tras el empate):</p>';
+    
+    for (let j of jugadoresCandidatos) {
+        let label = document.createElement('label');
+        label.style.display = 'block';
+        label.style.margin = '0.3rem 0';
+        label.style.padding = '0.3rem';
+        label.style.borderRadius = '0.3rem';
+        label.style.cursor = 'pointer';
+        label.innerHTML = `<input type="radio" name="aguaEmpate" value="${j.jugadorId}" style="margin-right:0.5rem;"> 🪑 ${j.posicion} - ${j.nombre}`;
+        checkAguaDiv.appendChild(label);
+    }
+    
+    if (modalAgua) {
+        modalAgua.style.display = 'flex';
+        const confirmarOriginal = confirmarAgua.onclick;
+        const cancelarOriginal = cancelarAgua.onclick;
+        
+        const confirmarHandler = () => {
+            const seleccionado = document.querySelector('input[name="aguaEmpate"]:checked');
+            if (seleccionado) {
+                const jugadorAguaId = parseInt(seleccionado.value);
+                modalAgua.style.display = 'none';
+                let partAgua = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorAguaId);
+                if (partAgua) {
+                    partAgua.aguas = (partAgua.aguas || 0) + 1;
+                    guardarTodoEnLocalStorage();
+                    alert(`💧 Agua asignada a: ${jugadoresCandidatos.find(j=>j.jugadorId===jugadorAguaId)?.nombre}`);
+                }
+                confirmarAgua.onclick = confirmarOriginal;
+                cancelarAgua.onclick = cancelarOriginal;
+            } else {
+                alert("Selecciona quién da agua");
+            }
+        };
+        
+        const cancelarHandler = () => {
+            modalAgua.style.display = 'none';
+            confirmarAgua.onclick = confirmarOriginal;
+            cancelarAgua.onclick = cancelarOriginal;
+        };
+        
+        confirmarAgua.onclick = confirmarHandler;
+        cancelarAgua.onclick = cancelarHandler;
+    }
 }
 
 // --- FUNCIÓN DE ORDENAMIENTO DE JUGADORES ---
@@ -934,7 +1060,6 @@ function renderizarTablaNormal(stats, titulo) {
     return html;
 }
 
-// Modo transpuesto: columna TOTAL al final (suma de cada fila)
 function renderizarTablaTranspuesta(stats, titulo) {
     if (!stats || stats.size === 0) {
         return `<div class="stats-container"><p class="stats-vacio">📭 No hay estadísticas registradas.</p></div>`;
@@ -984,13 +1109,12 @@ function renderizarTablaTranspuesta(stats, titulo) {
         html += `<td class="text-center" style="background:#f1f5f9; font-weight:bold;">${totalesPorMetrica[metrica.key]}</td>`;
         html += `</tr>`;
     }
-    html += `</tbody></table></div>`;
+    html += `</tbody></td></div>`;
     if (titulo) html += `<p class="stats-nota">⚡ ${titulo}</p>`;
     html += `</div>`;
     return html;
 }
 
-// Resumen general (modo normal y transpuesto)
 function renderizarTablaResumen(statsTotales, modoTranspuesto) {
     if (!statsTotales || statsTotales.size === 0) return '';
     
@@ -1041,9 +1165,8 @@ function renderizarTablaResumen(statsTotales, modoTranspuesto) {
             html += `<td class="text-center" style="background:#f1f5f9; font-weight:bold;">${totalesPorMetrica[metrica.key]}</td>`;
             html += `</tr>`;
         }
-        html += `</tbody><table>`;
+        html += `</tbody></table>`;
     } else {
-        // Modo normal: totales como fila al final
         html += `<table class="tabla-estadisticas"><thead>`;
         html += `<tr><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th><th>🐔 Pollonas</th><th>🀰 Capicuas</th><th>🚪 Cierres</th><th>🏃 Pegados</th><th>🧤 Forros</th><th>💧 Aguas</th><th>🎯 PM Dados</th><th>📥 PM Recibidos</th><th>⚖️ Empates</th><th>🏆⚖️ E. Ganados</th><th>🧩 Patas x Empate</th>`;
         html += `</thead><tbody>`;
@@ -1067,7 +1190,6 @@ function renderizarTablaResumen(statsTotales, modoTranspuesto) {
     return html;
 }
 
-// --- ESTADÍSTICAS DEL DÍA ---
 function mostrarEstadisticasDelDia() {
     if (!diaActivo) return alert('Inicia un día primero');
     let machsDelDia = almacenamiento.machs.filter(m => m.diaId === diaActivo.id);
@@ -1125,7 +1247,6 @@ function mostrarEstadisticasDelDia() {
     if (tituloStats) tituloStats.innerHTML = '📊 Estadísticas del Día';
 }
 
-// --- ESTADÍSTICAS GLOBALES ---
 function cargarEstadisticasGlobales(desde, hasta) {
     let machsFiltrados = almacenamiento.machs;
     if (desde && hasta) machsFiltrados = machsFiltrados.filter(m => { const dia = almacenamiento.dias.find(d => d.id === m.diaId); return dia && dia.fecha >= desde && dia.fecha <= hasta; });
@@ -1220,7 +1341,6 @@ function cargarEstadisticasGlobales(desde, hasta) {
     if (resultadosStats) resultadosStats.innerHTML = html;
 }
 
-// --- FUNCIONES DE UI Y EVENTOS ---
 function renderInputsJugadores() { 
     const jugadoresInputsContainer = document.getElementById('jugadoresInputsContainer');
     if(!jugadoresInputsContainer) return;
@@ -1262,10 +1382,10 @@ function getFechaLocal() {
     return `${año}-${mes}-${dia}`;
 }
 
-// --- MANUAL DE USUARIO COMPLETO (versión aprobada) ---
+// --- MANUAL DE USUARIO COMPLETO (versión 4.5) ---
 const manualHTML = `<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Manual Dominó Pintintín v4.0</title>
+<head><meta charset="UTF-8"><title>Manual Dominó Pintintín v4.5</title>
 <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',Roboto,sans-serif;background:#f1f5f9;padding:2rem;line-height:1.6;color:#1e293b}
@@ -1293,67 +1413,174 @@ const manualHTML = `<!DOCTYPE html>
 </head>
 <body>
 <div class="manual-container">
-<h1>📖 MANUAL DE USUARIO <span class="version-badge">Versión 4.0</span></h1>
+<h1>📖 MANUAL DE USUARIO <span class="version-badge">Versión 4.5</span></h1>
 <div class="subtitulo">🀰 DOMINÓ PINTINTÍN - Aplicación para Campeonato de Dominó (4 jugadores individuales)</div>
-<div class="creador"><strong>Creado por:</strong> Ricardo Castillo (Richard)<br><strong>Ubicación:</strong> La Demajagua, Isla de la Juventud, Cuba<br><strong>Versión actual:</strong> 4.0 - "La definitiva con automatizaciones"</div>
+<div class="creador"><strong>Creado por:</strong> Ricardo Castillo (Richard)<br><strong>Ubicación:</strong> La Demajagua, Isla de la Juventud, Cuba<br><strong>Versión actual:</strong> 4.5 - "La completa con gráficas y control de ganadores"</div>
+
 <h2>📋 ÍNDICE</h2>
-<div class="indice"><ol><li><a href="#" onclick="scrollToSection('intro')">Introducción</a></li><li><a href="#" onclick="scrollToSection('historia')">Historia</a></li><li><a href="#" onclick="scrollToSection('versiones')">Versiones</a></li><li><a href="#" onclick="scrollToSection('pwa')">PWA</a></li><li><a href="#" onclick="scrollToSection('instalacion')">Instalación</a></li><li><a href="#" onclick="scrollToSection('reglas')">Reglas</a></li><li><a href="#" onclick="scrollToSection('inicio')">Inicio</a></li><li><a href="#" onclick="scrollToSection('sorteo')">Sorteo</a></li><li><a href="#" onclick="scrollToSection('juego')">Juego</a></li><li><a href="#" onclick="scrollToSection('gestion')">Gestión jugadores</a></li><li><a href="#" onclick="scrollToSection('empate')">Empate</a></li><li><a href="#" onclick="scrollToSection('pata')">Registrar pata</a></li><li><a href="#" onclick="scrollToSection('pase-mano')">Pase mano</a></li><li><a href="#" onclick="scrollToSection('estadisticas')">Estadísticas</a></li><li><a href="#" onclick="scrollToSection('empatesStats')">Estadísticas empates</a></li><li><a href="#" onclick="scrollToSection('verificacion')">Verificación patas</a></li><li><a href="#" onclick="scrollToSection('autocompletado')">Autocompletado</a></li><li><a href="#" onclick="scrollToSection('backup')">Respaldo</a></li><li><a href="#" onclick="scrollToSection('persistencia')">Persistencia</a></li><li><a href="#" onclick="scrollToSection('admin')">Administración</a></li><li><a href="#" onclick="scrollToSection('borrar')">Borrar datos</a></li><li><a href="#" onclick="scrollToSection('problemas')">Problemas</a></li><li><a href="#" onclick="scrollToSection('faq')">FAQ</a></li><li><a href="#" onclick="scrollToSection('creditos')">Créditos</a></li></ol></div>
+<div class="indice"><ol>
+<li><a href="#" onclick="scrollToSection('intro')">Introducción</a></li>
+<li><a href="#" onclick="scrollToSection('novedades45')">🎉 Novedades de la versión 4.5</a></li>
+<li><a href="#" onclick="scrollToSection('historia')">Historia y evolución del Pintintín</a></li>
+<li><a href="#" onclick="scrollToSection('versiones')">Historial de versiones</a></li>
+<li><a href="#" onclick="scrollToSection('pwa')">¿Qué es una PWA?</a></li>
+<li><a href="#" onclick="scrollToSection('instalacion')">Instalación de la aplicación</a></li>
+<li><a href="#" onclick="scrollToSection('reglas')">Reglas del juego</a></li>
+<li><a href="#" onclick="scrollToSection('inicio')">Pantalla de inicio (Configuración)</a></li>
+<li><a href="#" onclick="scrollToSection('sorteo')">Sorteo de posiciones</a></li>
+<li><a href="#" onclick="scrollToSection('juego')">Pantalla de juego</a></li>
+<li><a href="#" onclick="scrollToSection('ganadores')">👑 Identificación de ganadores (Último y Penúltimo)</a></li>
+<li><a href="#" onclick="scrollToSection('gestion')">Gestión de jugadores</a></li>
+<li><a href="#" onclick="scrollToSection('empate')">Declarar empate y regla de potencias de 2</a></li>
+<li><a href="#" onclick="scrollToSection('agua-empate')">💧 Agua después del empate</a></li>
+<li><a href="#" onclick="scrollToSection('pata')">Registro de una pata (paso a paso)</a></li>
+<li><a href="#" onclick="scrollToSection('pase-mano')">Pase de mano automático</a></li>
+<li><a href="#" onclick="scrollToSection('estadisticas')">Estadísticas</a></li>
+<li><a href="#" onclick="scrollToSection('graficas')">📈 Módulo de gráficas interactivas</a></li>
+<li><a href="#" onclick="scrollToSection('empatesStats')">Estadísticas de Empates y Patas por Empate</a></li>
+<li><a href="#" onclick="scrollToSection('verificacion')">Fórmula de verificación de patas netas</a></li>
+<li><a href="#" onclick="scrollToSection('autocompletado')">Autocompletado de nombres</a></li>
+<li><a href="#" onclick="scrollToSection('backup')">Respaldo de datos con versión</a></li>
+<li><a href="#" onclick="scrollToSection('persistencia')">Persistencia y continuación de partidas</a></li>
+<li><a href="#" onclick="scrollToSection('admin')">Panel de administración</a></li>
+<li><a href="#" onclick="scrollToSection('borrar')">Borrar todos los datos</a></li>
+<li><a href="#" onclick="scrollToSection('ayuda')">Ayuda integrada</a></li>
+<li><a href="#" onclick="scrollToSection('problemas')">Solución de problemas</a></li>
+<li><a href="#" onclick="scrollToSection('faq')">Preguntas frecuentes (FAQ)</a></li>
+<li><a href="#" onclick="scrollToSection('creditos')">Créditos y agradecimientos</a></li>
+</ol></div>
+
 <h2 id="intro">1. INTRODUCCIÓN</h2>
-<p><strong>Dominó Pintintín</strong> es una aplicación para campeonatos de dominó individual (4 jugadores). La versión 4.0 automatiza el registro de 💧 Agua (tras cada pata mediante modal) y 🎯 Pase de Mano (sentido antihorario saltando sillas vacantes). Elimina botones redundantes, reduciendo errores.</p>
-<h2 id="historia">2. HISTORIA Y EVOLUCIÓN</h2>
-<p>Nace en La Demajagua, Cuba. Es un juego individual donde cada jugador juega para sí mismo. Conceptos: "agache", "botar gorda", "sin respeto de reglas".</p>
+<p><strong>Dominó Pintintín</strong> es una aplicación para campeonatos de dominó individual (4 jugadores). La versión 4.5 incorpora un <strong>módulo de gráficas interactivas</strong>, la <strong>identificación visual del último y penúltimo ganador</strong> (👑 y 🥈), la <strong>corrección de la estadística patasPorEmpate</strong> (ahora guarda el total de patas ganadas), y la <strong>asignación automática de agua después de declarar un empate</strong>.</p>
+
+<h2 id="novedades45">🎉 NOVEDADES DE LA VERSIÓN 4.5</h2>
+<table>
+<thead><tr><th>Característica</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td>📈 Módulo de gráficas interactivas</td><td>Visualiza todos los indicadores con gráficos de barras (múltiples indicadores), líneas, radar, pastel y polar. Filtro por fechas, selección de jugadores y actualización automática.</td></tr>
+<tr><td>👑 Identificación de ganadores</td><td>El último ganador de una pata muestra una corona 👑 y el penúltimo una medalla 🥈. Se actualiza en cada pata, no solo al completar un mach.</td></tr>
+<tr><td>💧 Agua después del empate</td><td>Tras declarar un empate, asigna automáticamente quién da agua según los jugadores fuera del empate.</td></tr>
+<tr><td>🧩 patasPorEmpate corregido</td><td>Guarda el total de patas ganadas (base × 2ⁿ) cuando el jugador ganó estando en empate.</td></tr>
+<tr><td>📅 Fechas por defecto en gráficas</td><td>El módulo de gráficas carga automáticamente la primera y última fecha registrada.</td></tr>
+</tbody>
+</table>
+
+<h2 id="historia">2. HISTORIA Y EVOLUCIÓN DEL PINTINTÍN</h2>
+<p>El nombre <strong>"Pintintín"</strong> nace en la peña de dominó de La Demajagua, en la Isla de la Juventud, Cuba. Es un juego <strong>individual</strong> donde cada jugador juega para sí mismo. Conceptos: "agache", "botar gorda", "sin respeto de reglas".</p>
+
 <h2 id="versiones">3. HISTORIAL DE VERSIONES</h2>
-<table><thead><tr><th>Versión</th><th>Fecha</th><th>Novedades</th></tr></thead><tbody>
-<tr><td>1.0</td><td>8/5/2026</td><td>Registro básico</td></tr>
-<tr><td>2.0</td><td>11/5/2026</td><td>PWA, persistencia</td></tr>
-<tr><td>3.0</td><td>14/5/2026</td><td>Estadísticas completas</td></tr>
-<tr><td>3.5</td><td>26/5/2026</td><td>Empates, orden personalizado</td></tr>
-<tr><td>4.0</td><td>28/5/2026</td><td>🧩 Patas por Empate, autocompletado, backups con versión, <strong>eliminación de botones 💧 y 📥</strong>, 💧 agua automática mediante modal, 🎯 pase de mano automático (salta vacantes), fórmula de verificación.</td></tr>
-</tbody></table>
+<table>
+<thead><tr><th>Versión</th><th>Fecha</th><th>Novedades</th></tr></thead>
+<tbody>
+<tr><td>1.0</td><td>8/5/2026</td><td>Registro básico de patas, machs, forros y aguas.</td></tr>
+<tr><td>2.0</td><td>11/5/2026</td><td>PWA, persistencia de datos, respaldos automáticos.</td></tr>
+<tr><td>3.0</td><td>14/5/2026</td><td>Estadísticas completas: capicuas, cierres, pegados, pase de mano.</td></tr>
+<tr><td>3.5</td><td>26/5/2026</td><td>Estadísticas de empates.</td></tr>
+<tr><td>4.0</td><td>28/5/2026</td><td>🧩 Patas por Empate, autocompletado, backups, 💧 agua automática, 🎯 pase de mano automático.</td></tr>
+<tr><td>4.5</td><td>29/5/2026</td><td><strong>📈 Módulo de gráficas, 👑 identificación de ganadores, 💧 agua tras empate, 🧩 patasPorEmpate corregido.</strong></td></tr>
+</tbody>
+</table>
+
 <h2 id="pwa">4. PWA</h2>
 <p>Progressive Web App: se instala como app nativa, funciona offline.</p>
+
 <h2 id="instalacion">5. INSTALACIÓN</h2>
 <p>Usar Chrome en Android: ⋮ → "Instalar aplicación". También puede generar APK con pwabuilder.com.</p>
+
 <h2 id="reglas">6. REGLAS DEL JUEGO</h2>
 <p><strong>Conceptos:</strong> 🏆 Pata (+1 o 2ⁿ), 🧤 Forro (-1), 💧 Agua (quien revuelve, automático), 🎯 Pase Mano (automático), ⚖️ Empate (acumula, ganador suma 2ⁿ), 🏆 Mach (5 patas, reinicio), 🐔 Pollona (Mach sin otros con patas positivas).</p>
 <p><strong>Formas de terminación:</strong> 🚪 Cierre (1 pata base), 🏃 Pegado (1), 🀰 Capicua (2). Con empates: base × 2ⁿ.</p>
+
 <h2 id="inicio">7. PANTALLA DE INICIO</h2>
-<p>📅 Fecha local automática. 👥 Autocompletado de nombres. Botones: 🎲 Sortear, 📊 Estadísticas globales, ⚠️ Borrar (clave: pintintin), 💾 Exportar respaldo, 📂 Importar respaldo.</p>
+<p>📅 Fecha local automática. 👥 Autocompletado de nombres. Botones: 🎲 Sortear, 📊 Estadísticas globales, 📈 Gráficas interactivas, ⚠️ Borrar, 💾 Exportar respaldo, 📂 Importar respaldo.</p>
+
 <h2 id="sorteo">8. SORTEO DE POSICIONES</h2>
 <p>Dados virtuales, resolución de empates, mezcla de sillas (1-4). Cualquier silla puede quedar vacante.</p>
+
 <h2 id="juego">9. PANTALLA DE JUEGO</h2>
-<p>Cada jugador tiene 🏆 Pata, 🧤 Forro, 🎯 Da PM. Los botones 💧 Agua y 📥 Recibe PM han sido eliminados (ahora automáticos).</p>
-<h2 id="gestion">10. GESTIÓN DE JUGADORES</h2>
+<p>Cada jugador tiene 🏆 Pata, 🧤 Forro, 🎯 Da PM. El último ganador aparece con 👑 y el penúltimo con 🥈.</p>
+
+<h2 id="ganadores">👑 10. IDENTIFICACIÓN DE GANADORES (ÚLTIMO Y PENÚLTIMO)</h2>
+<p><strong>¿Cómo funciona?</strong> Cuando un jugador gana una pata, se convierte en el último ganador (👑). El anterior último ganador pasa a ser penúltimo ganador (🥈). El anterior penúltimo pierde el icono.</p>
+<div class="ejemplo">
+<strong>📌 EJEMPLO:</strong><br>
+- Tito gana pata 1 → 👑 Tito<br>
+- Richard gana pata 2 → 👑 Richard, 🥈 Tito<br>
+- Osvaldo gana pata 3 → 👑 Osvaldo, 🥈 Richard<br>
+- Si hay empate, el próximo en salir es el siguiente al último ganador (Osvaldo).
+</div>
+
+<h2 id="gestion">11. GESTIÓN DE JUGADORES</h2>
 <p>➕ Añadir (sillas vacantes), 🔄 Sustituir (cuando hay 4), ➖ Retirar (mínimo 2 jugadores).</p>
-<h2 id="empate">11. DECLARAR EMPATE Y POTENCIAS DE 2</h2>
-<p>Pulsa ⚖️ Declarar empate, selecciona los empatados (mínimo 2). Acumulan n. Al ganar: suma 2ⁿ patas. Los no implicados reinician. Se registran 🏆⚖️ E. Ganados y 🧩 Patas por Empate.</p>
-<h2 id="pata">12. REGISTRO DE UNA PATA (PASO A PASO)</h2>
-<ol><li>Pulsa 🏆 Pata en el ganador.</li><li>Elige forma (🚪 Cierre, 🏃 Pegado, 🀰 Capicua).</li><li>Si hay >2 jugadores, modal para elegir quién da 💧 Agua; si son 2, se asigna automático.</li><li>Se registra la pata, el agua, y si aplica, los empates.</li><li>Si alcanza ≥5 patas → MACH, reinicio de patas.</li></ol>
-<h2 id="pase-mano">13. PASE DE MANO AUTOMÁTICO</h2>
+
+<h2 id="empate">12. DECLARAR EMPATE Y REGLA DE POTENCIAS DE 2</h2>
+<p>Pulsa ⚖️ Declarar empate, selecciona los empatados (mínimo 2). Acumulan n. Al ganar: suma 2ⁿ patas. Los no implicados reinician.</p>
+
+<h2 id="agua-empate">💧 13. AGUA DESPUÉS DEL EMPATE</h2>
+<p>Tras el empate, se asigna agua automáticamente:<br>
+- 1 jugador fuera del empate → automático.<br>
+- Varios fuera → modal para seleccionar.<br>
+- Todos empatados → agua compartida (sin asignar).</p>
+
+<h2 id="pata">14. REGISTRO DE UNA PATA</h2>
+<ol><li>Pulsa 🏆 Pata en el ganador.</li><li>Elige forma (🚪 Cierre, 🏃 Pegado, 🀰 Capicua).</li><li>Si hay >2 jugadores, modal para elegir quién da 💧 Agua; si son 2, se asigna automático.</li><li>Se registra la pata, el agua, y si aplica, los empates. La estadística patasPorEmpate guarda el total de patas ganadas.</li><li>El ganador recibe 👑 y el anterior 👑 pasa a 🥈.</li><li>Si alcanza ≥5 patas → MACH, reinicio de patas.</li></ol>
+
+<h2 id="pase-mano">15. PASE DE MANO AUTOMÁTICO</h2>
 <p>Pulsa 🎯 Da PM en el dador. El sistema busca el siguiente jugador activo en sentido antihorario (1→4→3→2→1) saltando sillas vacantes, y registra tanto el dado como el recibido.</p>
-<h2 id="estadisticas">14. ESTADÍSTICAS</h2>
-<p>📊 Estadísticas del día, 🌍 Estadísticas globales (filtro por fechas, exportación CSV/PDF). Botón 🔄 Intercambiar columnas: en modo transpuesto las estadísticas son filas y los jugadores columnas, con una columna TOTAL que suma cada fila. No hay fila de totales por jugador en modo transpuesto.</p>
-<h2 id="empatesStats">15. ESTADÍSTICAS DE EMPATES Y PATAS POR EMPATE</h2>
-<p>⚖️ Empates: veces que participó en empate.<br>🏆⚖️ E. Ganados: veces que ganó estando en empate.<br>🧩 Patas por Empate: patas extra por potencias de 2.</p>
-<h2 id="verificacion">16. FÓRMULA DE VERIFICACIÓN DE PATAS NETAS</h2>
+
+<h2 id="estadisticas">16. ESTADÍSTICAS</h2>
+<p>📊 Estadísticas del día, 🌍 Estadísticas globales (filtro por fechas, exportación CSV/PDF). Botón 🔄 Intercambiar columnas (modo transpuesto).</p>
+
+<h2 id="graficas">📈 17. MÓDULO DE GRÁFICAS INTERACTIVAS</h2>
+<p>Accede desde el botón 📈. Permite visualizar todos los indicadores con gráficos de barras (múltiples indicadores), líneas, radar, pastel y polar. Filtro por fechas, selección de jugadores (con orden prioritario), actualización automática y exportación a PNG/CSV.</p>
+
+<h2 id="empatesStats">18. ESTADÍSTICAS DE EMPATES Y PATAS POR EMPATE</h2>
+<p>⚖️ Empates: veces que participó en empate.<br>🏆⚖️ E. Ganados: veces que ganó estando en empate.<br>🧩 Patas por Empate: TOTAL de patas ganadas cuando había empate.</p>
+
+<h2 id="verificacion">19. FÓRMULA DE VERIFICACIÓN</h2>
 <div class="ejemplo"><code>🦶 Patas Netas = 🚪 Cierres + 🏃 Pegados + 2×🀰 Capicuas + 🧩 Patas por Empate - 🧤 Forros</code></div>
-<h2 id="autocompletado">17. AUTOCOMPLETADO DE NOMBRES</h2>
-<p>Los campos de nombre sugieren nombres existentes. Si escribes uno nuevo, se añade a la base de datos.</p>
-<h2 id="backup">18. RESPALDO DE DATOS CON VERSIÓN</h2>
-<p>Exportación manual: <code>Pinti_v40_ddmmyy.json</code>. Automático al cerrar día: <code>Pinti_v40_lun.json</code>, etc.</p>
-<h2 id="persistencia">19. PERSISTENCIA Y CONTINUACIÓN DE PARTIDAS</h2>
-<p>El estado se guarda tras cada acción. Al abrir, pregunta si continuar.</p>
-<h2 id="admin">20. PANEL DE ADMINISTRACIÓN</h2>
+
+<h2 id="autocompletado">20. AUTOCOMPLETADO DE NOMBRES</h2>
+<p>Sugiere nombres existentes. Si escribes uno nuevo, se añade a la base de datos.</p>
+
+<h2 id="backup">21. RESPALDO DE DATOS CON VERSIÓN</h2>
+<p>Exportación manual: <code>Pinti_v45_ddmmyy.json</code>. Automático al cerrar día: <code>Pinti_v45_lun.json</code>, etc.</p>
+
+<h2 id="persistencia">22. PERSISTENCIA Y CONTINUACIÓN DE PARTIDAS</h2>
+<p>El estado se guarda tras cada acción, incluyendo 👑 y 🥈. Al abrir, pregunta si continuar.</p>
+
+<h2 id="admin">23. PANEL DE ADMINISTRACIÓN</h2>
 <p><code>admin.html</code> con contraseña <code>admin</code>. Permite gestionar machs, jugadores, días, participaciones, reportes y exportar/importar.</p>
-<h2 id="borrar">21. BORRAR TODOS LOS DATOS</h2>
+
+<h2 id="borrar">24. BORRAR TODOS LOS DATOS</h2>
 <p><span class="badge badge-warning">⚠️ ADVERTENCIA</span> Botón "⚠️ Borrar datos" con contraseña <code>pintintin</code>. Acción irreversible.</p>
-<h2 id="problemas">22. SOLUCIÓN DE PROBLEMAS</h2>
-<ul><li>Fecha incorrecta: la aplicación usa fecha local (formato YYYY-MM-DD).</li><li>Modal agua no aparece: asegúrate de que el HTML contenga <code>&lt;div id="modalAgua"&gt;</code>. Con 2 jugadores es automático.</li><li>Pase de mano no asigna bien: verifica las posiciones de las sillas (1,2,3,4). El sistema salta vacantes.</li></ul>
-<h2 id="faq">23. PREGUNTAS FRECUENTES</h2>
-<ul><li>¿Funciona sin internet? Sí, como PWA.</li><li>¿Puedo jugar con menos de 4? Sí, con 2 o 3.</li><li>¿Qué significa 🧩 Patas por Empate? Patas extra por regla 2ⁿ.</li><li>¿Cómo exportar a Excel? Botón "📎 Exportar CSV".</li></ul>
-<h2 id="creditos">24. CRÉDITOS</h2>
+
+<h2 id="ayuda">25. AYUDA INTEGRADA</h2>
+<p><strong>❓ Botón de ayuda</strong> en la esquina superior derecha. Abre este manual completo dentro de la aplicación.</p>
+
+<h2 id="problemas">26. SOLUCIÓN DE PROBLEMAS</h2>
+<ul>
+<li>No se instala en el móvil: Usa Chrome para la instalación.</li>
+<li>No funciona offline: Abre al menos una vez con internet.</li>
+<li>Las gráficas no cargan: Asegúrate de tener datos registrados.</li>
+<li>No aparecen 👑 o 🥈: Debe haber al menos una pata ganada. Se actualizan en cada pata.</li>
+<li>Después de un empate no se asigna agua: Verifica que la lógica esté actualizada a v4.5.</li>
+</ul>
+
+<h2 id="faq">27. PREGUNTAS FRECUENTES (FAQ)</h2>
+<ul>
+<li>¿Funciona sin internet? Sí, como PWA.</li>
+<li>¿Puedo jugar con menos de 4? Sí, con 2 o 3.</li>
+<li>¿Qué significa 🧩 Patas por Empate? Total de patas ganadas cuando había empate.</li>
+<li>¿Cómo exportar a Excel? Botón "📎 Exportar CSV".</li>
+<li>¿Para qué sirven 👑 y 🥈? Para saber quién fue el último y penúltimo ganador (útil tras empate).</li>
+<li>¿Cómo accedo a las gráficas? Botón 📈 en pantalla principal o de juego.</li>
+</ul>
+
+<h2 id="creditos">28. CRÉDITOS</h2>
 <p>Desarrollador: Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba. Agradecimientos a la peña de dominó de La Demajagua.</p>
-<div class="footer"><p>🎲 ¡A BOTAR GORDA! 🎲</p><p>Hecho en La Demajagua, Isla de la Juventud, Cuba</p><p><strong>Versión 4.0 - La definitiva (Mayo 2026)</strong></p></div>
+
+<div class="footer"><p>🎲 ¡A BOTAR GORDA! 🎲</p><p>Hecho en La Demajagua, Isla de la Juventud, Cuba</p><p><strong>Versión 4.5 - La completa con gráficas y control de ganadores (Mayo 2026)</strong></p></div>
 </div>
 <script>function scrollToSection(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}</script>
 </body>
@@ -1363,7 +1590,6 @@ const manualHTML = `<!DOCTYPE html>
 function agregarBotonVolverSuperior() {
     const filtrosDiv = document.querySelector('#vistaEstadisticas .filtros');
     if (!filtrosDiv) return;
-    // Evitar duplicados
     if (document.getElementById('volverInicioStatsTop')) return;
     const btnVolverTop = document.createElement('button');
     btnVolverTop.id = 'volverInicioStatsTop';
@@ -1380,6 +1606,27 @@ function agregarBotonVolverSuperior() {
         }
     };
     filtrosDiv.appendChild(btnVolverTop);
+}
+
+function agregarBotonGraficas() {
+    const botonesSecundarios = document.querySelector('.botones-secundarios');
+    if (botonesSecundarios && !document.getElementById('btnGraficasConfig')) {
+        const btnGraficas = document.createElement('button');
+        btnGraficas.id = 'btnGraficasConfig';
+        btnGraficas.className = 'secundario';
+        btnGraficas.innerHTML = '📈 Gráficas interactivas';
+        btnGraficas.onclick = () => { window.location.href = 'estadisticas_graficas.html'; };
+        botonesSecundarios.appendChild(btnGraficas);
+    }
+    const accionesGlobales = document.querySelector('.acciones-globales');
+    if (accionesGlobales && !document.getElementById('btnGraficasJuego')) {
+        const btnGraficas = document.createElement('button');
+        btnGraficas.id = 'btnGraficasJuego';
+        btnGraficas.className = 'secundario';
+        btnGraficas.innerHTML = '📈 Gráficas interactivas';
+        btnGraficas.onclick = () => { window.location.href = 'estadisticas_graficas.html'; };
+        accionesGlobales.appendChild(btnGraficas);
+    }
 }
 
 // --- EVENTOS AL CARGAR LA PÁGINA ---
@@ -1480,7 +1727,7 @@ window.onload = () => {
         document.getElementById('vistaJuego').style.display='none';
         document.getElementById('vistaEstadisticas').style.display='block'; 
         const titulo = document.querySelector('#vistaEstadisticas h2'); if(titulo) titulo.innerHTML = '📊 Estadísticas Globales'; 
-        agregarBotonVolverSuperior(); // añadir botón superior cada vez que se carga la vista
+        agregarBotonVolverSuperior();
     };
     if(irAEstadisticas) irAEstadisticas.onclick = () => { 
         let fechas = almacenamiento.machs.map(m=>{const d=almacenamiento.dias.find(dia=>dia.id===m.diaId); return d?d.fecha:null;}).filter(f=>f); 
@@ -1503,30 +1750,49 @@ window.onload = () => {
     if(importBackupInput) importBackupInput.onchange = (e) => { if(e.target.files.length) importarBackup(e.target.files[0]); };
     if(btnExportarCSV) btnExportarCSV.onclick = () => { let csv = "Fecha,Mach,Ganador\n"; for(let m of almacenamiento.machs) { const dia = almacenamiento.dias.find(d=>d.id===m.diaId); let ganador = m.participantes.find(p=>p.jugadorId===m.ganadorId)?.nombre || '?'; csv += `${dia ? dia.fecha : '?'},${m.numeroMach},${ganador}\n`; } let blob = new Blob([csv], {type:'text/csv'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pintintin_stats.csv'; a.click(); };
     if(btnExportarPDF && window.jspdf) btnExportarPDF.onclick = () => { let { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Estadísticas Dominó Pintintín", 20,20); let data = almacenamiento.machs.map(m=>{ const dia = almacenamiento.dias.find(d=>d.id===m.diaId); return [dia ? dia.fecha : '?', m.numeroMach, m.participantes.find(p=>p.jugadorId===m.ganadorId)?.nombre]; }); doc.autoTable({ head:[['Fecha','Mach #','Ganador']], body:data, startY:30 }); doc.save('pintintin_stats.pdf'); };
-    if(btnEmpate) btnEmpate.onclick = () => { 
-        if(estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) return alert('Ya hay empate'); 
-        if(checkEmpateDiv) checkEmpateDiv.innerHTML = ''; 
-        for(let j of jugadoresActuales) if(j.jugadorId) { let l=document.createElement('label'); l.innerHTML=`<input type="checkbox" value="${j.jugadorId}"> ${j.nombre}`; if(checkEmpateDiv) checkEmpateDiv.appendChild(l); } 
-        if(modalEmpate) modalEmpate.style.display='flex'; 
-    };
-    if(confirmarEmpate) confirmarEmpate.onclick = () => { 
-        if(!checkEmpateDiv) return; let checks = [...checkEmpateDiv.querySelectorAll('input:checked')]; if(checks.length<2) return alert('Selecciona al menos dos'); 
-        const jugadoresEmpatados = checks.map(c=>parseInt(c.value));
-        for (let jugadorId of jugadoresEmpatados) { let part = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorId); if (part) { part.empatesParticipados = (part.empatesParticipados || 0) + 1; part.empatesAcumulados = (part.empatesAcumulados || 0) + 1; } }
-        for (let part of almacenamiento.participaciones.filter(p => p.diaId === diaActivo.id)) { if (!jugadoresEmpatados.includes(part.jugadorId)) part.empatesAcumulados = 0; }
-        estadoMachActual.empatePendiente = { jugadoresIds: jugadoresEmpatados, resuelto: false }; actualizarAvisoEmpate(); if(modalEmpate) modalEmpate.style.display='none'; guardarSesionCompleta(); guardarTodoEnLocalStorage(); renderizarJugadores();
-    };
+    
+    // Botón empate con asignación de agua después
+    if(btnEmpate) {
+        btnEmpate.onclick = () => { 
+            if(estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) return alert('Ya hay empate'); 
+            if(checkEmpateDiv) checkEmpateDiv.innerHTML = ''; 
+            for(let j of jugadoresActuales) if(j.jugadorId) { let l=document.createElement('label'); l.innerHTML=`<input type="checkbox" value="${j.jugadorId}"> ${j.nombre}`; if(checkEmpateDiv) checkEmpateDiv.appendChild(l); } 
+            if(modalEmpate) modalEmpate.style.display='flex'; 
+        };
+    }
+    
+    if(confirmarEmpate) {
+        confirmarEmpate.onclick = () => { 
+            if(!checkEmpateDiv) return; let checks = [...checkEmpateDiv.querySelectorAll('input:checked')]; if(checks.length<2) return alert('Selecciona al menos dos'); 
+            const jugadoresEmpatados = checks.map(c=>parseInt(c.value));
+            for (let jugadorId of jugadoresEmpatados) { 
+                let part = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorId); 
+                if (part) { 
+                    part.empatesParticipados = (part.empatesParticipados || 0) + 1; 
+                    part.empatesAcumulados = (part.empatesAcumulados || 0) + 1; 
+                } 
+            }
+            for (let part of almacenamiento.participaciones.filter(p => p.diaId === diaActivo.id)) { 
+                if (!jugadoresEmpatados.includes(part.jugadorId)) part.empatesAcumulados = 0; 
+            }
+            estadoMachActual.empatePendiente = { jugadoresIds: jugadoresEmpatados, resuelto: false }; 
+            actualizarAvisoEmpate(); 
+            if(modalEmpate) modalEmpate.style.display='none'; 
+            guardarSesionCompleta(); 
+            guardarTodoEnLocalStorage(); 
+            renderizarJugadores();
+            asignarAguaDespuesDeEmpate(jugadoresEmpatados);
+        };
+    }
+    
     if(cancelarEmpate) cancelarEmpate.onclick = () => { if(modalEmpate) modalEmpate.style.display='none'; };
     if(terminacionCierre) terminacionCierre.onclick = () => aplicarModalTerminacion('cierre');
     if(terminacionPegado) terminacionPegado.onclick = () => aplicarModalTerminacion('pegado');
     if(terminacionCapicua) terminacionCapicua.onclick = () => aplicarModalTerminacion('capicua');
     if(cancelarTerminacion) cancelarTerminacion.onclick = () => { cerrarModalTerminacion(); ganadorPendiente = null; };
     
-    // Cargar manual completo en el iframe o directamente en el div
     if(contenidoAyuda) {
-        // Insertar el manual completo como HTML
         contenidoAyuda.innerHTML = manualHTML;
-        // Reemplazar los enlaces del índice para que funcionen dentro del modal
         const links = contenidoAyuda.querySelectorAll('a[href="#"]');
         links.forEach(link => {
             const onclickAttr = link.getAttribute('onclick');
@@ -1557,4 +1823,6 @@ window.onload = () => {
         btnTransponer.style.fontWeight = 'bold';
         btnTransponer.innerHTML = tablaTranspuesta ? '🔄 Modo Normal (filas)' : '🔄 Intercambiar (columnas)';
     }
+    
+    agregarBotonGraficas();
 };
