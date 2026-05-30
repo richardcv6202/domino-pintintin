@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Iconos PWA - Dominó Pintintín</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            margin: 0;
+            padding: 1.5rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+        .editor-panel {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .editor-panel h3 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .editor-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+        .editor-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        .editor-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 0.25rem;
+        }
+        .editor-group input, .editor-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.5rem;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .upload-area {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 2px dashed #cbd5e1;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #8b5cf6;
+            background: #f8fafc;
+        }
+        .upload-area.drag-over {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .file-input {
+            display: none;
+        }
+        .btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0.25rem;
+            transition: transform 0.1s;
+            font-size: 0.85rem;
+        }
+        .btn:hover {
+            background: #7c3aed;
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: #475569;
+        }
+        .btn-secondary:hover {
+            background: #334155;
+        }
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .btn-warning {
+            background: #d97706;
+        }
+        .btn-warning:hover {
+            background: #b45309;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .icon-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .icon-card canvas {
+            background: #f1f5f9;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 0.5rem auto;
+        }
+        .icon-card h3 {
+            margin: 0.5rem 0;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .icon-card .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.65rem;
+            margin-left: 0.5rem;
+        }
+        .icon-card .purpose {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin: 0.3rem 0;
+        }
+        .maskable-badge {
+            background: #fef3c7;
+            color: #d97706;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            display: inline-block;
+            margin-top: 0.3rem;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+        }
+        .info {
+            background: #e0e7ff;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #3730a3;
+        }
+        .info code {
+            background: white;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.3rem;
+        }
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .preview-grid { grid-template-columns: 1fr; }
+            .editor-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎨 Generador de Iconos PWA</h1>
+        <p>Sube tu imagen y personaliza el texto que aparecerá en los iconos maskable (splash screen)</p>
+    </div>
+
+    <!-- Panel de edición para maskable -->
+    <div class="editor-panel" id="editorPanel">
+        <h3>✏️ Personalización de iconos MASKABLE (splash screen)</h3>
+        <div class="editor-row">
+            <div class="editor-group">
+                <label>📝 Texto a mostrar</label>
+                <input type="text" id="maskableText" placeholder="Ej: Estadísticas Pintintín" value="Estadísticas Pintintín">
+            </div>
+            <div class="editor-group">
+                <label>🎨 Color del texto</label>
+                <input type="color" id="textColor" value="#fef08a">
+            </div>
+            <div class="editor-group">
+                <label>📏 Tamaño del texto (%)</label>
+                <select id="textSize">
+                    <option value="0.07">Pequeño (7%)</option>
+                    <option value="0.09" selected>Normal (9%)</option>
+                    <option value="0.11">Grande (11%)</option>
+                    <option value="0.13">Muy grande (13%)</option>
+                </select>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="enableMaskableText" checked>
+                <label>✅ Activar título en iconos maskable</label>
+            </div>
+        </div>
+        <div class="editor-row">
+            <div class="editor-group">
+                <label>🖼️ Fondo de iconos maskable</label>
+                <select id="maskableBg">
+                    <option value="gradient">Gradiente morado</option>
+                    <option value="solid">Sólido morado (#8b5cf6)</option>
+                    <option value="dark">Sólido oscuro (#1e293b)</option>
+                    <option value="white">Blanco</option>
+                    <option value="transparent">Transparente</option>
+                </select>
+            </div>
+            <div class="editor-group">
+                <label>🎯 Posición del texto (Y)</label>
+                <select id="textPosition">
+                    <option value="0.72">Abajo (72%)</option>
+                    <option value="0.68" selected>Medio (68%)</option>
+                    <option value="0.62">Arriba (62%)</option>
+                </select>
+            </div>
+            <div class="editor-group">
+                <label>⭐ Emoji decorativo</label>
+                <select id="decorativeEmoji">
+                    <option value="🀰">🀰 Ficha de dominó</option>
+                    <option value="🎲">🎲 Dado</option>
+                    <option value="🏆">🏆 Trofeo</option>
+                    <option value="📊">📊 Estadísticas</option>
+                    <option value="none">Ninguno</option>
+                </select>
+            </div>
+            <button class="btn" id="applyTextBtn" style="background: #10b981;">✨ Aplicar cambios</button>
+        </div>
+    </div>
+
+    <!-- Área de carga de imagen -->
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">🖼️</div>
+        <p><strong>Arrastra o haz clic para subir tu imagen</strong></p>
+        <p style="font-size: 0.8rem; color: #64748b;">Formatos: PNG, JPG, WEBP, SVG (mínimo 512x512px recomendado)</p>
+        <input type="file" id="fileInput" class="file-input" accept="image/*">
+        <button class="btn" id="uploadBtn">📁 Seleccionar imagen</button>
+    </div>
+
+    <!-- Vista previa de iconos generados -->
+    <div id="previewSection" style="display: none;">
+        <h2 style="color: white; margin-bottom: 1rem;">📱 Iconos generados</h2>
+        <div class="preview-grid" id="iconsGrid"></div>
+
+        <div class="actions">
+            <button class="btn btn-success" id="downloadAllBtn">📦 Descargar todos (ZIP)</button>
+            <button class="btn btn-secondary" id="resetBtn">🔄 Subir otra imagen</button>
+        </div>
+
+        <div class="info">
+            <strong>📋 Leyenda:</strong><br>
+            • <strong>Iconos normales</strong> (any): mantienen tu imagen original sin texto adicional.<br>
+            • <strong>Iconos maskable</strong> (splash + launcher): incluyen el texto personalizado que configuraste.<br>
+            • Haz clic derecho sobre cada icono o usa el botón "Descargar" individual.<br>
+            • El botón <strong>"Descargar todos (ZIP)"</strong> descarga los 4 iconos comprimidos.
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Elementos DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const previewSection = document.getElementById('previewSection');
+        const iconsGrid = document.getElementById('iconsGrid');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const editorPanel = document.getElementById('editorPanel');
+        const applyTextBtn = document.getElementById('applyTextBtn');
+        
+        // Elementos del editor
+        const maskableTextInput = document.getElementById('maskableText');
+        const textColorInput = document.getElementById('textColor');
+        const textSizeSelect = document.getElementById('textSize');
+        const enableMaskableTextCheck = document.getElementById('enableMaskableText');
+        const maskableBgSelect = document.getElementById('maskableBg');
+        const textPositionSelect = document.getElementById('textPosition');
+        const decorativeEmojiSelect = document.getElementById('decorativeEmoji');
+
+        // Almacenar imagen original y blobs generados
+        let originalImage = null;
+        let generatedBlobs = {};
+        let currentIconConfigs = [];
+
+        // Configuración base de iconos
+        const baseIconConfigs = [
+            { name: 'icon-192.png', size: 192, purpose: 'any', isMaskable: false },
+            { name: 'icon-512.png', size: 512, purpose: 'any', isMaskable: false },
+            { name: 'icon-maskable-192.png', size: 192, purpose: 'maskable', isMaskable: true },
+            { name: 'icon-maskable-512.png', size: 512, purpose: 'maskable', isMaskable: true }
+        ];
+
+        // Función para dibujar texto en iconos maskable
+        function drawMaskableText(ctx, size, isMaskable) {
+            if (!isMaskable) return;
+            if (!enableMaskableTextCheck.checked) return;
+            
+            const text = maskableTextInput.value.trim();
+            if (!text) return;
+            
+            // Dividir texto en dos líneas si es largo
+            let line1 = text;
+            let line2 = '';
+            if (text.length > 15 && size >= 512) {
+                const spaceIndex = text.indexOf(' ');
+                if (spaceIndex > 0 && spaceIndex < text.length - 3) {
+                    line1 = text.substring(0, spaceIndex);
+                    line2 = text.substring(spaceIndex + 1);
+                }
+            }
+            
+            const fontSize = parseFloat(textSizeSelect.value) * size;
+            const textY = parseFloat(textPositionSelect.value) * size;
+            
+            ctx.fillStyle = textColorInput.value;
+            ctx.font = `bold ${fontSize}px system-ui, "Segoe UI", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            if (line2) {
+                ctx.fillText(line1, size/2, textY - fontSize * 0.5);
+                ctx.fillText(line2, size/2, textY + fontSize * 0.3);
+            } else {
+                ctx.fillText(text, size/2, textY);
+            }
+            
+            // Añadir emoji decorativo si se seleccionó
+            const emoji = decorativeEmojiSelect.value;
+            if (emoji !== 'none') {
+                ctx.font = `${fontSize * 1.2}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                ctx.fillText(emoji, size/2, size * 0.35);
+            }
+        }
+
+        // Función para obtener fondo según selección
+        function getMaskableBackground(ctx, size) {
+            const bgType = maskableBgSelect.value;
+            switch(bgType) {
+                case 'gradient':
+                    const grad = ctx.createLinearGradient(0, 0, size, size);
+                    grad.addColorStop(0, '#8b5cf6');
+                    grad.addColorStop(1, '#4f46e5');
+                    return grad;
+                case 'solid':
+                    return '#8b5cf6';
+                case 'dark':
+                    return '#1e293b';
+                case 'white':
+                    return '#ffffff';
+                case 'transparent':
+                    return null;
+                default:
+                    return '#8b5cf6';
+            }
+        }
+
+        // Redimensionar y dibujar imagen (con soporte para maskable text)
+        function resizeAndDraw(image, size, isMaskable) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // Calcular dimensiones para mantener proporción
+                let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                const imgRatio = image.width / image.height;
+                const canvasRatio = size / size;
+
+                if (imgRatio > canvasRatio) {
+                    drawWidth = size;
+                    drawHeight = size / imgRatio;
+                    offsetY = (size - drawHeight) / 2;
+                } else {
+                    drawHeight = size;
+                    drawWidth = size * imgRatio;
+                    offsetX = (size - drawWidth) / 2;
+                }
+
+                // Fondo según tipo de icono
+                if (isMaskable) {
+                    const bg = getMaskableBackground(ctx, size);
+                    if (bg) {
+                        ctx.fillStyle = bg;
+                        ctx.fillRect(0, 0, size, size);
+                    } else {
+                        // Transparente: limpiar
+                        ctx.clearRect(0, 0, size, size);
+                    }
+                } else {
+                    // Iconos normales: gradiente morado
+                    const grad = ctx.createLinearGradient(0, 0, size, size);
+                    grad.addColorStop(0, '#8b5cf6');
+                    grad.addColorStop(1, '#4f46e5');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, size, size);
+                }
+
+                // Dibujar la imagen centrada
+                ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+
+                // Si es maskable y está activado el texto, dibujar texto
+                if (isMaskable && enableMaskableTextCheck.checked) {
+                    drawMaskableText(ctx, size, isMaskable);
+                }
+
+                // Si es maskable, añadir círculo de guía (opcional)
+                if (isMaskable) {
+                    ctx.beginPath();
+                    ctx.arc(size/2, size/2, size * 0.38, 0, 2 * Math.PI);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                    ctx.lineWidth = size * 0.006;
+                    ctx.stroke();
+                }
+
+                canvas.toBlob(blob => {
+                    resolve({ blob, url: URL.createObjectURL(blob), canvas });
+                }, 'image/png');
+            });
+        }
+
+        // Regenerar todos los iconos con la configuración actual
+        async function regenerateAllIcons() {
+            if (!originalImage) return;
+            
+            generatedBlobs = {};
+            iconsGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center;">🔄 Regenerando iconos, espera...</div>';
+            
+            for (const config of baseIconConfigs) {
+                const { blob, url, canvas } = await resizeAndDraw(originalImage, config.size, config.isMaskable);
+                generatedBlobs[config.name] = blob;
+                
+                // Mostrar en el grid
+                const card = document.createElement('div');
+                card.className = 'icon-card';
+                const emojiIndicator = config.isMaskable && enableMaskableTextCheck.checked ? ' ✏️' : '';
+                card.innerHTML = `
+                    <canvas width="${config.size}" height="${config.size}" style="width: 128px; height: 128px;"></canvas>
+                    <h3>${config.name} <span class="badge">${config.size}×${config.size}</span></h3>
+                    <div class="purpose">📱 Propósito: ${config.purpose === 'maskable' ? 'maskable (splash + launcher)' + emojiIndicator : 'any (general)'}</div>
+                    ${config.isMaskable && enableMaskableTextCheck.checked ? `<div class="maskable-badge">✏️ Texto: "${maskableTextInput.value}"</div>` : ''}
+                    <button class="btn btn-secondary" data-filename="${config.name}" style="font-size:0.7rem; padding:0.3rem 0.6rem;">💾 Descargar</button>
+                `;
+                const previewCanvas = card.querySelector('canvas');
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                
+                const downloadBtn = card.querySelector('[data-filename]');
+                downloadBtn.onclick = () => downloadSingle(config.name, generatedBlobs[config.name]);
+                
+                iconsGrid.appendChild(card);
+            }
+        }
+
+        // Descargar un solo icono
+        function downloadSingle(filename, blob) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // Descargar todos los iconos como ZIP
+        async function downloadAllAsZip() {
+            if (Object.keys(generatedBlobs).length === 0) {
+                alert('No hay iconos generados');
+                return;
+            }
+
+            if (typeof JSZip === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.onload = () => createAndDownloadZip();
+                document.head.appendChild(script);
+            } else {
+                createAndDownloadZip();
+            }
+
+            function createAndDownloadZip() {
+                const zip = new JSZip();
+                for (const [filename, blob] of Object.entries(generatedBlobs)) {
+                    zip.file(filename, blob);
+                }
+                zip.generateAsync({ type: 'blob' }).then(content => {
+                    const link = document.createElement('a');
+                    link.download = 'pintintin_icons.zip';
+                    link.href = URL.createObjectURL(content);
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                });
+            }
+        }
+
+        // Procesar la imagen subida
+        async function processImage(file) {
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('❌ Por favor, selecciona un archivo de imagen (PNG, JPG, WEBP, SVG)');
+                return;
+            }
+
+            const img = new Image();
+            const imageUrl = URL.createObjectURL(file);
+
+            img.onload = async () => {
+                console.log(`✅ Imagen cargada: ${img.width}x${img.height}`);
+
+                if (img.width < 512 || img.height < 512) {
+                    alert('⚠️ Advertencia: La imagen es menor a 512x512px. Puede verse borrosa en iconos grandes.');
+                }
+
+                originalImage = img;
+                
+                // Mostrar editor y regenerar
+                editorPanel.style.display = 'block';
+                await regenerateAllIcons();
+                previewSection.style.display = 'block';
+                
+                URL.revokeObjectURL(imageUrl);
+            };
+
+            img.onerror = () => {
+                alert('❌ Error al cargar la imagen. Asegúrate de que sea un formato válido.');
+                URL.revokeObjectURL(imageUrl);
+            };
+
+            img.src = imageUrl;
+        }
+
+        // Resetear formulario
+        function reset() {
+            previewSection.style.display = 'none';
+            editorPanel.style.display = 'none';
+            iconsGrid.innerHTML = '';
+            generatedBlobs = {};
+            originalImage = null;
+            fileInput.value = '';
+        }
+
+        // Aplicar cambios de texto y regenerar
+        async function applyChanges() {
+            if (!originalImage) {
+                alert('Primero sube una imagen');
+                return;
+            }
+            await regenerateAllIcons();
+        }
+
+        // Eventos
+        uploadBtn.onclick = () => fileInput.click();
+        applyTextBtn.onclick = applyChanges;
+        
+        fileInput.onchange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                processImage(e.target.files[0]);
+            }
+        };
+
+        // Drag & drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processImage(file);
+            } else {
+                alert('❌ Por favor, arrastra un archivo de imagen válido');
+            }
+        });
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        downloadAllBtn.onclick = downloadAllAsZip;
+        resetBtn.onclick = reset;
+
+        console.log('✅ Generador de iconos listo. Sube tu imagen para comenzar.');
+    })();
+</script>
+<!-- JSZip para descarga en ZIP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</body>
+</html>
