@@ -302,6 +302,19 @@ th { background: #e2e8f0; }
   transform: scale(0.98);
 }
 
+/* ✅ Para tabla de machs por día - responsive */
+.tabla-machs {
+  min-width: 500px;
+}
+.tabla-machs td,
+.tabla-machs th {
+  text-align: left;
+}
+.tabla-machs td:first-child,
+.tabla-machs th:first-child {
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .jugadores-grid { grid-template-columns: 1fr; }
   .jugadores-inputs { flex-direction: column; }
