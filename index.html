@@ -33,7 +33,7 @@
     <hr>
     <div class="botones-secundarios">
         <button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
-<button id="btnGraficas" class="secundario" onclick="window.location.href='estadisticas_graficas.html'">📈 Gráficas</button>
+        <button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
         <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
         <div class="backup-buttons">
             <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
@@ -62,9 +62,8 @@
       <button id="btnGestionJugador" class="gestion-jugador">➕ Añadir jugador</button>
       <button id="btnRetirarJugador" class="secundario" style="background:#dc2626;">➖ Salida de jugador</button>
       <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
-<button id="btnGraficas" class="secundario" onclick="window.location.href='estadisticas_graficas.html'">📈 Gráficas</button>
       <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
-      <button id="btnCerrarDia" class="cerrar-dia">🚪 Cerrar día y guardar</button>
+      <button id="btnCerrarDia" class="cerrar-dia">🚪 Salir del juego</button>
     </div>
     <div id="avisoEmpate" class="aviso"></div>
   </section>
@@ -78,7 +77,6 @@
       <button id="btnFiltrar">Filtrar</button>
       <button id="btnExportarCSV">📎 Exportar CSV</button>
       <button id="btnExportarPDF">🖨️ Exportar PDF</button>
-      <!-- Botón para intercambiar filas/columnas (modo transpuesto) -->
       <button id="btnTransponer" class="btn-intercambiar">🔄 Intercambiar (columnas)</button>
     </div>
     <div id="resultadosStats">
@@ -88,7 +86,7 @@
   </section>
 </div>
 
-<!-- Modal empate -->
+<!-- Modales -->
 <div id="modalEmpate" class="modal" style="display:none;">
   <div class="modal-content">
     <h3>🤝 Jugadores empatados</h3>
@@ -98,7 +96,6 @@
   </div>
 </div>
 
-<!-- Modal forma de terminación -->
 <div id="modalTerminacion" class="modal" style="display:none;">
   <div class="modal-content">
     <h3>🎯 ¿Cómo terminó la mano?</h3>
@@ -110,7 +107,6 @@
   </div>
 </div>
 
-<!-- Modal para seleccionar quién da AGUA -->
 <div id="modalAgua" class="modal" style="display:none;">
   <div class="modal-content">
     <h3>💧 ¿Quién da AGUA?</h3>
@@ -122,7 +118,6 @@
   </div>
 </div>
 
-<!-- Modal de ayuda -->
 <div id="modalAyuda" class="modal" style="display:none;">
   <div class="modal-content modal-ayuda">
     <div class="modal-ayuda-header">
@@ -139,5 +134,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="app.js"></script>
+
+<!-- Registrar Service Worker para funcionamiento offline (PWA) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js')
+        .then(function(reg) {
+          console.log('✅ Service Worker registrado correctamente:', reg);
+        })
+        .catch(function(err) {
+          console.error('❌ Error al registrar el Service Worker:', err);
+        });
+    });
+  } else {
+    console.warn('⚠️ Service Worker no soportado en este navegador.');
+  }
+</script>
+
 </body>
 </html>
