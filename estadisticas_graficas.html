@@ -37,30 +37,6 @@
             font-size: 0.75rem;
             outline: none;
         }
-        .indicadores-multi {
-            background: #f1f5f9;
-            border-radius: 0.5rem;
-            padding: 0.4rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .indicadores-multi strong {
-            font-size: 0.7rem;
-        }
-        .indicadores-multi label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.7rem;
-            cursor: pointer;
-            background: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 1rem;
-            border: 1px solid #cbd5e1;
-        }
         .selector-jugadores {
             display: flex;
             flex-wrap: wrap;
@@ -118,6 +94,81 @@
             flex-wrap: wrap;
             margin-top: 0.5rem;
         }
+        .modal-indicadores {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-indicadores .modal-content {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+        .modal-indicadores h3 {
+            margin: 0 0 0.5rem 0;
+        }
+        .modal-indicadores .indicadores-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.05rem;
+            margin-bottom: 0.8rem;
+        }
+        .modal-indicadores .indicador-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.15rem 0.2rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+        }
+        .modal-indicadores .indicador-item label {
+            flex: 1;
+            cursor: pointer;
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-indicadores .indicador-item span {
+            text-align: left;
+        }
+        .modal-indicadores .indicador-item input {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .modal-indicadores .indicador-item:hover {
+            background: #f1f5f9;
+        }
+        .boton-seleccion {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        .contador-indicadores {
+            background: #e2e8f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
         @media (max-width: 640px) {
             .filtros-grid {
                 grid-template-columns: auto 1fr;
@@ -125,10 +176,6 @@
             }
             .selector-jugadores label {
                 min-width: 100%;
-            }
-            .indicadores-multi {
-                flex-direction: column;
-                align-items: flex-start;
             }
         }
     </style>
@@ -151,8 +198,8 @@
             
             <span class="filtro-etiqueta">📐 Tipo gráfico</span>
             <select id="tipoGrafico" class="filtro-control">
+                <option value="line" selected>📈 Líneas</option>
                 <option value="bar">📊 Barras (múltiples indicadores)</option>
-                <option value="line">📈 Líneas</option>
                 <option value="radar">🕸️ Radar</option>
                 <option value="pie">🥧 Pastel</option>
                 <option value="polarArea">🌀 Polar</option>
@@ -221,9 +268,7 @@
         document.getElementById('fechaHasta').value = max;
     }
 
-    // ---------- 3. Panel de indicadores (múltiple para barras, simple para otros) ----------
-    let indicadoresMulti = [];
-
+    // ---------- 3. Indicadores ----------
     const TODOS_INDICADORES = [
         { key: 'machsGanados', label: '🏆 Machs' },
         { key: 'patasNetas', label: '🦶 Patas netas' },
@@ -240,44 +285,79 @@
         { key: 'patasPorEmpate', label: '🧩 Patas por Empate' }
     ];
 
+    let indicadoresMulti = ['machsGanados', 'patasNetas', 'aguas'];
+
     function actualizarPanelIndicador() {
         const tipo = document.getElementById('tipoGrafico').value;
         const panel = document.getElementById('indicadorPanel');
         if (tipo === 'bar') {
-            // Modo múltiple: se muestran todos los checkboxes, SIN límite de selección
-            panel.innerHTML = `<div class="indicadores-multi"><strong>📊 Selecciona los indicadores a comparar:</strong>`;
-            TODOS_INDICADORES.forEach(ind => {
-                panel.innerHTML += `<label><input type="checkbox" value="${ind.key}" class="check-indicador"> ${ind.label}</label>`;
-            });
-            panel.innerHTML += `</div>`;
-            const checks = document.querySelectorAll('.check-indicador');
-            // Por defecto: Machs, Patas netas, Aguas
-            checks.forEach(cb => {
-                const val = cb.value;
-                if (val === 'machsGanados' || val === 'patasNetas' || val === 'aguas') {
-                    cb.checked = true;
-                } else {
-                    cb.checked = false;
-                }
-            });
-            indicadoresMulti = Array.from(document.querySelectorAll('.check-indicador:checked')).map(cb => cb.value);
-            document.querySelectorAll('.check-indicador').forEach(cb => cb.addEventListener('change', () => {
-                indicadoresMulti = Array.from(document.querySelectorAll('.check-indicador:checked')).map(cb => cb.value);
-                dibujarGrafico();
-            }));
+            panel.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span class="filtro-etiqueta">📊 Indicadores</span>
+                    <button id="btnSeleccionarIndicadores" class="boton-seleccion">Seleccionar indicadores</button>
+                    <span id="contadorIndicadores" class="contador-indicadores">${indicadoresMulti.length} seleccionados</span>
+                </div>
+            `;
+            document.getElementById('btnSeleccionarIndicadores').addEventListener('click', () => abrirModalIndicadores());
         } else {
-            // Modo simple: selector único
+            const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsGanados';
             panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
                 <span class="filtro-etiqueta">📊 Indicador</span>
                 <select id="indicadorUnico" class="filtro-control">
-                    ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}">${ind.label}</option>`).join('')}
+                    ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}" ${ind.key === indicadorUnico ? 'selected' : ''}>${ind.label}</option>`).join('')}
                 </select>
             </div>`;
             document.getElementById('indicadorUnico').addEventListener('change', () => dibujarGrafico());
         }
     }
 
-    // ---------- 4. Orden de jugadores (mismo criterio que app.js) ----------
+    function abrirModalIndicadores() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-indicadores';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>📊 Selecciona los indicadores</h3>
+                <div class="indicadores-lista" id="modalIndicadoresLista">
+                    ${TODOS_INDICADORES.map(ind => `
+                        <div class="indicador-item">
+                            <label style="width:100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                <span>${ind.label}</span>
+                                <input type="checkbox" value="${ind.key}" ${indicadoresMulti.includes(ind.key) ? 'checked' : ''}>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button id="modalIndicadoresCancelar" class="btn-cancelar">Cancelar</button>
+                    <button id="modalIndicadoresAceptar" class="btn-guardar">Aceptar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const aceptarBtn = modal.querySelector('#modalIndicadoresAceptar');
+        const cancelarBtn = modal.querySelector('#modalIndicadoresCancelar');
+
+        aceptarBtn.onclick = () => {
+            const checks = modal.querySelectorAll('input[type="checkbox"]:checked');
+            const nuevos = Array.from(checks).map(cb => cb.value);
+            if (nuevos.length === 0) {
+                alert('Debes seleccionar al menos un indicador');
+                return;
+            }
+            indicadoresMulti = nuevos;
+            const contador = document.getElementById('contadorIndicadores');
+            if (contador) contador.innerText = `${indicadoresMulti.length} seleccionados`;
+            document.body.removeChild(modal);
+            dibujarGrafico();
+        };
+
+        cancelarBtn.onclick = () => {
+            document.body.removeChild(modal);
+        };
+    }
+
+    // ---------- 4. Orden de jugadores ----------
     function ordenarJugadoresPorPrioridad(jugadoresArray) {
         const statsMap = new Map();
         for (let p of participaciones) {
@@ -366,7 +446,7 @@
         dibujarGrafico();
     }
 
-    // ---------- 5. Datos ----------
+    // ---------- 5. Datos agregados ----------
     function filtrarParticipacionesPorFecha(desde, hasta) {
         if (!desde && !hasta) return participaciones;
         let diasFiltrados = dias;
@@ -421,7 +501,7 @@
         { bg: 'rgba(249, 115, 22, 0.7)', border: 'rgb(234, 88, 12)' }
     ];
 
-    // ---------- 7. Gráfico automático ----------
+    // ---------- 7. Dibujar gráfico ----------
     let chartInstance = null;
     const ctx = document.getElementById('miGrafica').getContext('2d');
 
@@ -489,10 +569,11 @@
             return;
         }
         
-        // Modo un solo indicador
-        const indicadorUnico = document.getElementById('indicadorUnico');
-        if (!indicadorUnico) return;
-        const indicadorKey = indicadorUnico.value;
+        let indicadorKey;
+        const indicadorUnicoSelect = document.getElementById('indicadorUnico');
+        if (!indicadorUnicoSelect) return;
+        indicadorKey = indicadorUnicoSelect.value;
+        
         const datos = obtenerDatosPorJugador(idsJugadores, indicadorKey, desde, hasta);
         const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
         const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
@@ -576,15 +657,17 @@
             datosMulti.forEach(j => {
                 csv += `"${j.nombre}",${indicadoresMulti.map(k => j.valores[k] || 0).join(',')}\n`;
             });
-            const blob = new Blob([csv], {type: 'text/csv'});
+            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
             saveAs(blob, `pintintin_datos_multi_${new Date().toISOString().slice(0,19)}.csv`);
         } else {
-            const indicadorKey = document.getElementById('indicadorUnico').value;
+            const indicadorUnico = document.getElementById('indicadorUnico');
+            if (!indicadorUnico) return;
+            const indicadorKey = indicadorUnico.value;
             const datos = obtenerDatosPorJugador(ids, indicadorKey, desde, hasta);
             const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
             let csv = `"Jugador","${nombreIndicador}"\n`;
             datos.forEach(d => { csv += `"${d.nombre}",${d.total}\n`; });
-            const blob = new Blob([csv], {type: 'text/csv'});
+            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
             saveAs(blob, `pintintin_datos_${indicadorKey}_${new Date().toISOString().slice(0,19)}.csv`);
         }
     }
@@ -600,15 +683,28 @@
     }
 
     // ---------- 9. Inicialización ----------
-    function iniciarModulo() {
+    async function iniciarModulo() {
         cargarDatosLocales();
+        
+        // Pequeña pausa para asegurar DOM
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         if (jugadores.length === 0) {
             document.querySelector('.graficas-container').innerHTML = '<p class="mensaje-carga">⚠️ No hay datos. Inicia un día en la app principal primero.</p>';
             return;
         }
+        
         inicializarFechas();
         renderizarChecklistJugadores();
         actualizarPanelIndicador();
+        
+        // Asegurar que el canvas existe antes de dibujar
+        const canvas = document.getElementById('miGrafica');
+        if (canvas) {
+            await dibujarGrafico();
+        } else {
+            console.error('Canvas no encontrado');
+        }
         
         document.getElementById('fechaDesde').addEventListener('change', dibujarGrafico);
         document.getElementById('fechaHasta').addEventListener('change', dibujarGrafico);
@@ -620,9 +716,12 @@
         
         document.getElementById('btnDescargarImagen').addEventListener('click', descargarImagen);
         document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
-        document.getElementById('btnVolver').addEventListener('click', () => { window.location.href = 'index.html'; });
         
-        dibujarGrafico();
+        // ✅ PUNTO 2: Guardar flag al volver para restaurar eventos
+        document.getElementById('btnVolver').addEventListener('click', () => {
+            sessionStorage.setItem('volviendoDeGraficas', 'true');
+            window.location.href = 'index.html';
+        });
     }
 
     window.onload = iniciarModulo;
