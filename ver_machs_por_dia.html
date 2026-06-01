@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Ver Machs por Día - Dominó Pintintín</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            margin: 0;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 1.5rem;
+        }
+        h1 {
+            color: #1e293b;
+            border-bottom: 3px solid #8b5cf6;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+            text-align: center;
+        }
+        .filtros {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .filtros .campo {
+            flex: 2;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        .filtros .accion {
+            flex: 0 0 auto;
+            min-width: 140px;
+        }
+        .filtros label {
+            font-weight: bold;
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+        .filtros select, .filtros button {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.9rem;
+        }
+        .filtros button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .filtros button:hover {
+            background: #7c3aed;
+        }
+        .tabla-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 0.6rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background: #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        td:first-child, th:first-child {
+            text-align: center;
+        }
+        .jugador-patas {
+            margin: 0.2rem 0;
+            padding: 0.1rem 0;
+            border-bottom: 1px dotted #e2e8f0;
+        }
+        .jugador-patas:last-child {
+            border-bottom: none;
+        }
+        .resumen {
+            margin-top: 1.5rem;
+            background: #f1f5f9;
+            padding: 0.8rem;
+            border-radius: 0.8rem;
+        }
+        .resumen h3 {
+            margin: 0 0 0.5rem 0;
+        }
+        .resumen table {
+            width: 100%;
+            max-width: 500px;
+        }
+        .resumen th, .resumen td {
+            padding: 0.4rem 0.6rem;
+            text-align: center;
+        }
+        .resumen td:first-child,
+        .resumen th:first-child,
+        .resumen-acumulado td:first-child,
+        .resumen-acumulado th:first-child {
+            text-align: left;
+        }
+        .subtitulo-machs {
+            margin: 0.5rem 0 1rem 0;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #1e293b;
+            background: #e2e8f0;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 1rem;
+        }
+        .volver {
+            display: inline-block;
+            margin-top: 1.5rem;
+            background: #475569;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .volver:hover {
+            background: #334155;
+        }
+        .mensaje {
+            padding: 1rem;
+            text-align: center;
+            color: #475569;
+            background: #f8fafc;
+            border-radius: 0.8rem;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .boton-exportar {
+            background: #10b981;
+        }
+        .boton-exportar:hover {
+            background: #059669;
+        }
+        .resumen-acumulado {
+            margin-top: 2rem;
+            background: #e0e7ff;
+            padding: 1rem;
+            border-radius: 0.8rem;
+        }
+        .resumen-acumulado h3 {
+            margin: 0 0 0.5rem 0;
+            color: #1e293b;
+        }
+        .resumen-acumulado table {
+            background: white;
+            max-width: 500px;
+        }
+        @media (max-width: 640px) {
+            .filtros {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filtros .campo, .filtros .accion {
+                max-width: 100%;
+            }
+            th, td {
+                padding: 0.3rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📋 Historial de Machs por Día</h1>
+    <div class="filtros">
+        <div class="campo">
+            <label>📅 Seleccionar día (por fecha):</label>
+            <select id="selectorFecha">
+                <option value="">-- Cargando fechas --</option>
+            </select>
+        </div>
+        <div class="accion">
+            <button id="btnCargar">🔍 Ver machs del día</button>
+        </div>
+        <div class="accion">
+            <button id="btnExportarCSV" class="boton-exportar">📎 Exportar CSV</button>
+        </div>
+    </div>
+
+    <div id="resultado">
+        <div class="mensaje">Cargando última fecha jugada...</div>
+    </div>
+
+    <a href="index.html" class="volver">← Volver al juego</a>
+</div>
+
+<script>
+    // Claves de localStorage
+    const STORAGE_KEYS = {
+        jugadores: 'pintintin_jugadores',
+        dias: 'pintintin_dias',
+        machs: 'pintintin_machs'
+    };
+
+    let jugadores = [];
+    let dias = [];
+    let machs = [];
+
+    function cargarDatos() {
+        try {
+            jugadores = JSON.parse(localStorage.getItem(STORAGE_KEYS.jugadores)) || [];
+            dias = JSON.parse(localStorage.getItem(STORAGE_KEYS.dias)) || [];
+            machs = JSON.parse(localStorage.getItem(STORAGE_KEYS.machs)) || [];
+            console.log(`✅ Datos cargados: ${jugadores.length} jugadores, ${dias.length} días, ${machs.length} machs`);
+        } catch(e) {
+            console.error("Error cargando datos:", e);
+            mostrarError("No se pudieron cargar los datos. Asegúrate de haber jugado al menos una partida.");
+        }
+    }
+
+    function mostrarError(mensaje) {
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = `<div class="mensaje error">⚠️ ${mensaje}</div>`;
+    }
+
+    function obtenerFechasConMachs() {
+        const fechasConMachs = new Set();
+        for (const mach of machs) {
+            const dia = dias.find(d => d.id === mach.diaId);
+            if (dia) {
+                fechasConMachs.add(dia.fecha);
+            }
+        }
+        const fechasArray = Array.from(fechasConMachs);
+        fechasArray.sort((a, b) => new Date(b) - new Date(a));
+        return fechasArray;
+    }
+
+    function llenarSelectorFechas() {
+        const selector = document.getElementById('selectorFecha');
+        if (!selector) return;
+        selector.innerHTML = '<option value="">-- Selecciona una fecha --</option>';
+        
+        const fechasConMachs = obtenerFechasConMachs();
+        if (fechasConMachs.length === 0) {
+            selector.innerHTML = '<option value="">-- No hay machs registrados --</option>';
+            return;
+        }
+        
+        for (const fecha of fechasConMachs) {
+            const option = document.createElement('option');
+            option.value = fecha;
+            option.textContent = fecha;
+            selector.appendChild(option);
+        }
+    }
+
+    function obtenerNombreJugador(id) {
+        if (!id) return 'Desconocido';
+        const jug = jugadores.find(j => j.id === id);
+        return jug ? jug.nombre : `Jugador ${id}`;
+    }
+
+    function obtenerMachsPorFecha(fecha) {
+        const idsDias = dias.filter(d => d.fecha === fecha).map(d => d.id);
+        if (idsDias.length === 0) return [];
+        return machs.filter(m => idsDias.includes(m.diaId));
+    }
+
+    function exportarCSV() {
+        const selector = document.getElementById('selectorFecha');
+        const fecha = selector.value;
+        if (!fecha) {
+            alert("No hay fecha seleccionada");
+            return;
+        }
+        const machsDelDia = obtenerMachsPorFecha(fecha);
+        if (machsDelDia.length === 0) {
+            alert("No hay machs para exportar.");
+            return;
+        }
+        
+        let csv = "N° Mach,Ganador,Participantes (Jugador:Patas)\n";
+        for (const mach of machsDelDia) {
+            let ganadorNombre = obtenerNombreJugador(mach.ganadorId);
+            let participantesStr = "";
+            if (mach.participantes) {
+                participantesStr = mach.participantes.map(p => {
+                    const nombre = p.nombre || obtenerNombreJugador(p.jugadorId);
+                    return `${nombre}:${p.patasFinales ?? 0}`;
+                }).join("; ");
+            }
+            csv += `${mach.numeroMach},${ganadorNombre},"${participantesStr}"\n`;
+        }
+        
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.download = `pintintin_machs_${fecha}.csv`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function mostrarMachsDelDia() {
+        const selector = document.getElementById('selectorFecha');
+        const fechaSeleccionada = selector.value;
+        if (!fechaSeleccionada || fechaSeleccionada === '-- No hay machs registrados --') {
+            mostrarError("No hay fecha seleccionada o no hay machs registrados.");
+            return;
+        }
+
+        const machsDelDia = obtenerMachsPorFecha(fechaSeleccionada);
+        if (machsDelDia.length === 0) {
+            document.getElementById('resultado').innerHTML = `<div class="mensaje">📭 No hay machs registrados para la fecha ${fechaSeleccionada}.</div>`;
+            return;
+        }
+        
+        // Ordenar por número de mach
+        machsDelDia.sort((a, b) => a.numeroMach - b.numeroMach);
+
+        let html = `<h2>📅 ${fechaSeleccionada}</h2>`;
+        html += `<div class="subtitulo-machs">🏆 Total de machs jugados en el día: ${machsDelDia.length}</div>`;
+
+        html += `<div class="tabla-container">`;
+        html += `<table class="tabla-machs">
+            <thead>
+                <tr><th># Mach</th><th>Ganador</th><th>Participantes y patas finales</th></tr>
+            </thead>
+            <tbody>`;
+
+        for (const mach of machsDelDia) {
+            let nombreGanador = obtenerNombreJugador(mach.ganadorId);
+            const ganadorEnParticipantes = mach.participantes?.find(p => p.jugadorId === mach.ganadorId);
+            if (ganadorEnParticipantes && ganadorEnParticipantes.nombre) {
+                nombreGanador = ganadorEnParticipantes.nombre;
+            }
+
+            let participantesHtml = '';
+            if (mach.participantes && mach.participantes.length) {
+                for (const p of mach.participantes) {
+                    const nombre = p.nombre || obtenerNombreJugador(p.jugadorId);
+                    const patas = p.patasFinales ?? 0;
+                    const esGanador = p.jugadorId === mach.ganadorId;
+                    participantesHtml += `<div class="jugador-patas">${esGanador ? '👑 ' : ''}${escapeHtml(nombre)}: ${patas} 🦶</div>`;
+                }
+            } else {
+                participantesHtml = '<em>Sin participantes registrados</em>';
+            }
+
+            html += `<tr>
+                <td style="text-align:center; font-weight:bold;">${mach.numeroMach}º</td>
+                <td><strong>${escapeHtml(nombreGanador)}</strong></td>
+                <td>${participantesHtml}</td>
+            </tr>`;
+        }
+
+        html += `</tbody>
+        </table></div>`;
+
+        // --- RESUMEN DEL DÍA (solo jugadores reales) ---
+        const statsJugador = new Map();
+        for (const mach of machsDelDia) {
+            if (mach.participantes) {
+                for (const p of mach.participantes) {
+                    if (!p.jugadorId) continue;
+                    const nombre = p.nombre || obtenerNombreJugador(p.jugadorId);
+                    if (nombre.toLowerCase().includes('vacía') || nombre === 'Vacante') continue;
+                    
+                    const patas = p.patasFinales ?? 0;
+                    if (!statsJugador.has(nombre)) {
+                        statsJugador.set(nombre, { machsGanados: 0, patasTotales: 0 });
+                    }
+                    const stats = statsJugador.get(nombre);
+                    stats.patasTotales += patas;
+                    if (p.jugadorId === mach.ganadorId) {
+                        stats.machsGanados++;
+                    }
+                }
+            }
+        }
+
+        if (statsJugador.size > 0) {
+            const sortedStats = Array.from(statsJugador.entries()).sort((a, b) => {
+                if (a[1].machsGanados !== b[1].machsGanados) return b[1].machsGanados - a[1].machsGanados;
+                return b[1].patasTotales - a[1].patasTotales;
+            });
+            html += `<div class="resumen">
+                <h3>📊 Resumen del día (solo jugadores)</h3>
+                <table class="resumen-tabla">
+                    <thead>
+                        <tr><th>Jugador</th><th>🏆 Machs ganados</th><th>🦶 Patas totales</th></tr>
+                    </thead>
+                    <tbody>`;
+            for (const [nombre, stats] of sortedStats) {
+                html += `<tr>
+                    <td><strong>${escapeHtml(nombre)}</strong></td>
+                    <td style="text-align:center">${stats.machsGanados}</td>
+                    <td style="text-align:center">${stats.patasTotales}</td>
+                </tr>`;
+            }
+            html += `</tbody>
+                </table>
+            </div>`;
+        }
+
+        // --- RESUMEN ACUMULADO GENERAL ---
+        const statsAcumuladas = new Map();
+        for (const mach of machs) {
+            if (mach.participantes) {
+                for (const p of mach.participantes) {
+                    if (!p.jugadorId) continue;
+                    const nombre = p.nombre || obtenerNombreJugador(p.jugadorId);
+                    if (nombre.toLowerCase().includes('vacía') || nombre === 'Vacante') continue;
+                    
+                    const patas = p.patasFinales ?? 0;
+                    if (!statsAcumuladas.has(nombre)) {
+                        statsAcumuladas.set(nombre, { machsGanados: 0, patasTotales: 0 });
+                    }
+                    const stats = statsAcumuladas.get(nombre);
+                    stats.patasTotales += patas;
+                    if (p.jugadorId === mach.ganadorId) {
+                        stats.machsGanados++;
+                    }
+                }
+            }
+        }
+
+        if (statsAcumuladas.size > 0) {
+            const sortedAcumuladas = Array.from(statsAcumuladas.entries()).sort((a, b) => {
+                if (a[1].machsGanados !== b[1].machsGanados) return b[1].machsGanados - a[1].machsGanados;
+                return b[1].patasTotales - a[1].patasTotales;
+            });
+            html += `<div class="resumen-acumulado">
+                <h3>📊 RESUMEN ACUMULADO GENERAL (Todos los días, solo jugadores)</h3>
+                <table class="resumen-tabla">
+                    <thead>
+                        <tr><th>Jugador</th><th>🏆 Machs ganados</th><th>🦶 Patas totales</th></tr>
+                    </thead>
+                    <tbody>`;
+            for (const [nombre, stats] of sortedAcumuladas) {
+                html += `<tr>
+                    <td><strong>${escapeHtml(nombre)}</strong></td>
+                    <td style="text-align:center">${stats.machsGanados}</td>
+                    <td style="text-align:center">${stats.patasTotales}</td>
+                </tr>`;
+            }
+            html += `</tbody>
+                </table>
+            </div>`;
+        }
+
+        document.getElementById('resultado').innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function init() {
+        cargarDatos();
+        llenarSelectorFechas();
+        
+        const fechas = obtenerFechasConMachs();
+        if (fechas.length > 0) {
+            const ultimaFecha = fechas[0];
+            const selector = document.getElementById('selectorFecha');
+            selector.value = ultimaFecha;
+            // Mostrar los machs después de un breve retraso para asegurar que el DOM esté listo
+            setTimeout(() => {
+                mostrarMachsDelDia();
+            }, 50);
+        } else {
+            document.getElementById('resultado').innerHTML = '<div class="mensaje">📭 No hay machs registrados. Inicia una partida primero.</div>';
+        }
+        
+        // Eventos
+        const btnCargar = document.getElementById('btnCargar');
+        if (btnCargar) {
+            btnCargar.addEventListener('click', mostrarMachsDelDia);
+        }
+        const btnExportar = document.getElementById('btnExportarCSV');
+        if (btnExportar) {
+            btnExportar.addEventListener('click', exportarCSV);
+        }
+    }
+
+    // Ejecutar cuando el DOM esté completamente cargado
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+</script>
+</body>
+</html>
