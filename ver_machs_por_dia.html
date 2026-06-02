@@ -209,9 +209,6 @@
             </select>
         </div>
         <div class="accion">
-            <button id="btnCargar">🔍 Ver machs del día</button>
-        </div>
-        <div class="accion">
             <button id="btnExportarCSV" class="boton-exportar">📎 Exportar CSV</button>
         </div>
     </div>
@@ -252,6 +249,24 @@
         resultadoDiv.innerHTML = `<div class="mensaje error">⚠️ ${mensaje}</div>`;
     }
 
+    function formatearFecha(fechaISO) {
+        if (!fechaISO) return '?';
+        const partes = fechaISO.split('-');
+        if (partes.length !== 3) return fechaISO;
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    function formatearHora(fechaHoraISO) {
+        if (!fechaHoraISO) return '?';
+        const fecha = new Date(fechaHoraISO);
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12;
+        horas = horas === 0 ? 12 : horas;
+        return `${horas}:${minutos} ${ampm}`;
+    }
+
     function obtenerFechasConMachs() {
         const fechasConMachs = new Set();
         for (const mach of machs) {
@@ -279,7 +294,7 @@
         for (const fecha of fechasConMachs) {
             const option = document.createElement('option');
             option.value = fecha;
-            option.textContent = fecha;
+            option.textContent = formatearFecha(fecha);
             selector.appendChild(option);
         }
     }
@@ -303,14 +318,17 @@
             alert("No hay fecha seleccionada");
             return;
         }
-        const machsDelDia = obtenerMachsPorFecha(fecha);
+        let machsDelDia = obtenerMachsPorFecha(fecha);
         if (machsDelDia.length === 0) {
             alert("No hay machs para exportar.");
             return;
         }
         
-        let csv = "N° Mach,Ganador,Participantes (Jugador:Patas)\n";
-        for (const mach of machsDelDia) {
+        machsDelDia.sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
+        
+        let csv = "N° Mach,Ganador,Participantes (Jugador:Patas),Hora fin\n";
+        for (let i = 0; i < machsDelDia.length; i++) {
+            const mach = machsDelDia[i];
             let ganadorNombre = obtenerNombreJugador(mach.ganadorId);
             let participantesStr = "";
             if (mach.participantes) {
@@ -319,7 +337,8 @@
                     return `${nombre}:${p.patasFinales ?? 0}`;
                 }).join("; ");
             }
-            csv += `${mach.numeroMach},${ganadorNombre},"${participantesStr}"\n`;
+            const horaFin = formatearHora(mach.fechaHora);
+            csv += `${i+1},${ganadorNombre},"${participantesStr}",${horaFin}\n`;
         }
         
         const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
@@ -338,26 +357,51 @@
             return;
         }
 
-        const machsDelDia = obtenerMachsPorFecha(fechaSeleccionada);
+        let machsDelDia = obtenerMachsPorFecha(fechaSeleccionada);
         if (machsDelDia.length === 0) {
-            document.getElementById('resultado').innerHTML = `<div class="mensaje">📭 No hay machs registrados para la fecha ${fechaSeleccionada}.</div>`;
+            document.getElementById('resultado').innerHTML = `<div class="mensaje">📭 No hay machs registrados para la fecha ${formatearFecha(fechaSeleccionada)}.</div>`;
             return;
         }
         
-        // Ordenar por número de mach
-        machsDelDia.sort((a, b) => a.numeroMach - b.numeroMach);
-
-        let html = `<h2>📅 ${fechaSeleccionada}</h2>`;
+        machsDelDia.sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
+        
+        let duracionTotalMinutos = null;
+        if (machsDelDia.length >= 2) {
+            const primerTimestamp = new Date(machsDelDia[0].fechaHora);
+            const ultimoTimestamp = new Date(machsDelDia[machsDelDia.length - 1].fechaHora);
+            const diffMs = ultimoTimestamp - primerTimestamp;
+            duracionTotalMinutos = Math.round(diffMs / 60000);
+        }
+        
+        let html = `<h2>📅 ${formatearFecha(fechaSeleccionada)}</h2>`;
         html += `<div class="subtitulo-machs">🏆 Total de machs jugados en el día: ${machsDelDia.length}</div>`;
+        
+        if (duracionTotalMinutos !== null) {
+            const horas = Math.floor(duracionTotalMinutos / 60);
+            const minutos = duracionTotalMinutos % 60;
+            let tiempoTexto = '';
+            if (horas > 0) tiempoTexto += `${horas} hora(s) `;
+            if (minutos > 0) tiempoTexto += `${minutos} minuto(s)`;
+            html += `<div class="info-tiempo" style="background:#fef9c3; padding:0.5rem; border-radius:0.5rem; margin:1rem 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+                        <span>⏱️ Duración total de la sesión: ${tiempoTexto}</span>
+                        <span>📊 Promedio por mach: ~${Math.round(duracionTotalMinutos / machsDelDia.length)} min</span>
+                     </div>`;
+        }
 
         html += `<div class="tabla-container">`;
         html += `<table class="tabla-machs">
             <thead>
-                <tr><th># Mach</th><th>Ganador</th><th>Participantes y patas finales</th></tr>
+                <tr>
+                    <th># Mach</th>
+                    <th>Ganador</th>
+                    <th>Participantes y patas finales</th>
+                    <th>⏱️ Hora fin</th>
+                </tr>
             </thead>
             <tbody>`;
 
-        for (const mach of machsDelDia) {
+        for (let i = 0; i < machsDelDia.length; i++) {
+            const mach = machsDelDia[i];
             let nombreGanador = obtenerNombreJugador(mach.ganadorId);
             const ganadorEnParticipantes = mach.participantes?.find(p => p.jugadorId === mach.ganadorId);
             if (ganadorEnParticipantes && ganadorEnParticipantes.nombre) {
@@ -375,18 +419,21 @@
             } else {
                 participantesHtml = '<em>Sin participantes registrados</em>';
             }
+            
+            const horaFin = formatearHora(mach.fechaHora);
 
             html += `<tr>
-                <td style="text-align:center; font-weight:bold;">${mach.numeroMach}º</td>
+                <td style="text-align:center; font-weight:bold;">${i+1}º</td>
                 <td><strong>${escapeHtml(nombreGanador)}</strong></td>
                 <td>${participantesHtml}</td>
+                <td style="text-align:center;">${horaFin}</td>
             </tr>`;
         }
 
         html += `</tbody>
         </table></div>`;
 
-        // --- RESUMEN DEL DÍA (solo jugadores reales) ---
+        // Resumen del día (solo jugadores reales)
         const statsJugador = new Map();
         for (const mach of machsDelDia) {
             if (mach.participantes) {
@@ -432,7 +479,7 @@
             </div>`;
         }
 
-        // --- RESUMEN ACUMULADO GENERAL ---
+        // Resumen acumulado general
         const statsAcumuladas = new Map();
         for (const mach of machs) {
             if (mach.participantes) {
@@ -495,31 +542,26 @@
         cargarDatos();
         llenarSelectorFechas();
         
+        const selector = document.getElementById('selectorFecha');
         const fechas = obtenerFechasConMachs();
+        
         if (fechas.length > 0) {
             const ultimaFecha = fechas[0];
-            const selector = document.getElementById('selectorFecha');
             selector.value = ultimaFecha;
-            // Mostrar los machs después de un breve retraso para asegurar que el DOM esté listo
-            setTimeout(() => {
-                mostrarMachsDelDia();
-            }, 50);
+            mostrarMachsDelDia();
         } else {
             document.getElementById('resultado').innerHTML = '<div class="mensaje">📭 No hay machs registrados. Inicia una partida primero.</div>';
         }
         
-        // Eventos
-        const btnCargar = document.getElementById('btnCargar');
-        if (btnCargar) {
-            btnCargar.addEventListener('click', mostrarMachsDelDia);
-        }
+        // ✅ Al cambiar la fecha, se actualiza automáticamente
+        selector.addEventListener('change', mostrarMachsDelDia);
+        
         const btnExportar = document.getElementById('btnExportarCSV');
         if (btnExportar) {
             btnExportar.addEventListener('click', exportarCSV);
         }
     }
 
-    // Ejecutar cuando el DOM esté completamente cargado
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
