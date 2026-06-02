@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar tiempos de machs - Dominó Pintintín</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #1e293b;
+            text-align: center;
+            border-bottom: 3px solid #8b5cf6;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .warning p {
+            margin: 0;
+        }
+        .info {
+            background: #e0e7ff;
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 0.5rem 0;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #7c3aed;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: #475569;
+        }
+        .btn-secondary:hover {
+            background: #334155;
+        }
+        .resultado {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .exito {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #86efac;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .progreso {
+            background: #e2e8f0;
+            border-radius: 0.5rem;
+            height: 20px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        .progreso-bar {
+            background: #8b5cf6;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            text-align: center;
+            color: white;
+            font-size: 0.7rem;
+            line-height: 20px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .stat-card {
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .stats { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛠️ Actualizador de tiempos para machs antiguos</h1>
+    
+    <div class="warning">
+        <p>⚠️ <strong>ADVERTENCIA:</strong> Esta herramienta modificará los machs que no tengan <code>fechaHoraInicio</code>.</p>
+        <p>Se asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.</p>
+        <p>📌 <strong>Esta herramienta es de USO ÚNICO.</strong> No la incluyas en la aplicación principal.</p>
+    </div>
+    
+    <div class="info">
+        <p>📋 <strong>Instrucciones:</strong></p>
+        <ol>
+            <li>Haz clic en "🔍 Analizar machs antiguos" para ver cuántos machs necesitan actualización.</li>
+            <li>Luego haz clic en "🔄 Actualizar machs" para asignar horas de inicio aleatorias.</li>
+            <li>Después de la actualización, verifica en la aplicación que los machs tengan hora de inicio.</li>
+            <li>Esta herramienta NO afecta los machs que ya tienen <code>fechaHoraInicio</code>.</li>
+        </ol>
+    </div>
+    
+    <button id="btnAnalizar">🔍 Analizar machs antiguos</button>
+    <button id="btnActualizar" class="btn-secondary" disabled>🔄 Actualizar machs</button>
+    
+    <div id="progresoContainer" style="display:none;">
+        <div class="progreso">
+            <div id="progresoBar" class="progreso-bar">0%</div>
+        </div>
+    </div>
+    
+    <div id="resultado" class="resultado">
+        <p style="color: #64748b; text-align:center;">Haz clic en "Analizar machs antiguos" para comenzar.</p>
+    </div>
+</div>
+
+<script>
+    // Claves de localStorage
+    const STORAGE_KEYS = {
+        jugadores: 'pintintin_jugadores',
+        dias: 'pintintin_dias',
+        participaciones: 'pintintin_participaciones',
+        machs: 'pintintin_machs',
+        preferencia: 'pintintin_preferencia'
+    };
+
+    // Función para generar minutos aleatorios entre min y max
+    function minutosAleatorios(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Función para restar minutos a una fecha ISO
+    function restarMinutos(fechaISO, minutos) {
+        const fecha = new Date(fechaISO);
+        fecha.setMinutes(fecha.getMinutes() - minutos);
+        return fecha.toISOString();
+    }
+
+    // Cargar datos
+    function cargarDatos() {
+        try {
+            const machs = JSON.parse(localStorage.getItem(STORAGE_KEYS.machs)) || [];
+            return machs;
+        } catch(e) {
+            console.error("Error cargando datos:", e);
+            return [];
+        }
+    }
+
+    // Guardar datos
+    function guardarDatos(machs) {
+        localStorage.setItem(STORAGE_KEYS.machs, JSON.stringify(machs));
+    }
+
+    // Analizar machs antiguos
+    function analizarMachs() {
+        const machs = cargarDatos();
+        const machsSinInicio = machs.filter(m => !m.fechaHoraInicio || m.fechaHoraInicio === null);
+        
+        const resultadoDiv = document.getElementById('resultado');
+        const btnActualizar = document.getElementById('btnActualizar');
+        
+        if (machsSinInicio.length === 0) {
+            resultadoDiv.innerHTML = `
+                <div class="exito" style="padding:1rem;">
+                    ✅ <strong>No hay machs antiguos.</strong><br>
+                    Todos los machs ya tienen <code>fechaHoraInicio</code>. No es necesario actualizar nada.
+                </div>
+            `;
+            btnActualizar.disabled = true;
+        } else {
+            resultadoDiv.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${machs.length}</div>
+                        <div>Total machs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#f59e0b;">${machsSinInicio.length}</div>
+                        <div>Machs sin inicio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#10b981;">${machs.length - machsSinInicio.length}</div>
+                        <div>Machs con inicio</div>
+                    </div>
+                </div>
+                <div class="warning" style="margin-top:0.5rem;">
+                    <p>⚠️ Se encontraron <strong>${machsSinInicio.length}</strong> machs sin hora de inicio.</p>
+                    <p>Se les asignará una hora aleatoria entre 8 y 15 minutos antes de su hora de finalización.</p>
+                </div>
+            `;
+            btnActualizar.disabled = false;
+        }
+        
+        // Guardar lista para la actualización
+        window.machsPendientes = machsSinInicio;
+    }
+    
+    // Actualizar machs
+    async function actualizarMachs() {
+        if (!window.machsPendientes || window.machsPendientes.length === 0) {
+            alert("No hay machs pendientes. Ejecuta 'Analizar' primero.");
+            return;
+        }
+        
+        const machs = cargarDatos();
+        const machsSinInicio = window.machsPendientes;
+        const total = machsSinInicio.length;
+        
+        if (total === 0) {
+            alert("No hay machs para actualizar.");
+            return;
+        }
+        
+        if (!confirm(`⚠️ ¿Estás seguro de actualizar ${total} machs?\n\nSe asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.\n\nEsta acción NO se puede deshacer.`)) {
+            return;
+        }
+        
+        const progresoContainer = document.getElementById('progresoContainer');
+        const progresoBar = document.getElementById('progresoBar');
+        const resultadoDiv = document.getElementById('resultado');
+        const btnActualizar = document.getElementById('btnActualizar');
+        const btnAnalizar = document.getElementById('btnAnalizar');
+        
+        progresoContainer.style.display = 'block';
+        btnActualizar.disabled = true;
+        btnAnalizar.disabled = true;
+        
+        let actualizados = 0;
+        let errores = 0;
+        
+        for (let i = 0; i < machs.length; i++) {
+            const mach = machs[i];
+            if (!mach.fechaHoraInicio || mach.fechaHoraInicio === null) {
+                if (mach.fechaHora) {
+                    const minutos = minutosAleatorios(8, 15);
+                    const nuevaHoraInicio = restarMinutos(mach.fechaHora, minutos);
+                    mach.fechaHoraInicio = nuevaHoraInicio;
+                    actualizados++;
+                } else {
+                    errores++;
+                    console.warn(`Mach #${mach.numeroMach} (ID: ${mach.id}) no tiene fechaHora`, mach);
+                }
+            }
+            
+            // Actualizar progreso
+            const porcentaje = Math.round(((i + 1) / machs.length) * 100);
+            progresoBar.style.width = `${porcentaje}%`;
+            progresoBar.textContent = `${porcentaje}%`;
+            
+            // Pequeña pausa para que se vea el progreso
+            await new Promise(resolve => setTimeout(resolve, 5));
+        }
+        
+        // Guardar los machs actualizados
+        guardarDatos(machs);
+        
+        // Mostrar resultados
+        resultadoDiv.innerHTML = `
+            <div class="exito" style="padding:1rem;">
+                ✅ <strong>Actualización completada</strong><br>
+                Machs actualizados: <strong>${actualizados}</strong><br>
+                Errores (sin fechaHora): <strong>${errores}</strong>
+            </div>
+            <div class="info" style="margin-top:1rem;">
+                <p>📌 <strong>Recomendación:</strong> Abre la aplicación principal y verifica que los machs tengan hora de inicio visible en el módulo "Ver machs por día".</p>
+                <p>⚠️ Puedes cerrar esta herramienta. No es necesario volver a ejecutarla.</p>
+            </div>
+        `;
+        
+        btnAnalizar.disabled = false;
+        btnActualizar.disabled = true;
+        window.machsPendientes = null;
+        
+        // Ocultar barra de progreso después de 3 segundos
+        setTimeout(() => {
+            progresoContainer.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Eventos
+    document.getElementById('btnAnalizar').addEventListener('click', analizarMachs);
+    document.getElementById('btnActualizar').addEventListener('click', actualizarMachs);
+    
+    // Mostrar mensaje inicial
+    console.log("🛠️ Herramienta de actualización de tiempos lista.");
+</script>
+</body>
+</html>
