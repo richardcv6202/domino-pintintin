@@ -1,7 +1,7 @@
 {
   "name": "Dominó Pintintín",
   "short_name": "Pintintín",
-  "description": "Aplicación para campeonato de dominó - Creada por Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba",
+  "description": "Aplicación para campeonato de dominó - Creada por Ricardo Castillo Valdés - La Demajagua, Isla de la Juventud, Cuba - Versión 5.2.0",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1e293b",
@@ -31,5 +31,39 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "categories": ["games", "entertainment"],
+  "author": {
+    "name": "Ricardo Castillo Valdés",
+    "email": "3sayricardo@gmail.com",
+    "whatsapp": "+53 55031725",
+    "url": "https://github.com/tuusuario",
+    "location": "La Demajagua, Isla de la Juventud, Cuba"
+  },
+  "shortcuts": [
+    {
+      "name": "Nueva partida",
+      "short_name": "Jugar",
+      "description": "Iniciar una nueva partida de dominó",
+      "url": ".",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Estadísticas",
+      "short_name": "Stats",
+      "description": "Ver estadísticas globales",
+      "url": "?stats=true",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Pantalla de juego"
+    }
+  ],
+  "prefer_related_applications": false
 }
