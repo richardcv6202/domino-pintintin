@@ -272,18 +272,9 @@ function calcularPatasConTope(ganadorId, patasBase, multiplicadorEmpate) {
 // ==================== PLACEHOLDER DINÁMICO ====================
 function renderInputsJugadores() {
     const jugadoresInputsContainer = document.getElementById('jugadoresInputsContainer');
-    if(!jugadoresInputsContainer) return;
-    jugadoresInputsContainer.innerHTML = '';
-    
-    const hayPartidaGuardada = localStorage.getItem('sesionPintintinV2') !== null;
-    
-    for(let i = 1; i <= 4; i++) {
-        let placeholder = "Nombre (opcional)";
-        if (!hayPartidaGuardada) {
-            if (i <= 2) placeholder = "Nombre (obligatorio)";
-            else placeholder = "Nombre (opcional)";
-        }
-        jugadoresInputsContainer.innerHTML += `<div><label>🎲 Jugador ${i}</label><input type="text" id="jugador${i}" list="listaJugadores" placeholder="${placeholder}" autocomplete="off"></div>`;
+    if(jugadoresInputsContainer) {
+        // La nueva estructura ya no usa jugadoresInputsContainer
+        // Los inputs están fijos en el HTML, solo actualizamos datalist
     }
     actualizarDatalistJugadores();
     agregarListenersInputs();
@@ -483,6 +474,8 @@ function resolverEmpates(jugadoresConDados) {
 async function sortearEIniciar() {
     console.log("🎲 sortearEIniciar() llamado. diaActivo:", diaActivo, "hayPartidaGuardada:", hayPartidaGuardada());
     
+    const mantenerUbicacion = document.getElementById('mantenerUbicacion')?.checked || false;
+    
     if (hayPartidaGuardada()) {
         console.log("📀 Intentando continuar partida guardada...");
         if (!diaActivo || jugadoresActuales.length === 0) {
@@ -520,47 +513,58 @@ async function sortearEIniciar() {
         actualizarColorBotonSorteo();
     }
     
-    let nombresIngresados = 0;
-    for (let i = 1; i <= 4; i++) {
-        let n = document.getElementById(`jugador${i}`)?.value.trim();
-        if (n && n !== "") nombresIngresados++;
-    }
+    // Obtener nombres de los inputs
+    const nombres = [
+        document.getElementById('jugador1')?.value.trim(),
+        document.getElementById('jugador2')?.value.trim(),
+        document.getElementById('jugador3')?.value.trim(),
+        document.getElementById('jugador4')?.value.trim()
+    ];
     
-    if (nombresIngresados < 2) {
-        alert("❌ Debe haber al menos 2 jugadores para iniciar un nuevo juego");
-        return;
-    }
+    const jugadoresValidos = nombres.filter(n => n !== null && n !== "");
+    if(jugadoresValidos.length < 2) { alert("Debe haber al menos 2 jugadores"); return; }
+    
+    // Verificar nombres duplicados
+    const nombresSet = new Set(jugadoresValidos.map(s => s.toLowerCase()));
+    if(nombresSet.size !== jugadoresValidos.length) { alert("Los nombres no pueden repetirse"); return; }
     
     const fechaDiaInput = document.getElementById('fechaDia');
     const fecha = fechaDiaInput ? fechaDiaInput.value : '';
     if (!fecha) { alert("Selecciona fecha"); return; }
     
-    let nombres = [];
-    for (let i=1; i<=4; i++) {
-        let n = document.getElementById(`jugador${i}`).value.trim();
-        nombres.push(n || null);
-    }
-    
-    const jugadoresValidos = nombres.filter(n => n !== null);
-    if(jugadoresValidos.length < 2) { alert("Debe haber al menos 2 jugadores"); return; }
-    if(new Set(jugadoresValidos.map(s=>s.toLowerCase())).size !== jugadoresValidos.length) { alert("Los nombres no pueden repetirse"); return; }
-    
-    let jugadoresDados = jugadoresValidos.map(n => ({nombre:n, dado:tirarDado()}));
-    let ordenFinal = resolverEmpates(jugadoresDados);
-    let sillas = [1, 2, 3, 4];
-    for(let i = sillas.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [sillas[i], sillas[j]] = [sillas[j], sillas[i]];
-    }
+    // Obtener o crear jugadores en la base de datos
+    const jugadoresConId = nombres.map(n => n ? obtenerOJugador(n) : null);
     
     let posicionesMap = new Map();
-    for(let i = 0; i < ordenFinal.length; i++) {
-        const sillaAsignada = sillas[i];
-        const jugador = ordenFinal[i];
-        const jug = obtenerOJugador(jugador.nombre);
-        posicionesMap.set(sillaAsignada, { jugadorId: jug.id, nombre: jug.nombre });
+    
+    if (mantenerUbicacion) {
+        console.log("🎲 Modo mantener ubicación: NO se sortean las sillas");
+        // Asignar en el orden de entrada: jugador1 → silla1, jugador2 → silla2, etc.
+        for (let i = 0; i < jugadoresConId.length; i++) {
+            const jug = jugadoresConId[i];
+            if (jug) {
+                posicionesMap.set(i + 1, { jugadorId: jug.id, nombre: jug.nombre });
+            }
+        }
+    } else {
+        console.log("🎲 Modo sorteo: se sortean las sillas aleatoriamente");
+        // Sorteo de sillas
+        let jugadoresDados = jugadoresValidos.map(n => ({nombre:n, dado:tirarDado()}));
+        let ordenFinal = resolverEmpates(jugadoresDados);
+        let sillas = [1, 2, 3, 4];
+        for(let i = sillas.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [sillas[i], sillas[j]] = [sillas[j], sillas[i]];
+        }
+        for(let i = 0; i < ordenFinal.length; i++) {
+            const sillaAsignada = sillas[i];
+            const jugador = ordenFinal[i];
+            const jug = obtenerOJugador(jugador.nombre);
+            posicionesMap.set(sillaAsignada, { jugadorId: jug.id, nombre: jug.nombre });
+        }
     }
     
+    // Construir jugadoresPos (sillas 1-4)
     let jugadoresPos = [];
     for(let silla = 1; silla <= 4; silla++) {
         if(posicionesMap.has(silla)) {
@@ -571,10 +575,12 @@ async function sortearEIniciar() {
         }
     }
     
+    // Crear día
     const diaId = almacenamiento.dias.length + 1;
     almacenamiento.dias.push({ id: diaId, fecha, activo: 1 });
     diaActivo = { id: diaId, fecha };
     
+    // Crear participaciones
     for(let j of jugadoresPos) {
         if(j.jugadorId) {
             almacenamiento.participaciones.push({
@@ -726,6 +732,8 @@ function actualizarColorBotonSorteo() {
     const btn = document.getElementById('btnSortearEIniciar');
     if (!btn) return;
     
+    const mantenerUbicacion = document.getElementById('mantenerUbicacion')?.checked || false;
+    
     if (hayPartidaGuardada()) {
         btn.style.background = "#10b981";
         btn.textContent = "🎲 Continuar partida guardada";
@@ -735,7 +743,7 @@ function actualizarColorBotonSorteo() {
     
     if (diaActivo) {
         btn.style.background = "#8b5cf6";
-        btn.textContent = "🎲 Sortear e iniciar NUEVA";
+        btn.textContent = "🎲 Iniciar NUEVA partida";
         btn.style.display = "block";
         return;
     }
@@ -748,7 +756,11 @@ function actualizarColorBotonSorteo() {
     
     if (nombresIngresados >= 2) {
         btn.style.background = "#8b5cf6";
-        btn.textContent = "🎲 Sortear sillas e iniciar";
+        if (mantenerUbicacion) {
+            btn.textContent = "🎲 Iniciar juego (sin sorteo)";
+        } else {
+            btn.textContent = "🎲 Sortear sillas e iniciar";
+        }
     } else {
         btn.style.background = "#8b5cf6";
         btn.textContent = "🎲 Sortear sillas e iniciar";
@@ -1868,6 +1880,12 @@ window.onload = () => {
     actualizarColorBotonSorteo();
     
     iniciarDeteccionAccesoAdmin();
+	
+	// Listener para el checkbox de mantener ubicación
+	const chkMantener = document.getElementById('mantenerUbicacion');
+	if (chkMantener) {
+		chkMantener.addEventListener('change', actualizarColorBotonSorteo);
+	}
     
     // Asignar eventos globales
     const btnSortearEIniciar = document.getElementById('btnSortearEIniciar');
