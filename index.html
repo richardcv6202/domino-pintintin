@@ -19,21 +19,49 @@
   <!-- Pantalla de inicio / configuración -->
   <section id="vistaConfig" class="vista">
     <h2>⚙️ Nueva Jornada</h2>
-    <label>📅 Fecha: <input type="date" id="fechaDia" required></label>
-    
-    <h3>👥 Ingresa los jugadores (mínimo 2):</h3>
-    <div id="jugadoresInputsContainer" class="jugadores-inputs"></div>
-    
+
+    <!-- Fecha -->
+    <div class="campo-borde">
+      <div class="campo-label">📅 Fecha</div>
+      <input type="date" id="fechaDia" required>
+    </div>
+
+    <!-- Nombres obligatorios (Jugadores 1 y 2) -->
+    <div class="campo-borde">
+      <div class="campo-label">👥 Nombres <span class="obligatorio">(obligatorios)</span></div>
+      <div class="inputs-dobles">
+        <input type="text" id="jugador1" list="listaJugadores" placeholder="Jugador 1" autocomplete="off">
+        <input type="text" id="jugador2" list="listaJugadores" placeholder="Jugador 2" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Nombres opcionales (Jugadores 3 y 4) -->
+    <div class="campo-borde">
+      <div class="campo-label">👥 Nombres <span class="opcional">(opcionales)</span></div>
+      <div class="inputs-dobles">
+        <input type="text" id="jugador3" list="listaJugadores" placeholder="Jugador 3" autocomplete="off">
+        <input type="text" id="jugador4" list="listaJugadores" placeholder="Jugador 4" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Checkbox mantener ubicación -->
+    <div class="checkbox-mantener">
+      <input type="checkbox" id="mantenerUbicacion">
+      <label for="mantenerUbicacion">🎲 Mantener ubicación de los jugadores (sin sorteo de sillas)</label>
+    </div>
+
+    <!-- Botón principal -->
     <div class="sorteo-buttons">
       <button id="btnSortearEIniciar" class="sorteo-btn">🎲 Sortear sillas e iniciar</button>
     </div>
-    
+
     <div id="resultadoSorteo" class="resultado-sorteo"></div>
-    
+
     <hr>
     <div class="botones-secundarios">
-        <button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
-        <button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
+		<button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
+		<button id="btnGraficasConfig" class="secundario">📈 Gráficas interactivas</button>
+		<button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
         <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
         <div class="backup-buttons">
             <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
@@ -41,13 +69,14 @@
             <input type="file" id="importBackupInput" accept=".json" style="display: none;">
         </div>
     </div>
-    
-	<div class="creditos">
-	  <p>🎲 Creado por <strong>Ricardo Castillo Valdés (Richard)</strong></p>
-	  <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
-	  <p>📧 <a href="mailto:3sayricardo@gmail.com" style="color:#8b5cf6; text-decoration:none;">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725" style="color:#8b5cf6; text-decoration:none;">+53 55031725</a></p>
-	  <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
-	</div>
+
+	
+    <div class="creditos">
+      <p>🎲 Creado por <strong>Ricardo Castillo Valdés (Richard)</strong></p>
+      <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
+      <p>📧 <a href="mailto:3sayricardo@gmail.com" style="color:#8b5cf6; text-decoration:none;">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725" style="color:#8b5cf6; text-decoration:none;">+53 55031725</a></p>
+      <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
+    </div>
   </section>
 
   <!-- Pantalla de juego -->
@@ -131,9 +160,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="app.js"></script>
 
 <!-- Registrar Service Worker para funcionamiento offline (PWA) -->
