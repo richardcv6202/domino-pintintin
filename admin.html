@@ -73,20 +73,20 @@
         <h1>🛠️ Panel de Administración - Dominó Pintintín v6.0</h1>
         <p class="stats-mini">⚠️ Ten cuidado al modificar los datos. Los cambios son permanentes.</p>
 
-        <div class="aux-card">
-            <h3>🔧 Herramientas Auxiliares</h3>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="actualizar_tiempos.html" class="aux-link" target="_blank">⏰ Actualizar Tiempos de Machs</a>
-                <button class="aux-link" onclick="verificarIntegridadAvanzada()">🔬 Verificación Avanzada</button>
-                <button class="aux-link" onclick="repararAutomaticamente()">🔨 Reparación Automática</button>
-            </div>
-        </div>
-
+		<div class="aux-card">
+			<h3>🔧 Herramientas Auxiliares</h3>
+			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+				<a href="actualizar_tiempos.html" class="aux-link" target="_blank">⏰ Actualizar Tiempos de Machs</a>
+				<button class="aux-link" onclick="verificarIntegridadAvanzada()">🔬 Verificación Avanzada</button>
+				<button class="aux-link" onclick="repararAutomaticamente()">🔨 Reparación Automática</button>
+				<button class="aux-link" onclick="verificarIntegridad()" style="background: rgba(255,193,7,0.3);">🔍 Verificar integridad</button>
+			</div>
+		</div>
+		
         <div class="backup-buttons">
             <button onclick="exportarDatos()">💾 Exportar todos los datos (JSON)</button>
             <button onclick="importarDatos()">📂 Importar datos (JSON)</button>
             <button onclick="limpiarBaseDatos()" style="background:#dc2626;">⚠️ Limpiar toda la base de datos</button>
-            <button onclick="verificarIntegridad()" style="background:#f59e0b;">🔍 Verificar integridad</button>
         </div>
 
         <div id="mensajeImportacion" style="display:none;"></div>
@@ -355,30 +355,91 @@
         html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.machs.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
-    function verDetalleMach(id) { let m=datosActuales.machs.find(m=>m.id===id); if(!m) return; let msg=`Mach #${m.numeroMach}\nGanador: ${datosActuales.jugadores.find(j=>j.id===m.ganadorId)?.nombre}\nParticipantes:\n`; for(let p of m.participantes) msg+=`- ${p.nombre||(p.jugadorId?datosActuales.jugadores.find(j=>j.id===p.jugadorId)?.nombre:'Vacante')}: ${p.patasFinales} patas\n`; alert(msg); }
-    function eliminarMach(id) { if(confirm("¿Eliminar este mach?")){ datosActuales.machs=datosActuales.machs.filter(m=>m.id!==id); guardarTodo(); renderizarMachs(); mostrarMensaje("Mach eliminado","exito"); } }
-    function renderizarReporteGeneral() {
-        const cont = document.getElementById('reporteGeneralTable');
-        if (!cont) return;
-        let partFiltradas = [...datosActuales.participaciones];
-        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
-            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha>=reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha<=reporteFechasFiltro.hasta)).map(d=>d.id);
-            partFiltradas = partFiltradas.filter(p=>idsDias.includes(p.diaId));
+	function verDetalleMach(id) {
+    const mach = datosActuales.machs.find(m => m.id === id);
+    if (!mach) return;
+    
+    const dia = datosActuales.dias.find(d => d.id === mach.diaId);
+    const ganador = datosActuales.jugadores.find(j => j.id === mach.ganadorId);
+    
+    // Función para formatear fecha/hora completa
+    const formatearFechaHora = (isoFecha) => {
+        if (!isoFecha) return '⏳ No registrada';
+        const fecha = new Date(isoFecha);
+        const dia = fecha.getDate().toString().padStart(2, '0');
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const año = fecha.getFullYear();
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12 || 12;
+        return `${dia}/${mes}/${año} ${horas}:${minutos} ${ampm}`;
+    };
+    
+    // Función para formatear solo hora
+    const formatearHora = (isoFecha) => {
+        if (!isoFecha) return '⏳ No registrada';
+        const fecha = new Date(isoFecha);
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12 || 12;
+        return `${horas}:${minutos} ${ampm}`;
+    };
+    
+    // Calcular duración si hay inicio y fin
+    let duracionTexto = '';
+    if (mach.fechaHoraInicio && mach.fechaHora) {
+        const inicio = new Date(mach.fechaHoraInicio);
+        const fin = new Date(mach.fechaHora);
+        const diffMs = fin - inicio;
+        if (diffMs > 0) {
+            const diffMin = Math.floor(diffMs / 60000);
+            const diffSeg = Math.floor((diffMs % 60000) / 1000);
+            if (diffMin > 0) {
+                duracionTexto = `⏱️ Duración: ${diffMin} min ${diffSeg > 0 ? diffSeg + ' seg' : ''}`;
+            } else {
+                duracionTexto = `⏱️ Duración: ${diffSeg} segundos`;
+            }
         }
-        const stats = new Map();
-        for (let p of partFiltradas) {
-            let j=datosActuales.jugadores.find(j=>j.id===p.jugadorId);
-            if(!j) continue;
-            if(!stats.has(j.id)) stats.set(j.id, {nombre:j.nombre, machs:0, patas:0});
-            stats.get(j.id).machs += p.machsGanados;
-            stats.get(j.id).patas += p.patasNetas;
-        }
-        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
-        let html = '<table class="tabla-datos"><thead><tr><th>#</th><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th></tr></thead><tbody>';
-        ordenado.forEach((s,i)=>html+=`<tr><td>${i+1}</td><td><strong>${escapeHtml(s.nombre)}</strong></td><td>${s.machs}</td><td>${s.patas}</td></tr>`);
-        html+=`</tbody></table>`;
-        cont.innerHTML = html;
     }
+    
+    let msg = `🔍 DETALLE DEL MACH #${mach.numeroMach}\n`;
+    msg += `📅 Fecha: ${dia ? dia.fecha : 'Desconocida'}\n`;
+    msg += `🕐 Inicio: ${formatearHora(mach.fechaHoraInicio)}\n`;
+    msg += `🕐 Fin: ${formatearHora(mach.fechaHora)}\n`;
+    if (duracionTexto) msg += `${duracionTexto}\n`;
+    msg += `🏆 Ganador: ${ganador ? ganador.nombre : 'Desconocido'}\n`;
+    msg += `\n👥 PARTICIPANTES:\n`;
+    
+    for (let p of (mach.participantes || [])) {
+        const nombre = p.nombre || (p.jugadorId ? obtenerNombreJugador(p.jugadorId) : 'Vacante');
+        msg += `  🪑 ${nombre}: ${p.patasFinales || 0} patas finales\n`;
+    }
+    
+    if (mach.manos && mach.manos.length > 0) {
+        msg += `\n📜 MANOS (${mach.manos.length}):\n`;
+        for (let mano of mach.manos) {
+            const nombreJugador = mano.jugadorId ? obtenerNombreJugador(mano.jugadorId) : '?';
+            let tipoMostrado = mano.tipo;
+            switch(mano.tipo) {
+                case 'paseMano': tipoMostrado = '🎯 Pase de mano'; break;
+                case 'paseManoDado': tipoMostrado = '🎯 PM Dado'; break;
+                case 'paseManoRecibido': tipoMostrado = '📥 PM Recibido'; break;
+                case 'forro': tipoMostrado = '🧤 Forro'; break;
+                case 'agua': tipoMostrado = '💧 Agua'; break;
+                case 'capicua': tipoMostrado = '🀰 Capicua'; break;
+                case 'cierre': tipoMostrado = '🚪 Cierre'; break;
+                case 'pegado': tipoMostrado = '🏃 Pegado'; break;
+                default: tipoMostrado = mano.tipo;
+            }
+            const patas = (mano.patasAfectadas !== undefined && mano.patasAfectadas !== 0) ? ` (${mano.patasAfectadas > 0 ? '+' : ''}${mano.patasAfectadas} pata)` : '';
+            msg += `  • ${tipoMostrado}: ${nombreJugador}${patas}\n`;
+        }
+    }
+    
+    alert(msg);
+	}
     function filtrarReportePorFechas() { reporteFechasFiltro.desde=document.getElementById('reporteFechaDesde').value; reporteFechasFiltro.hasta=document.getElementById('reporteFechaHasta').value; renderizarReporteGeneral(); }
     function exportarReporteGeneral() { alert("Exportación CSV disponible en versión completa"); }
     function cargarEstadisticasTiempo() {
