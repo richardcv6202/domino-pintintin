@@ -6,7 +6,7 @@
 //
 // Creado por Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba
 
-console.log("🎲 Dominó Pintintín - Versión 5.2.0: Métricas de tiempo reales");
+console.log("🎲 Dominó Pintintín - Versión 5.2.1: Mejoras de usabilidad y visuales");
 
 // --- CONFIGURACIÓN INICIAL ---
 let diaActivo = null;
@@ -167,7 +167,7 @@ async function guardarBackupAutomatico() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v520_${getDiaSemanaAbreviatura()}.json`;
+    const nombreArchivo = `Pinti_v521_${getDiaSemanaAbreviatura()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -180,7 +180,7 @@ async function exportarBackupManual() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v520_${formatearFechaParaNombre()}.json`;
+    const nombreArchivo = `Pinti_v521_${formatearFechaParaNombre()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
