@@ -1,11 +1,12 @@
 {
   "name": "Dominó Pintintín",
   "short_name": "Pintintín",
-  "description": "Aplicación para campeonato de dominó - Creada por Ricardo Castillo Valdés - La Demajagua, Isla de la Juventud, Cuba - Versión 5.2.0",
+  "description": "Aplicación para campeonato de dominó - Creada por Ricardo Castillo Valdés - La Demajagua, Isla de la Juventud, Cuba - Versión 5.2.1",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1e293b",
   "theme_color": "#8b5cf6",
+  "version": "5.2.1",
   "icons": [
     {
       "src": "icon-192.png",
@@ -54,15 +55,6 @@
       "description": "Ver estadísticas globales",
       "url": "?stats=true",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot1.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Pantalla de juego"
     }
   ],
   "prefer_related_applications": false
