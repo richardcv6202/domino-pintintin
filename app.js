@@ -1,14 +1,12 @@
-// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.0.2 (CORREGIDA) ====================
-// CORRECCIONES v5.0.2:
-// - NUEVA LÓGICA: "Salir del juego" con opción de conservar partida (sin cerrar día)
-// - Arreglada restauración de partida (ya no falla por día inactivo)
-// - Contraseña doble: acceso oculto pide "administrador", admin.html pide "admin"
-// - Botón de continuación ahora funciona correctamente
-// - MANUAL DE USUARIO ACTUALIZADO (versión extensa y detallada)
+// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.2.0 ====================
+// NUEVAS FUNCIONALIDADES v5.2.0:
+// - Se añade fechaHoraInicio a cada mach para calcular duración real
+// - Preparación para métricas de tiempo en gráficas y admin
+// - Compatibilidad con machs antiguos (fechaHoraInicio = null)
 //
 // Creado por Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba
 
-console.log("🎲 Dominó Pintintín - Versión 5.0.2 (corregida)");
+console.log("🎲 Dominó Pintintín - Versión 5.2.0: Métricas de tiempo reales");
 
 // --- CONFIGURACIÓN INICIAL ---
 let diaActivo = null;
@@ -18,7 +16,8 @@ let estadoMachActual = {
     patasActuales: new Map(),
     empatePendiente: null,
     historialManos: [],
-    historialGanadores: []
+    historialGanadores: [],
+    fechaHoraInicio: null
 };
 let almacenamiento = { jugadores: [], dias: [], participaciones: [], machs: [] };
 let ganadorPendiente = null;
@@ -61,6 +60,11 @@ function cargarTodoDesdeLocalStorage() {
         if (p.paseManoDados === undefined) p.paseManoDados = 0;
         if (p.paseManoRecibidos === undefined) p.paseManoRecibidos = 0;
     }
+    for (let m of almacenamiento.machs) {
+        if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
+        if (!m.participantes) m.participantes = [];
+        if (!m.manos) m.manos = [];
+    }
 
     ultimoGanadorId = parseInt(localStorage.getItem('pintintin_ultimoGanador')) || null;
     penultimoGanadorId = parseInt(localStorage.getItem('pintintin_penultimoGanador')) || null;
@@ -75,7 +79,8 @@ function guardarSesionCompleta() {
             patasActuales: Array.from(estadoMachActual.patasActuales.entries()),
             empatePendiente: estadoMachActual.empatePendiente,
             historialManos: estadoMachActual.historialManos,
-            historialGanadores: estadoMachActual.historialGanadores
+            historialGanadores: estadoMachActual.historialGanadores,
+            fechaHoraInicio: estadoMachActual.fechaHoraInicio
         },
         ultimoGanadorId: ultimoGanadorId,
         penultimoGanadorId: penultimoGanadorId
@@ -118,7 +123,8 @@ function cargarSesionCompleta() {
             patasActuales: new Map(data.estadoMachActual.patasActuales),
             empatePendiente: data.estadoMachActual.empatePendiente,
             historialManos: data.estadoMachActual.historialManos || [],
-            historialGanadores: data.estadoMachActual.historialGanadores || []
+            historialGanadores: data.estadoMachActual.historialGanadores || [],
+            fechaHoraInicio: data.estadoMachActual.fechaHoraInicio || null
         };
         ultimoGanadorId = data.ultimoGanadorId || null;
         penultimoGanadorId = data.penultimoGanadorId || null;
@@ -161,7 +167,7 @@ async function guardarBackupAutomatico() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v502_${getDiaSemanaAbreviatura()}.json`;
+    const nombreArchivo = `Pinti_v520_${getDiaSemanaAbreviatura()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -174,7 +180,7 @@ async function exportarBackupManual() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v502_${formatearFechaParaNombre()}.json`;
+    const nombreArchivo = `Pinti_v520_${formatearFechaParaNombre()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -192,6 +198,9 @@ async function importarBackup(file) {
                 participaciones: data.participaciones || [], 
                 machs: data.machs || [] 
             };
+            for (let m of almacenamiento.machs) {
+                if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
+            }
             guardarTodoEnLocalStorage();
             limpiarSesionCompleta();
             diaActivo = null;
@@ -201,7 +210,8 @@ async function importarBackup(file) {
                 patasActuales: new Map(),
                 empatePendiente: null,
                 historialManos: [],
-                historialGanadores: []
+                historialGanadores: [],
+                fechaHoraInicio: null
             };
             
             if (document.getElementById('vistaConfig')) {
@@ -244,7 +254,7 @@ function validarConsistenciaMachs() {
     return correcciones;
 }
 
-// ==================== PUNTO 5: LÍMITE DE 5 PATAS POR MACH ====================
+// ==================== LÍMITE DE 5 PATAS POR MACH ====================
 function calcularPatasConTope(ganadorId, patasBase, multiplicadorEmpate) {
     const patasBrutas = patasBase * Math.pow(2, multiplicadorEmpate);
     const patasActuales = estadoMachActual.patasActuales.get(ganadorId) || 0;
@@ -259,7 +269,7 @@ function calcularPatasConTope(ganadorId, patasBase, multiplicadorEmpate) {
     }
 }
 
-// ==================== PUNTO 13: PLACEHOLDER DINÁMICO ====================
+// ==================== PLACEHOLDER DINÁMICO ====================
 function renderInputsJugadores() {
     const jugadoresInputsContainer = document.getElementById('jugadoresInputsContainer');
     if(!jugadoresInputsContainer) return;
@@ -289,12 +299,11 @@ function agregarListenersInputs() {
     }
 }
 
-// ==================== ACCESO OCULTO A ADMIN (CONTRASEÑA "administrador") ====================
+// ==================== ACCESO OCULTO A ADMIN ====================
 let tapCount = 0;
 let tapTimer = null;
 
 function iniciarDeteccionAccesoAdmin() {
-    // Método 1: URL con parámetro
     if (window.location.search.includes('admin=true')) {
         const pwd = prompt("🔐 Contraseña de administrador:");
         if (pwd === "administrador") {
@@ -305,7 +314,6 @@ function iniciarDeteccionAccesoAdmin() {
         return;
     }
     
-    // Método 2: 5 taps en el marcador de puntos del jugador 1
     const detectarTaps = () => {
         const marcadorJ1 = document.querySelector('.tarjeta-jugador .patas');
         if (marcadorJ1) {
@@ -330,7 +338,6 @@ function iniciarDeteccionAccesoAdmin() {
     const observer = new MutationObserver(() => detectarTaps());
     observer.observe(document.body, { childList: true, subtree: true });
     
-    // Método 3: Enlace oculto en créditos (clic en "Richard")
     setTimeout(() => {
         const creditosDiv = document.querySelector('.creditos');
         if (creditosDiv) {
@@ -357,7 +364,7 @@ function iniciarDeteccionAccesoAdmin() {
     }, 500);
 }
 
-// ==================== PUNTO 4: MENSAJE DE EMPATE PERSISTENTE ====================
+// ==================== MENSAJE DE EMPATE PERSISTENTE ====================
 function actualizarAvisoEmpate() {
     const avisoEmpateDiv = document.getElementById('avisoEmpate');
     if(avisoEmpateDiv) {
@@ -372,7 +379,7 @@ function actualizarAvisoEmpate() {
     }
 }
 
-// ==================== MODAL DE SALIR DEL JUEGO (NUEVA LÓGICA) ====================
+// ==================== MODAL DE SALIR DEL JUEGO ====================
 function mostrarModalCerrarDia() {
     const modalSalir = document.createElement('div');
     modalSalir.className = 'modal';
@@ -422,7 +429,8 @@ function mostrarModalCerrarDia() {
             patasActuales: new Map(),
             empatePendiente: null,
             historialManos: [],
-            historialGanadores: []
+            historialGanadores: [],
+            fechaHoraInicio: null
         };
         
         document.getElementById('vistaConfig').style.display = 'block';
@@ -449,7 +457,7 @@ function mostrarModalCerrarDia() {
     };
 }
 
-// ==================== SORTEO E INICIAR (CORREGIDO) ====================
+// ==================== SORTEO E INICIAR (con inicio de tiempo) ====================
 function tirarDado() { return Math.floor(Math.random() * 6) + 1; }
 
 function resolverEmpates(jugadoresConDados) {
@@ -586,7 +594,8 @@ async function sortearEIniciar() {
         patasActuales: new Map(),
         empatePendiente: null,
         historialManos: [],
-        historialGanadores: []
+        historialGanadores: [],
+        fechaHoraInicio: new Date().toISOString()
     };
     jugadoresActuales.forEach(j => { if(j.jugadorId) estadoMachActual.patasActuales.set(j.jugadorId, 0); });
     ultimaJugadaFueAgua = false;
@@ -634,7 +643,33 @@ function reasignarTodosLosEventos() {
         btnAyuda.onclick = () => {
             const modalAyuda = document.getElementById('modalAyuda');
             const contenidoAyuda = document.getElementById('contenidoAyuda');
-            if(contenidoAyuda) contenidoAyuda.innerHTML = manualHTML;
+            if (contenidoAyuda) {
+                contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem;">Cargando manual...</div>';
+                fetch('manual_pintintin.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        contenidoAyuda.innerHTML = html;
+                        const links = contenidoAyuda.querySelectorAll('a[href="#"]');
+                        links.forEach(link => {
+                            const onclickAttr = link.getAttribute('onclick');
+                            if (onclickAttr) {
+                                const idMatch = onclickAttr.match(/scrollToSection\('([^']+)'\)/);
+                                if (idMatch) {
+                                    const id = idMatch[1];
+                                    link.onclick = (e) => {
+                                        e.preventDefault();
+                                        const target = contenidoAyuda.querySelector(`#${id}`);
+                                        if (target) target.scrollIntoView({ behavior: 'smooth' });
+                                    };
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error cargando manual:', err);
+                        contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">❌ Error al cargar el manual. Verifica tu conexión.</div>';
+                    });
+            }
             if(modalAyuda) modalAyuda.style.display = 'flex';
         };
     }
@@ -642,7 +677,7 @@ function reasignarTodosLosEventos() {
     renderizarJugadores();
 }
 
-// --- FUNCIONES AUXILIARES ---
+// --- FUNCIONES AUXILIARES (sin cambios relevantes) ---
 function obtenerOJugador(nombre) {
     nombre = nombre.trim();
     let existente = almacenamiento.jugadores.find(j => j.nombre.toLowerCase() === nombre.toLowerCase());
@@ -740,7 +775,7 @@ function actualizarVisibilidadBotones() {
     }
 }
 
-// --- GESTIÓN DE JUGADORES ---
+// --- GESTIÓN DE JUGADORES (sin cambios) ---
 async function gestionarJugador() {
     if(!diaActivo) { alert("Primero inicia un día"); return; }
     const jugadoresActivos = contarJugadoresActivos();
@@ -947,6 +982,7 @@ function mostrarModalSalida(jugador) {
     modalSalida.onclick = (e) => { if (e.target === modalSalida) document.body.removeChild(modalSalida); };
 }
 
+// ==================== MOSTRAR HISTORIAL (completo) ====================
 function mostrarHistorialGanadores() {
     if (!diaActivo) {
         alert("No hay un día activo");
@@ -980,13 +1016,13 @@ function mostrarHistorialGanadores() {
         else formaMostrada = item.forma;
         const machOrdinal = item.machNumero + 'º';
         html += `<tr>
-                    <td>${idx+1}</td>
-                    <td>${escapeHtml(item.nombre)}</td>
-                    <td>${formaMostrada}</td>
-                    <td>${item.patasGanadas}</td>
-                    <td>${machOrdinal}</td>
-                    <td>${hora}</td>
-                </tr>`;
+            <td>${idx+1}</td>
+            <td>${escapeHtml(item.nombre)}</td>
+            <td>${formaMostrada}</td>
+            <td class="text-center">${item.patasGanadas}</td>
+            <td class="text-center">${machOrdinal}</td>
+            <td class="text-center">${hora}</td>
+        </tr>`;
     });
     html += `
                 </tbody>
@@ -1220,7 +1256,19 @@ async function verificarFinMach(ganadorId) {
         for(let j of jugadoresActuales) if(j.jugadorId && j.jugadorId !== ganadorId && (estadoMachActual.patasActuales.get(j.jugadorId) || 0) > 0) esPollona = false;
         let participantesMach = [];
         for(let j of jugadoresActuales) participantesMach.push({ jugadorId: j.jugadorId, nombre: j.nombre || `Silla ${j.posicion} Vacía`, patasFinales: j.jugadorId ? (estadoMachActual.patasActuales.get(j.jugadorId) || 0) : 0 });
-        almacenamiento.machs.push({ id: almacenamiento.machs.length+1, diaId: diaActivo.id, numeroMach: estadoMachActual.numero, fechaHora: new Date().toISOString(), ganadorId, participantes: participantesMach, manos: JSON.parse(JSON.stringify(estadoMachActual.historialManos)) });
+        
+        // Guardar mach con fechaHoraInicio y fechaHora (fin)
+        almacenamiento.machs.push({ 
+            id: almacenamiento.machs.length+1, 
+            diaId: diaActivo.id, 
+            numeroMach: estadoMachActual.numero, 
+            fechaHora: new Date().toISOString(),
+            fechaHoraInicio: estadoMachActual.fechaHoraInicio,   // NUEVO
+            ganadorId, 
+            participantes: participantesMach, 
+            manos: JSON.parse(JSON.stringify(estadoMachActual.historialManos)) 
+        });
+        
         for(let j of jugadoresActuales) {
             if(!j.jugadorId) continue;
             let part = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === j.jugadorId);
@@ -1249,7 +1297,10 @@ async function verificarFinMach(ganadorId) {
         guardarTodoEnLocalStorage();
         const ganadorMachMsg = document.getElementById('ganadorMachMsg');
         if(ganadorMachMsg) ganadorMachMsg.innerText = `🎉 ¡MACH para ${ganadorNombre} con ${patasGanador} patas!${esPollona ? ' 🐔 ¡POLLONA!' : ''}`;
+        
+        // Incrementar número de mach y reiniciar hora de inicio para el siguiente mach
         estadoMachActual.numero++;
+        estadoMachActual.fechaHoraInicio = new Date().toISOString();   // NUEVO: hora de inicio del siguiente mach
         estadoMachActual.patasActuales.clear();
         jugadoresActuales.forEach(j => { if(j.jugadorId) estadoMachActual.patasActuales.set(j.jugadorId, 0); });
         estadoMachActual.historialManos = [];
@@ -1264,7 +1315,6 @@ async function verificarFinMach(ganadorId) {
     }
     guardarSesionCompleta();
 }
-
 // ==================== NUEVA LÓGICA DE EMPATE ====================
 function procesarEmpateConAguaYSalida(jugadoresEmpatadosIds) {
     const jugadoresActivos = jugadoresActuales.filter(j => j.jugadorId !== null);
@@ -1768,648 +1818,12 @@ function getFechaLocal() {
     return `${año}-${mes}-${dia}`;
 }
 
-// ==================== MANUAL DE USUARIO (ACTUALIZADO v5.0.2 - VERSIÓN EXTENSA) ====================
-const manualHTML = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual de Usuario - Dominó Pintintín v5.0.2</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            background: #f1f5f9;
-            padding: 2rem;
-            line-height: 1.6;
-            color: #1e293b;
-        }
-        .manual-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 2rem;
-        }
-        h1 {
-            color: #1e293b;
-            text-align: center;
-            border-bottom: 3px solid #8b5cf6;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .subtitulo {
-            text-align: center;
-            color: #475569;
-            margin-bottom: 2rem;
-        }
-        .version-badge {
-            display: inline-block;
-            background: #8b5cf6;
-            color: white;
-            padding: 0.2rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            margin-left: 0.5rem;
-        }
-        .creador {
-            text-align: center;
-            background: #e0e7ff;
-            padding: 1rem;
-            border-radius: 1rem;
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
-        .creador span {
-            color: #8b5cf6;
-            cursor: pointer;
-            text-decoration: underline;
-            font-weight: bold;
-        }
-        h2 {
-            color: #334155;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid #8b5cf6;
-            padding-left: 1rem;
-        }
-        h3 {
-            color: #475569;
-            margin-top: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            font-size: 0.85rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        th, td {
-            border: 1px solid #cbd5e1;
-            padding: 0.5rem;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background: #e2e8f0;
-            font-weight: bold;
-        }
-        ul, ol {
-            margin: 0.5rem 0 1rem 1.5rem;
-        }
-        li {
-            margin: 0.3rem 0;
-        }
-        code {
-            background: #f1f5f9;
-            padding: 0.2rem 0.4rem;
-            border-radius: 0.3rem;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-        .footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #64748b;
-            border-top: 1px solid #e2e8f0;
-        }
-        .badge {
-            display: inline-block;
-            background: #8b5cf6;
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 1rem;
-            font-size: 0.7rem;
-            margin-right: 0.5rem;
-        }
-        .badge-nuevo {
-            background: #10b981;
-        }
-        .badge-warning {
-            background: #dc2626;
-        }
-        .ejemplo {
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin: 1rem 0;
-            border-left: 4px solid #8b5cf6;
-        }
-        .indice {
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            columns: 2;
-            column-gap: 2rem;
-        }
-        .indice a {
-            text-decoration: none;
-            color: #4f46e5;
-        }
-        .indice a:hover {
-            text-decoration: underline;
-        }
-        .nota {
-            background: #fef9c3;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            margin: 0.5rem 0;
-            font-size: 0.85rem;
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-            .manual-container {
-                padding: 1rem;
-            }
-            .indice {
-                columns: 1;
-            }
-        }
-    </style>
-</head>
-<body>
-<div class="manual-container">
-    <h1>📖 MANUAL DE USUARIO <span class="version-badge">Versión 5.0.2</span></h1>
-    <div class="subtitulo">🀰 DOMINÓ PINTINTÍN - Aplicación para Campeonato de Dominó (4 jugadores individuales)</div>
-    <div class="creador">
-        <strong>Creado por:</strong> Ricardo Castillo (<span id="manualAdminLink">Richard</span>)<br>
-        <strong>Ubicación:</strong> La Demajagua, Isla de la Juventud, Cuba<br>
-        <strong>Versión actual:</strong> 5.0.2 - "Restauración de partida CORREGIDA y acceso oculto a admin"
-    </div>
-
-    <script>
-        setTimeout(() => {
-            const link = document.getElementById('manualAdminLink');
-            if (link) {
-                link.style.cursor = 'pointer';
-                link.style.color = '#8b5cf6';
-                link.style.textDecoration = 'underline';
-                link.onclick = () => {
-                    const pwd = prompt("🔐 Contraseña de administrador:");
-                    if (pwd === "administrador") window.location.href = "admin.html";
-                    else alert("Contraseña incorrecta");
-                };
-            }
-        }, 100);
-    </script>
-
-    <h2>📋 ÍNDICE GENERAL</h2>
-    <div class="indice">
-        <ol>
-            <li><a href="#intro">Introducción y filosofía del juego</a></li>
-            <li><a href="#novedades502">🎉 Novedades de la versión 5.0.2</a></li>
-            <li><a href="#historia">Historia y evolución del Pintintín (por qué jugamos individual)</a></li>
-            <li><a href="#versiones">Historial de versiones</a></li>
-            <li><a href="#pwa">¿Qué es una PWA? Ventajas</a></li>
-            <li><a href="#instalacion">Instalación de la aplicación</a></li>
-            <li><a href="#reglas">Reglas del juego (explicación detallada)</a></li>
-            <li><a href="#inicio">Pantalla de inicio (Configuración)</a></li>
-            <li><a href="#sorteo">Sorteo de posiciones (con ejemplos)</a></li>
-            <li><a href="#juego">Pantalla de juego y sus elementos</a></li>
-            <li><a href="#ganadores">👑 Identificación de ganadores (último y penúltimo)</a></li>
-            <li><a href="#historial">📜 Historial de ganadores (manos y empates)</a></li>
-            <li><a href="#empate">Declarar empate – Paso a paso</a></li>
-            <li><a href="#agua-empate">💧 Asignación de agua después del empate</a></li>
-            <li><a href="#gestion">Gestión de jugadores (añadir, sustituir, retirar)</a></li>
-            <li><a href="#pata">Registro de una pata – Flujo completo</a></li>
-            <li><a href="#pase-mano">Pase de mano automático (cómo funciona)</a></li>
-            <li><a href="#estadisticas">Estadísticas (del día, globales, exportación)</a></li>
-            <li><a href="#graficas">📈 Módulo de gráficas interactivas</a></li>
-            <li><a href="#machsPorDia">📋 Ver Machs por Día – Explicación detallada</a></li>
-            <li><a href="#empatesStats">Estadísticas de Empates y Patas por Empate</a></li>
-            <li><a href="#limitePatas">⚠️ Límite de 5 patas por mach (casos prácticos)</a></li>
-            <li><a href="#autocompletado">Autocompletado de nombres</a></li>
-            <li><a href="#backup">Respaldo de datos (automático y manual)</a></li>
-            <li><a href="#persistencia">Persistencia y continuación de partidas</a></li>
-            <li><a href="#admin">Panel de administración – Funciones avanzadas</a></li>
-            <li><a href="#adminAcceso">🔐 Acceso oculto al Panel de Administración</a></li>
-            <li><a href="#borrar">Borrar todos los datos (con contraseña)</a></li>
-            <li><a href="#ayuda">Ayuda integrada (botón ❓)</a></li>
-            <li><a href="#problemas">Solución de problemas comunes</a></li>
-            <li><a href="#faq">Preguntas frecuentes (más de 20 preguntas)</a></li>
-            <li><a href="#creditos">Créditos y agradecimientos</a></li>
-        </ol>
-    </div>
-
-    <!-- ==================== SECCIONES DETALLADAS ==================== -->
-
-    <h2 id="intro">1. INTRODUCCIÓN Y FILOSOFÍA DEL JUEGO</h2>
-    <p><strong>Dominó Pintintín</strong> es una aplicación diseñada específicamente para <strong>campeonatos de dominó individual</strong> (4 jugadores, cada uno juega para sí mismo). Nace en la peña de dominó de La Demajagua, Isla de la Juventud, Cuba, donde se juega con reglas propias: "agache", "botar gorda", "sin respeto de reglas". La aplicación automatiza el registro de puntos, patas, machs, forros, aguas, pases de mano y empates, permitiendo a los jugadores concentrarse en el juego.</p>
-    <p>La app es una <strong>PWA (Progressive Web App)</strong>, por lo que puede instalarse en el móvil y funciona sin conexión a internet después de la primera carga. También es totalmente responsive, adaptándose a cualquier tamaño de pantalla.</p>
-    <div class="nota">📌 <strong>Filosofía:</strong> "El dominó no se juega con las manos, se juega con la cabeza". La aplicación está pensada para ser justa, rápida y transparente, con trazabilidad completa de cada mano.</div>
-
-    <h2 id="novedades502">🎉 2. NOVEDADES DE LA VERSIÓN 5.0.2</h2>
-    <table>
-        <thead><tr><th>Característica</th><th>Descripción</th></tr></thead>
-        <tbody>
-            <tr><td><strong>🐛 Restauración de partida CORREGIDA</strong></td><td>Al hacer clic en "Continuar partida guardada" ahora carga correctamente los jugadores y el estado del juego, sin pedir nombres nuevos. Ya no aparece el error "Debe haber al menos 2 jugadores".</td></tr>
-            <tr><td><strong>🚪 Nueva lógica de salida</strong></td><td>El modal ahora se llama "Salir del juego". Si marcas "Conservar partida", sales sin cerrar el día (el día sigue activo y la sesión se guarda). Si lo desmarcas, se cierra el día definitivamente (activo=0) y se descarta la partida.</td></tr>
-            <tr><td><strong>🔐 Acceso oculto a admin mejorado</strong></td><td>Ahora se pide contraseña <strong>"administrador"</strong> (palabra completa) para acceder a admin.html. Dentro del panel, la contraseña sigue siendo <code>admin</code> (doble autenticación). También hay un enlace en los créditos (el nombre "Richard").</td></tr>
-            <tr><td><strong>📊 Tablas de administración corregidas</strong></td><td>La tabla de machs en el panel de admin muestra los datos correctamente alineados en sus columnas. El reporte general ordena por machs ganados (descendente) y luego por patas netas.</td></tr>
-            <tr><td><strong>📋 Ver Machs por Día mejorado</strong></td><td>Los resúmenes ya no incluyen sillas vacías (solo jugadores reales). Nombres alineados a la izquierda y botones centrados. Tabla responsive.</td></tr>
-            <tr><td><strong>⚠️ Límite de 5 patas por mach</strong></td><td>Si un jugador ganaría más de 5 patas en una mano, solo recibe las necesarias para llegar a 5. El excedente no se contabiliza para el mach (aunque se refleja en patas por empate).</td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="historia">3. HISTORIA Y EVOLUCIÓN DEL PINTINTÍN (POR QUÉ JUGAMOS INDIVIDUAL)</h2>
-    <p>El nombre <strong>"Pintintín"</strong> surge de una expresión local en la peña de La Demajagua. El dominó tradicional se juega por parejas, y aunque es muy divertido, a menudo nos encontrábamos con un problema: <strong>la diferencia de nivel entre los jugadores</strong> es tan grande que al formar las parejas, el resultado solía ser muy desequilibrado. Los jugadores más experimentados se frustraban porque debían “cargar” a sus compañeros menos hábiles, y los principiantes se sentían presionados o menospreciados. Esto hacía que la partida no fuera realmente competitiva ni agradable para todos.</p>
-    <p>Fue entonces que decidimos <strong>adoptar la modalidad individual</strong>. Cada jugador juega para sí mismo, sin depender de un compañero. Esta variante:</p>
-    <ul>
-        <li><strong>Elimina las desigualdades de pareja:</strong> Ya no importa quién es más fuerte o más débil; cada uno es responsable de su propia estrategia y suerte.</li>
-        <li><strong>Es más participativa e inclusiva:</strong> Pueden jugar niños, niñas, mujeres, hombres y personas mayores, todos al mismo nivel de exigencia. No hay presión por “defraudar” a un compañero.</li>
-        <li><strong>Fomenta la diversión familiar:</strong> En reuniones familiares, cualquier combinación de personas puede sentarse a jugar sin tener que preocuparse por equilibrar las parejas.</li>
-        <li><strong>Mantiene la esencia competitiva:</strong> Cada jugador busca ganar por sí mismo, lo que hace el juego más intenso y emocionante.</li>
-    </ul>
-    <p>Así nació <strong>Dominó Pintintín</strong>: una aplicación que registra automáticamente todo lo que sucede en esta modalidad individual, liberando a los jugadores de las anotaciones manuales y permitiéndoles concentrarse en el placer del juego.</p>
-
-    <h2 id="versiones">4. HISTORIAL DE VERSIONES</h2>
-    <table>
-        <thead><tr><th>Versión</th><th>Fecha</th><th>Novedades principales</th></tr></thead>
-        <tbody>
-            <tr><td>1.0</td><td>8/5/2026</td><td>Registro básico de patas, machs, forros y aguas.</td></tr>
-            <tr><td>2.0</td><td>11/5/2026</td><td>PWA, persistencia de datos, respaldos automáticos.</td></tr>
-            <tr><td>3.0</td><td>14/5/2026</td><td>Estadísticas completas: capicuas, cierres, pegados, pase de mano.</td></tr>
-            <tr><td>3.5</td><td>26/5/2026</td><td>Estadísticas de empates.</td></tr>
-            <tr><td>4.0</td><td>28/5/2026</td><td>🧩 Patas por Empate, autocompletado, backups, 💧 agua automática.</td></tr>
-            <tr><td>4.5</td><td>29/5/2026</td><td>📈 Gráficas, 👑 identificación de ganadores.</td></tr>
-            <tr><td>4.5.1</td><td>30/5/2026</td><td>📜 Historial de ganadores del día.</td></tr>
-            <tr><td>4.5.7</td><td>31/5/2026</td><td>Modal cerrar día con opción de conservar partida.</td></tr>
-            <tr><td>4.6.1</td><td>31/5/2026</td><td>Tablas corregidas, nuevo botón "Ver machs por día".</td></tr>
-            <tr><td>5.0.0</td><td>31/5/2026</td><td>⚠️ Límite de 5 patas por mach, ver machs por día mejorado, acceso oculto a admin.</td></tr>
-            <tr><td>5.0.1</td><td>1/6/2026</td><td>Corrección de continuación de partida (parcial).</td></tr>
-            <tr><td><strong>5.0.2</strong></td><td><strong>1/6/2026</strong></td><td><strong>Restauración definitiva, nueva lógica de salida, doble contraseña para admin, correcciones visuales en tablas.</strong></td></tr>
-        </tbody>
-    </table>
-
-    <h2 id="pwa">5. ¿QUÉ ES UNA PWA? VENTAJAS</h2>
-    <p>Una PWA (Progressive Web App) es una aplicación web que se comporta como una nativa. Ventajas:</p>
-    <ul>
-        <li><strong>Instalable</strong> en la pantalla de inicio del móvil sin pasar por una tienda de aplicaciones.</li>
-        <li><strong>Funciona offline</strong> (después de la primera carga).</li>
-        <li><strong>Actualizaciones automáticas</strong> (el Service Worker cachea los nuevos archivos).</li>
-        <li><strong>Segura</strong> (sirve a través de HTTPS en producción).</li>
-    </ul>
-    <p>Para instalarla en Android con Chrome, toca el menú de tres puntos y selecciona "Instalar aplicación" o "Agregar a pantalla de inicio".</p>
-
-    <h2 id="instalacion">6. INSTALACIÓN DE LA APLICACIÓN</h2>
-    <h3>En tu móvil Android (recomendado)</h3>
-    <ol>
-        <li>Abre la aplicación en <strong>Chrome</strong> (si la tienes alojada en un servidor HTTPS o en localhost).</li>
-        <li>Toca los tres puntos ⋮ en la esquina superior derecha.</li>
-        <li>Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Agregar a pantalla de inicio"</strong>.</li>
-        <li>Confirma el nombre "Dominó Pintintín".</li>
-        <li>La app quedará instalada como una nativa y funcionará sin internet.</li>
-    </ol>
-    <h3>Generar APK para distribución</h3>
-    <p>Sube la app a un servidor HTTPS (GitHub Pages, Netlify), luego ve a <a href="https://pwabuilder.com" target="_blank">PWABuilder</a>, ingresa la URL y genera el APK.</p>
-    <h3>En PC (navegador)</h3>
-    <p>Solo abre el enlace y comienza a jugar. La interfaz es responsive y se adapta al tamaño de pantalla.</p>
-
-    <h2 id="reglas">7. REGLAS DEL JUEGO (EXPLICACIÓN DETALLADA)</h2>
-    <p>El dominó individual se juega con 4 jugadores, cada uno con sus 7 fichas (o 5 en la variante de 55). El objetivo es sumar patas hasta alcanzar 5 patas en un "mach". Cada mano termina cuando un jugador coloca su última ficha o cuando se bloquea el juego y gana el que tenga menos puntos (pegado). También existe la capicua, que es una forma especial de pegado.</p>
-    
-    <h3>Conceptos clave</h3>
-    <ul>
-        <li><strong>🏆 Pata:</strong> Unidad de puntuación. Se otorga al ganador de una mano (1 por cierre o pegado, 2 por capicua).</li>
-        <li><strong>🧤 Forro:</strong> Penalización de 1 pata (se resta). Se asigna cuando un jugador comete una infracción o decide tomarlo voluntariamente.</li>
-        <li><strong>💧 Agua:</strong> Se asigna al jugador que revolvió las fichas después de una mano (no afecta las patas, solo se contabiliza en estadísticas).</li>
-        <li><strong>🎯 Pase de mano:</strong> Cuando un jugador cede su turno intencionalmente (pasa). El siguiente en sentido antihorario recibe el pase.</li>
-        <li><strong>⚖️ Empate:</strong> Se declara cuando dos o más jugadores quedan empatados en una situación (por ejemplo, ambos se quedan sin jugada al mismo tiempo). Acumula un multiplicador para la próxima mano.</li>
-        <li><strong>🏆 Mach:</strong> Conjunto de 5 patas. Cuando un jugador llega a 5, gana un mach y se reinician las patas a cero para todos.</li>
-        <li><strong>🐔 Pollona:</strong> Mach en el que ningún otro jugador sumó ninguna pata (el ganador hizo todas las patas del mach). Otorga un punto extra en estadísticas.</li>
-    </ul>
-
-    <h3>Formas de terminación de una mano</h3>
-    <table>
-        <thead><tr><th>Forma</th><th>Patas base</th><th>Descripción</th></tr></thead>
-        <tbody>
-            <tr><td>🚪 Cierre</td><td>1</td><td>Un jugador coloca su última ficha y termina la mano. Puede ser cualquier ficha, doble o no, siempre que encaje en la cabeza correspondiente.</td></tr>
-            <tr><td>🏃 Pegado (normal)</td><td>1</td><td>El juego se bloquea (nadie puede jugar) y gana el que tenga menos puntos en sus fichas restantes. También ocurre cuando un jugador, con una ficha que no es doble, solo tiene una opción de colocación (una sola cabeza) y al ponerla termina la partida.</td></tr>
-            <tr><td>🀰 Capicua (pegue especial)</td><td>2</td><td>Ocurre cuando un jugador, con una ficha <strong>que no es doble</strong>, puede colocarla por <strong>cualquiera de las dos cabezas</strong> del tablero (es decir, la ficha encaja tanto en la cabeza izquierda como en la derecha) y con esa jugada <strong>termina la partida</strong> (se queda sin fichas). Es una variante más difícil y se premia con 2 patas. Si la ficha fuera un doble, o solo encajara en una cabeza, se considera pegado normal (1 pata).</td></tr>
-        </tbody>
-    </table>
-    <div class="ejemplo">
-        <strong>📌 EJEMPLO DE CAPICUA:</strong> El tablero tiene cabezas con valores 3 y 5. Un jugador tiene la ficha [3-5] (que no es doble). Esta ficha puede colocarse tanto en la cabeza de 3 como en la de 5. Si el jugador la coloca y se queda sin fichas, <strong>es capicua</strong> y recibe 2 patas.<br>
-        <strong>📌 PEGADO NORMAL:</strong> Si la misma ficha [3-5] solo pudiera colocarse en una cabeza (por ejemplo, porque la otra cabeza no coincide), entonces sería un pegado normal y recibe 1 pata.
-    </div>
-
-    <h3>Efecto de los empates</h3>
-    <p>Cuando hay empates consecutivos sin que nadie gane una mano, el multiplicador se acumula: base × 2ⁿ donde n = número de empates. Ejemplo: si hay 2 empates seguidos, la próxima mano que gane alguno de los empatados le dará base × 4 patas.</p>
-    <div class="ejemplo">
-        <strong>📌 EJEMPLO DE EMPATES:</strong><br>
-        Jugadores: Tito, Richard, Osvaldo. Empate 1: Tito y Richard empatan (n=1). Acumulan 1. Luego otro empate (n=2). Luego Osvaldo gana con un cierre. Base=1, multiplicador 2²=4 → Osvaldo recibe 4 patas.
-    </div>
-
-    <h3>⚠️ Límite de 5 patas por mach (v5.0.2)</h3>
-    <p>Si el cálculo anterior arrojara más de 5 patas (ej: base=2, n=3 → 2×8=16), el jugador solo recibe las patas necesarias para llegar a 5 (si ya tenía 0, recibe 5; si tenía 2, recibe 3). El excedente no se contabiliza para el mach, pero se guarda en la estadística "Patas por Empate" a modo informativo. Esto evita que un mach se alargue artificialmente.</p>
-
-    <h2 id="inicio">8. PANTALLA DE INICIO (CONFIGURACIÓN)</h2>
-    <p>Al abrir la app, si no hay partida guardada o se ha cerrado el día, se muestra la pantalla de configuración.</p>
-    <h3>Campos y botones</h3>
-    <ul>
-        <li><strong>📅 Fecha:</strong> Por defecto la fecha actual. Se puede cambiar manualmente. Es importante para el registro histórico.</li>
-        <li><strong>👥 Jugadores:</strong> Cuatro campos. En un juego nuevo, los dos primeros son obligatorios (placeholder "Nombre (obligatorio)"), los otros opcionales. Si hay partida guardada, todos son "Nombre (opcional)".</li>
-        <li><strong>🎲 Sortear e iniciar:</strong> Botón principal (morado). Si existe partida guardada y no hay día activo, el botón se vuelve verde y dice "Continuar partida guardada".</li>
-        <li><strong>📊 Estadísticas globales:</strong> Abre una vista con todas las estadísticas históricas, con filtro de fechas y exportación.</li>
-        <li><strong>📈 Gráficas interactivas:</strong> Abre el módulo de gráficas.</li>
-        <li><strong>📋 Ver machs por día:</strong> Abre el módulo que lista los machs de una fecha seleccionada.</li>
-        <li><strong>⚠️ Borrar datos:</strong> Elimina toda la base de datos (pide contraseña <code>pintintin</code>).</li>
-        <li><strong>💾 Exportar respaldo:</strong> Descarga un JSON con todos los datos.</li>
-        <li><strong>📂 Importar respaldo:</strong> Permite cargar un JSON previamente exportado.</li>
-    </ul>
-    <div class="nota">📌 <strong>Consejo:</strong> Siempre exporta un respaldo antes de borrar datos o cerrar un día importante.</div>
-
-    <h2 id="sorteo">9. SORTEO DE POSICIONES (CON EJEMPLOS)</h2>
-    <p>El sorteo determina qué silla (1 a 4) ocupará cada jugador. Se simula una tirada de dados para cada jugador, se resuelven empates con nuevas tiradas, y luego se mezclan las sillas aleatoriamente.</p>
-    <div class="ejemplo">
-        <strong>🎲 EJEMPLO DE SORTEO:</strong><br>
-        Jugadores: Tito (dado 5), Richard (dado 3), Osvaldo (dado 5), El Niche (dado 2).<br>
-        - Empate entre Tito y Osvaldo: vuelven a tirar. Tito saca 6, Osvaldo 4 → orden: Tito, Osvaldo, Richard, El Niche.<br>
-        - Se mezclan las sillas: [3,1,4,2].<br>
-        - Asignación: Tito → silla 3, Osvaldo → silla 1, Richard → silla 4, El Niche → silla 2.<br>
-        El orden de juego (sentido antihorario) será: silla 1 (Osvaldo) → silla 4 (Richard) → silla 3 (Tito) → silla 2 (El Niche) → vuelta a silla 1.
-    </div>
-    <p><strong>Importante:</strong> El sorteo se hace en orden de las manecillas del reloj (para decidir la precedencia), pero <strong>el juego y los pases de mano se realizan en sentido antihorario</strong> (por convención del dominó). La aplicación respeta esta dinámica.</p>
-
-    <h2 id="juego">10. PANTALLA DE JUEGO Y SUS ELEMENTOS</h2>
-    <p>Una vez iniciado el día, se muestra la pantalla de juego con cuatro tarjetas (una por silla, aunque estén vacías). Cada tarjeta de jugador activo contiene:</p>
-    <ul>
-        <li><strong>🪑 Posición y nombre:</strong> Con un color distintivo. Si es el último ganador, aparece 👑; si es el penúltimo, 🥈.</li>
-        <li><strong>Patas actuales:</strong> Número grande. Es la cantidad de patas que lleva en el mach actual.</li>
-        <li><strong>Estadísticas mini:</strong> Íconos con valores del día: 🚪 Cierres, 🏃 Pegados, 🀰 Capicuas, 🐔 Pollonas, 🧤 Forros, 💧 Aguas, 🎯 PM Dados, 📥 PM Recibidos, ⚖️ Empates, 🏆⚖️ E. Ganados, 🧩 Patas por Empate.</li>
-        <li><strong>Botones:</strong> 🏆 Pata, 🧤 Forro, 🎯 Da PM.</li>
-    </ul>
-    <p><strong>Botones globales inferiores:</strong></p>
-    <ul>
-        <li><strong>⚖️ Declarar empate:</strong> Abre un modal para seleccionar los jugadores empatados.</li>
-        <li><strong>➕ Añadir jugador / 🔄 Sustituir jugador:</strong> Cambia según si hay sillas vacantes o ya están ocupadas las cuatro.</li>
-        <li><strong>➖ Salida de jugador:</strong> Retira a un jugador (mínimo 2 en mesa).</li>
-        <li><strong>📊 Estadísticas del día:</strong> Muestra una tabla con los acumulados del día actual.</li>
-        <li><strong>🌍 Estadísticas globales:</strong> Abre la vista de estadísticas históricas.</li>
-        <li><strong>🚪 Salir del juego:</strong> Abre modal para salir conservando o no la partida.</li>
-        <li><strong>❓ Ayuda:</strong> Botón flotante superior derecho.</li>
-        <li><strong>📜 Historial:</strong> Botón (a veces aparece en la fila de botones globales) que muestra el historial de manos y empates.</li>
-    </ul>
-
-    <h2 id="ganadores">👑 11. IDENTIFICACIÓN DE GANADORES (ÚLTIMO Y PENÚLTIMO)</h2>
-    <p>La aplicación mantiene un registro de los dos últimos ganadores de una pata (o salida por empate). Esto es crucial para saber quién comienza después de un empate (el siguiente al último ganador en sentido antihorario).</p>
-    <div class="ejemplo">
-        <strong>📌 SECUENCIA:</strong><br>
-        - Tito gana una pata → 👑 Tito, 🥈 (vacío).<br>
-        - Richard gana la siguiente pata → 👑 Richard, 🥈 Tito.<br>
-        - Osvaldo gana → 👑 Osvaldo, 🥈 Richard.<br>
-        - Se declara empate → el que comienza es el jugador siguiente a Osvaldo en sentido antihorario (por ejemplo, si Osvaldo está en silla 1, el siguiente en antihorario es silla 4). Ese jugador recibe la corona 👑 y el anterior 👑 pasa a 🥈.
-    </div>
-
-    <h2 id="historial">📜 12. HISTORIAL DE GANADORES (MANOS Y EMPATES)</h2>
-    <p>Al pulsar el botón 📜 (visible en la pantalla de juego), se abre un modal con una tabla que muestra todas las manos registradas en el día actual, incluyendo:</p>
-    <ul>
-        <li>Número de orden (#).</li>
-        <li>Jugador ganador o que salió por empate.</li>
-        <li>Motivo: Cierre, Pegado, Capicua o Empate.</li>
-        <li>Patas otorgadas (0 en caso de empate).</li>
-        <li>Número de mach en que ocurrió.</li>
-        <li>Hora exacta (timestamp).</li>
-    </ul>
-    <p>Esto permite reconstruir la partida y resolver disputas.</p>
-
-    <h2 id="empate">13. DECLARAR EMPATE – PASO A PASO</h2>
-    <ol>
-        <li>Pulsa el botón <strong>⚖️ Declarar empate</strong>.</li>
-        <li>En el modal, marca los <strong>checkboxes de los jugadores empatados</strong> (mínimo 2).</li>
-        <li>Pulsa <strong>Aceptar</strong>.</li>
-        <li>La aplicación incrementa los contadores de <strong>empates participados</strong> y <strong>empates acumulados</strong> de esos jugadores.</li>
-        <li>Luego asigna el agua (ver siguiente punto).</li>
-        <li>Determina quién comienza la partida (el jugador siguiente al último ganador en sentido antihorario) y muestra un modal.</li>
-        <li>Registra la salida en el historial como "Empate (comienza partida)".</li>
-        <li>Actualiza la corona 👑 al jugador que sale.</li>
-    </ol>
-    <div class="ejemplo">
-        <strong>🎯 CASO PRÁCTICO:</strong> Último ganador: Richard (silla 2). Sentido antihorario: sillas 2 → 1 → 4 → 3 → 2. Los jugadores empatados son Tito (silla 1) y Osvaldo (silla 4). El siguiente a Richard en antihorario es silla 1 (Tito). Por tanto, Tito sale a jugar y recibe la corona.
-    </div>
-
-    <h2 id="agua-empate">💧 14. ASIGNACIÓN DE AGUA DESPUÉS DEL EMPATE</h2>
-    <p>El agua (quien revuelve las fichas) se asigna automáticamente a un jugador que <strong>no esté empatado</strong>. La lógica es:</p>
-    <ul>
-        <li>Si hay un solo jugador no empatado, se le asigna el agua automáticamente.</li>
-        <li>Si hay varios, se abre un modal para que el usuario elija quién da agua.</li>
-        <li>Si todos los jugadores están empatados, no se asigna agua.</li>
-    </ul>
-    <p>El agua queda registrada en las estadísticas del jugador correspondiente (aumenta su contador de 💧 Aguas).</p>
-
-    <h2 id="gestion">15. GESTIÓN DE JUGADORES (AÑADIR, SUSTITUIR, RETIRAR)</h2>
-    <h3>➕ Añadir jugador</h3>
-    <p>Cuando hay sillas vacantes, el botón "➕ Añadir jugador" está visible. Al pulsarlo, se pide el nombre y se asigna a una silla vacante <strong>aleatoria</strong>. Se crea automáticamente una participación para ese jugador en el día actual (con todas las estadísticas a cero).</p>
-    <h3>🔄 Sustituir jugador</h3>
-    <p>Cuando ya hay 4 jugadores, el botón cambia a "🔄 Sustituir jugador". Pide la posición (1-4) a sustituir y el nombre del nuevo jugador. Reemplaza al anterior manteniendo la misma silla. Las estadísticas del nuevo jugador se inicializan a cero; las del sustituido se conservan en el historial pero ya no participa.</p>
-    <h3>➖ Salida de jugador</h3>
-    <p>Solo visible si hay al menos 3 jugadores activos. Permite retirar a un jugador (deja su silla vacante). Útil si un jugador abandona la partida. Mínimo 2 jugadores en la mesa.</p>
-
-    <h2 id="pata">16. REGISTRO DE UNA PATA – FLUJO COMPLETO</h2>
-    <ol>
-        <li>Pulsa <strong>🏆 Pata</strong> en la tarjeta del jugador que ganó la mano.</li>
-        <li>Selecciona la forma de terminación: 🚪 Cierre, 🏃 Pegado o 🀰 Capicua.</li>
-        <li>Si hay más de 2 jugadores, se abre modal para elegir quién da 💧 Agua. Si solo hay 2 jugadores, el agua se asigna automáticamente al otro.</li>
-        <li>La aplicación calcula las patas base (1 o 2) y aplica el multiplicador por empates acumulados (base × 2ⁿ).</li>
-        <li><strong>⚠️ Límite de 5 patas:</strong> Si las patas a sumar superan las necesarias para llegar a 5, se suman solo las necesarias. El excedente se descarta (pero se registra en patasPorEmpate).</li>
-        <li>Se actualizan las patas actuales del ganador y se registra la mano en el historial.</li>
-        <li>Se incrementan las estadísticas del ganador (cierres/pegados/capicuas según corresponda) y del que da agua (aguas).</li>
-        <li>Se actualizan las coronas (último y penúltimo ganador).</li>
-        <li>Si después de sumar las patas, el ganador alcanza 5 o más, se declara <strong>MACH</strong>:
-            <ul>
-                <li>Se guarda el mach en la base de datos con los participantes y sus patas finales.</li>
-                <li>Se actualizan las estadísticas de los jugadores (machs ganados, patas netas, etc.) y se verifica si fue pollona (ningún otro sumó patas).</li>
-                <li>Se reinician las patas de todos a 0 y se incrementa el número de mach en uno.</li>
-                <li>Se muestra un mensaje de felicitación durante 4 segundos.</li>
-            </ul>
-        </li>
-    </ol>
-    <div class="ejemplo">
-        <strong>🎯 EJEMPLO CON LÍMITE DE 5:</strong><br>
-        Situación: Tito tiene 2 patas, empates acumulados = 2, gana una capicua (base=2).<br>
-        Patas brutas = 2 × 2² = 8. Necesita 3 patas para llegar a 5. Solo recibe 3 patas. Alcanza el mach. Las 5 patas excedentes no se contabilizan para este mach.
-    </div>
-
-    <h2 id="pase-mano">17. PASE DE MANO AUTOMÁTICO (CÓMO FUNCIONA)</h2>
-    <p>El pase de mano se registra pulsando <strong>🎯 Da PM</strong> en el jugador que da el pase. El sistema automáticamente:</p>
-    <ul>
-        <li>Determina el siguiente jugador activo en <strong>sentido antihorario</strong> (1→4→3→2→1) saltando sillas vacías.</li>
-        <li>Incrementa el contador de "PM Dados" del dador y "PM Recibidos" del receptor.</li>
-        <li>Registra el evento en el historial de manos (tipo 'paseMano').</li>
-        <li>Muestra un mensaje emergente indicando quién dio y quién recibió el pase.</li>
-    </ul>
-    <p>Si no hay receptor (por ejemplo, solo un jugador activo), solo se registra el pase dado.</p>
-
-    <h2 id="estadisticas">18. ESTADÍSTICAS (DEL DÍA, GLOBALES, EXPORTACIÓN)</h2>
-    <h3>Estadísticas del día</h3>
-    <p>Muestra una tabla con los acumulados del día actual, incluyendo patas del mach en curso. Se puede alternar entre vista normal (jugadores como filas) y transpuesta (indicadores como filas) mediante el botón 🔄.</p>
-    <h3>Estadísticas globales</h3>
-    <p>Permite filtrar por rango de fechas (desde/hasta) y ver los acumulados de todos los machs en ese período. También incluye un <strong>resumen general</strong> (todos los días) y una tabla por día. Se pueden exportar los datos a CSV (compatible con Excel) o a PDF (usando jsPDF).</p>
-    <h3>Botón de exportación</h3>
-    <ul>
-        <li><strong>CSV:</strong> Exporta una tabla con columnas: Fecha, Mach #, Ganador. Útil para análisis externo.</li>
-        <li><strong>PDF:</strong> Genera un documento con la misma tabla (requiere la librería jsPDF).</li>
-    </ul>
-
-    <h2 id="graficas">📈 19. MÓDULO DE GRÁFICAS INTERACTIVAS</h2>
-    <p>Acceso desde el botón <strong>📈 Gráficas interactivas</strong> en la pantalla de configuración. Características:</p>
-    <ul>
-        <li><strong>Filtro por fechas:</strong> Se cargan automáticamente la primera y última fecha con datos.</li>
-        <li><strong>Selección de jugadores:</strong> Lista ordenada por rendimiento (más machs, más patas, etc.) con checkbox para incluir/excluir.</li>
-        <li><strong>Tipo de gráfico:</strong> Líneas, Barras (múltiples indicadores), Radar, Pastel, Polar.</li>
-        <li><strong>Indicadores:</strong> Todos los disponibles (Machs, Patas netas, Pollonas, Capicuas, Cierres, Pegados, Forros, Aguas, PM Dados, PM Recibidos, Empates, E. Ganados, Patas por Empate).</li>
-        <li><strong>Gráfico de barras:</strong> Permite seleccionar múltiples indicadores (por defecto: Machs, Patas, Aguas).</li>
-        <li><strong>Exportación:</strong> Imagen PNG del gráfico o CSV con los datos subyacentes.</li>
-    </ul>
-    <p>Al volver al juego (<strong>← Volver al juego</strong>), la aplicación restaura la partida automáticamente (si había una).</p>
-
-    <h2 id="machsPorDia">📋 20. VER MACHS POR DÍA – EXPLICACIÓN DETALLADA</h2>
-    <p>Este módulo (acceso desde el botón <strong>📋 Ver machs por día</strong>) permite consultar el historial de machs de una fecha concreta. Interfaz:</p>
-    <ul>
-        <li><strong>Selector de fechas:</strong> Solo aparecen días que tienen al menos un mach registrado. No muestra la etiqueta "(activo)" para evitar confusiones.</li>
-        <li><strong>Botón "Ver machs del día":</strong> Carga la tabla y los resúmenes.</li>
-        <li><strong>Botón "Exportar CSV":</strong> Descarga los machs mostrados en formato CSV (con columnas: N° Mach, Ganador, Participantes).</li>
-        <li><strong>Tabla principal:</strong> Muestra cada mach con su número, ganador y lista de participantes (incluyendo sillas vacías si las hubo) con sus patas finales. La tabla tiene scroll horizontal para móviles.</li>
-        <li><strong>Resumen del día:</strong> Tabla con los <strong>jugadores reales</strong> (excluye sillas vacías) mostrando machs ganados y patas totales en ese día. Nombres alineados a la izquierda.</li>
-        <li><strong>Resumen acumulado general:</strong> Similar al anterior pero sumando todos los días (toda la historia de la base de datos).</li>
-    </ul>
-    <div class="nota">📌 Esta herramienta es muy útil para revisar el desempeño de los jugadores en jornadas pasadas o para preparar estadísticas de un torneo.</div>
-
-    <h2 id="empatesStats">21. ESTADÍSTICAS DE EMPATES Y PATAS POR EMPATE</h2>
-    <ul>
-        <li><strong>⚖️ Empates:</strong> Número de veces que el jugador ha participado en un empate (se incrementa cada vez que se declara un empate y el jugador está seleccionado).</li>
-        <li><strong>🏆⚖️ E. Ganados:</strong> Número de veces que el jugador ha ganado una mano <strong>estando en empate</strong> (es decir, con empates acumulados > 0).</li>
-        <li><strong>🧩 Patas por Empate:</strong> Total de patas <strong>extra</strong> ganadas por efecto de los empates. Se calcula como (patas realmente otorgadas - patas base). Si se aplicó el límite de 5 patas, el extra se calcula sobre las patas realmente sumadas. Por ejemplo, si un jugador tenía 2 patas, base=1, multiplicador=4 → patas brutas=4, pero solo necesitaba 3 para llegar a 5 → se le dan 3. El extra sería 3 - 1 = 2, no 3. Esto evita distorsiones.</li>
-    </ul>
-
-    <h2 id="limitePatas">⚠️ 22. LÍMITE DE 5 PATAS POR MACH – CASOS PRÁCTICOS</h2>
-    <p>Esta es una de las mejoras más importantes de la versión 5.0.2. Antes, un jugador podía ganar más de 5 patas en una sola mano, lo que rompía la definición de mach (5 patas). Ahora se aplica un tope.</p>
-    <div class="ejemplo">
-        <strong>📌 CASO 1:</strong> Jugador con 0 patas, gana una capicua (base=2) con 3 empates acumulados (multiplicador 8). Patas brutas = 16. Necesita 5 para llegar a mach. Recibe 5. El excedente (11) no se contabiliza. El mach se cierra inmediatamente.<br>
-        <strong>📌 CASO 2:</strong> Jugador con 3 patas, gana un cierre (base=1) con 2 empates (multiplicador 4). Patas brutas = 4. Necesita 2 para llegar a 5. Recibe 2. Alcanza el mach.<br>
-        <strong>📌 CASO 3:</strong> Jugador con 4 patas, gana un pegado (base=1) con 0 empates. Patas brutas = 1. Necesita 1 → recibe 1. Mach.
-    </div>
-    <p>El sistema muestra en la consola del navegador (para el administrador) un mensaje de "Excedente de X patas no contabilizadas". Las estadísticas de patas por empate reflejan el extra realmente otorgado.</p>
-
-    <h2 id="autocompletado">23. AUTOCOMPLETADO DE NOMBRES</h2>
-    <p>Los campos de entrada de jugadores utilizan un <code>&lt;datalist&gt;</code> que sugiere nombres de jugadores ya registrados en la base de datos. Si escribes un nombre nuevo, al iniciar el juego se crea automáticamente un nuevo jugador en la tabla de jugadores. Esto evita tener que agregarlos manualmente desde el panel de administración.</p>
-
-    <h2 id="backup">24. RESPALDO DE DATOS (AUTOMÁTICO Y MANUAL)</h2>
-    <h3>Respaldo automático</h3>
-    <p>Cada vez que se <strong>cierra un día definitivamente</strong> (saliendo sin conservar partida), la aplicación genera un archivo JSON con nombre <code>Pinti_v502_XXX.json</code> donde XXX es el día de la semana abreviado (lun, mar, mié, etc.). Si se juega el mismo día de la semana y se cierra otro día, el archivo se sobrescribe (solo se mantiene el último backup del día).</p>
-    <h3>Respaldo manual</h3>
-    <p>Botón <strong>💾 Exportar respaldo</strong> en la pantalla de configuración. Genera un archivo con la fecha exacta (<code>Pinti_v502_ddmmyy.json</code>). El botón <strong>📂 Importar respaldo</strong> permite cargar un archivo JSON previamente exportado y reemplaza toda la base de datos.</p>
-    <div class="nota">⚠️ La importación borra los datos actuales, así que asegúrate de hacer una copia de seguridad antes.</div>
-
-    <h2 id="persistencia">25. PERSISTENCIA Y CONTINUACIÓN DE PARTIDAS</h2>
-    <p>La aplicación guarda automáticamente el estado después de cada acción (pata, forro, pase, empate, etc.) en <code>localStorage</code>. Cuando se pulsa <strong>Salir del juego</strong> y se marca <strong>"Conservar partida para continuar después"</strong>, el día <strong>no se cierra</strong> (sigue activo) y la sesión completa se almacena. Al volver a abrir la app (o recargar la página), el botón principal se pondrá verde con el texto <strong>"🎲 Continuar partida guardada"</strong>. Al pulsarlo, se restaura el juego exactamente donde se dejó: mismos jugadores, mismas patas, mismo historial, misma corona, etc.</p>
-    <p>Si en lugar de conservar la partida se elige cerrar el día (desmarcando el checkbox), el día se marca como inactivo y se descarta la sesión; ya no se podrá continuar. Además, se genera un backup automático (como se explicó).</p>
-    <div class="nota">📌 <strong>Importante:</strong> Si cierras el navegador sin salir explícitamente (por ejemplo, por un cierre forzado), la partida se conserva igualmente porque la sesión se guarda constantemente. Al volver a abrir la app, se restaurará automáticamente (sin necesidad de pulsar el botón verde) porque detectará la partida guardada.</div>
-
-    <h2 id="admin">26. PANEL DE ADMINISTRACIÓN – FUNCIONES AVANZADAS</h2>
-    <p>El panel de administración (<code>admin.html</code>) es una herramienta poderosa para gestionar la base de datos. Requiere contraseña <code>admin</code> después de haber accedido por el método oculto.</p>
-    <h3>Pestañas disponibles</h3>
-    <ul>
-        <li><strong>📊 Machs:</strong> Lista todos los machs con opciones de:
-            <ul>
-                <li>🔍 Ver detalle: Muestra un modal con la información completa del mach (participantes, manos).</li>
-                <li>✏️ Cambiar ganador: Permite corregir el ganador del mach (solo entre los participantes).</li>
-                <li>🗑️ Eliminar: Borra solo el registro del mach (no afecta estadísticas).</li>
-                <li>🔥 Eliminar MACH completo: Borra el mach y <strong>resta</strong> las estadísticas de los jugadores (machs ganados, patas, etc.) para mantener la coherencia. Esta acción es peligrosa y pide confirmación adicional.</li>
-            </ul>
-        </li>
-        <li><strong>👥 Jugadores:</strong> CRUD completo (crear, editar, eliminar). Al eliminar un jugador, se borran automáticamente sus participaciones y los machs donde haya sido ganador.</li>
-        <li><strong>📅 Días:</strong> Gestión de días. Se puede activar/desactivar un día con un checkbox, forzar el cierre de un día (sin eliminar datos), o eliminar el día junto con todas sus participaciones y machs.</li>
-        <li><strong>📈 Participaciones:</strong> Permite editar todos los campos estadísticos de cada jugador por día. Es útil para corregir errores puntuales. También se pueden agregar participaciones manualmente.</li>
-        <li><strong>📊 Reporte General:</strong> Muestra totales acumulados con filtro por rango de fechas. Exportable a CSV. Los datos se ordenan automáticamente por machs ganados (descendente) y luego por patas netas.</li>
-    </ul>
-    <p>Además, hay botones de <strong>Exportar todos los datos (JSON)</strong>, <strong>Importar datos</strong>, <strong>Limpiar toda la base de datos</strong> y <strong>Verificar integridad</strong> (detecta y repara inconsistencias).</p>
-    <div class="nota">⚠️ El panel de administración es para usuarios avanzados. Cualquier cambio mal realizado puede corromper las estadísticas. Se recomienda hacer un respaldo antes de operar.</div>
-
-    <h2 id="adminAcceso">🔐 27. ACCESO OCULTO AL PANEL DE ADMINISTRACIÓN</h2>
-    <p>Para evitar que los jugadores comunes accedan al panel, se han implementado tres métodos ocultos, todos protegidos por la misma contraseña: <strong>"administrador"</strong> (en minúsculas, sin comillas).</p>
-    <ol>
-        <li><strong>Parámetro en URL:</strong> Añade <code>?admin=true</code> a la URL principal. Ejemplo: <code>index.html?admin=true</code>. Aparecerá un prompt pidiendo la contraseña. Si es correcta, redirige a <code>admin.html</code>. Una vez allí, se pedirá la contraseña <code>admin</code> del propio panel (doble autenticación).</li>
-        <li><strong>5 taps en el marcador de puntos:</strong> En la pantalla de juego, haz clic o toca <strong>5 veces rápidamente</strong> en el <strong>número grande de patas (🦶)</strong> del jugador 1 (la primera tarjeta). Aparecerá un prompt. Si introduces "administrador", irás al panel.</li>
-        <li><strong>Enlace en los créditos:</strong> En la pantalla de inicio (configuración), al final, en el texto "Creado por Ricardo Castillo (Richard)", el nombre <strong>Richard</strong> aparece subrayado en morado. Haz clic en él, escribe la contraseña y accederás al panel.</li>
-    </ol>
-    <p>Este sistema es lo suficientemente discreto para que los jugadores no lo descubran accidentalmente, pero accesible para el administrador del torneo.</p>
-
-    <h2 id="borrar">28. BORRAR TODOS LOS DATOS</h2>
-    <p>En la pantalla de configuración, el botón <strong>⚠️ Borrar datos</strong> permite eliminar por completo la base de datos. Para evitar pulsaciones accidentales, se pide una contraseña: <code>pintintin</code> (sin comillas). Tras confirmar, se recarga la página con todos los datos limpios.</p>
-    <div class="nota">🚨 Esta acción es irreversible. Siempre exporta un respaldo antes de borrar.</div>
-
-    <h2 id="ayuda">29. AYUDA INTEGRADA (BOTÓN ❓)</h2>
-    <p>En la esquina superior derecha de cualquier pantalla hay un botón flotante con un signo de interrogación. Al pulsarlo, se abre un <strong>modal</strong> que muestra este mismo manual de usuario completo, permitiendo consultar cualquier duda sin salir de la aplicación.</p>
-
-    <h2 id="problemas">30. SOLUCIÓN DE PROBLEMAS COMUNES</h2>
-    <ul>
-        <li><strong>El botón "Continuar partida guardada" no funciona o pide jugadores:</strong> En v5.0.2 está completamente solucionado. Si aún así ocurre, verifica que no hayas cerrado el día sin conservar. También puedes limpiar la caché del navegador (o desinstalar la PWA y reinstalarla).</li>
-        <li><strong>La pantalla se queda en blanco o no responde:</strong> Puede deberse a un error en el almacenamiento local. Abre la consola del navegador (F12) y busca errores. Prueba a borrar los datos desde el botón correspondiente (con contraseña).</li>
-        <li><strong>Las gráficas no muestran nada:</strong> Asegúrate de que haya al menos un mach registrado. Si no hay datos, el módulo muestra un mensaje de advertencia.</li>
-        <li><strong>No aparecen las coronas 👑 o 🥈:</strong> Debe haber al menos una mano ganada o un empate con salida. El sistema actualiza las coronas solo cuando ocurre una pata o un empate con salida.</li>
-        <li><strong>Las patas por empate (🧩) parecen incorrectas:</strong> Recuerda que solo reflejan el <strong>extra</strong> (patas sumadas menos la base). Además, si se aplicó el límite de 5, el extra se calcula sobre las patas realmente otorgadas, no sobre las brutas. Por tanto, puede ser menor de lo esperado.</li>
-        <li><strong>El agua tras empate no se asigna correctamente:</strong> Con esta versión, si hay un solo candidato se asigna automáticamente. Si hay varios, se abre un modal para elegir. Si no aparece, asegúrate de que el modal no esté bloqueado por el navegador.</li>
-        <li><strong>No puedo acceder al panel de administración:</strong> Prueba los tres métodos explicados. La contraseña es <strong>"administrador"</strong> (en minúsculas). Una vez dentro, la contraseña del panel es <code>admin</code>.</li>
-        <li><strong>La tabla de machs en el panel de admin se ve desordenada:</strong> En v5.0.2 se corrigió, pero si persiste, actualiza la página o limpia la caché. Verifica que el CSS tenga la clase <code>.tabla-responsive</code>.</li>
-    </ul>
-
-    <h2 id="faq">31. PREGUNTAS FRECUENTES (FAQ) – MÁS DE 20 PREGUNTAS</h2>
-    <ul>
-        <li><strong>¿Funciona sin internet?</strong> Sí, después de la primera carga como PWA.</li>
-        <li><strong>¿Puedo jugar con menos de 4 jugadores?</strong> Sí, con 2 o 3 jugadores. Las sillas vacías se muestran como "Vacante".</li>
-        <li><strong>¿Qué significa el ícono 🧩 Patas por Empate?</strong> Es el total de patas extra ganadas por efecto de empates (patas otorgadas menos la base).</li>
-        <li><strong>¿Cómo exporto las estadísticas a Excel?</strong> Usa el botón "📎 Exportar CSV" en las estadísticas globales. Luego abre el CSV con Excel (puede necesitar importar como texto UTF-8).</li>
-        <li><strong>¿Cómo sé quién comienza después de un empate?</strong> Aparece un modal emergente indicando el jugador que comienza (el siguiente al último ganador en sentido antihorario). También puedes ver la corona 👑 en la tarjeta de ese jugador.</li>
-        <li><strong>¿Puedo recuperar una partida cerrada sin conservar?</strong> No, si saliste sin marcar "Conservar partida", el día se cierra y la sesión se borra.</li>
-        <li><strong>¿Cómo veo los machs de un día específico?</strong> Usa el botón "📋 Ver machs por día" en la pantalla de configuración.</li>
-        <li><strong>¿Qué pasa si un jugador gana más de 5 patas en una mano?</strong> Solo recibe las necesarias para llegar a 5. El excedente no cuenta para el mach.</li>
-        <li><strong>¿Cómo accedo al panel de administración?</strong> Por acceso oculto: 5 taps en el marcador del jugador 1, o clic en "Richard" en los créditos, o <code>?admin=true</code>. Contraseña: <code>administrador</code>.</li>
-        <li><strong>¿Puedo personalizar los iconos de la PWA?</strong> Sí, utiliza el archivo <code>generar_iconos.html</code> que se incluye en el proyecto. Permite subir una imagen y generar los tamaños necesarios.</li>
-        <li><strong>¿Hay límite de almacenamiento?</strong> localStorage tiene un límite de ~5-10 MB, suficiente para miles de machs. Si la app crece mucho, en el futuro se migrará a IndexedDB.</li>
-        <li><strong>¿Cómo reporto un error o sugiero una mejora?</strong> Contacta al desarrollador a través de los medios indicados en los créditos.</li>
-        <li><strong>¿El sorteo de posiciones es realmente aleatorio?</strong> Sí, combina dados virtuales (Math.random) con resolución de empates y mezcla de sillas.</li>
-        <li><strong>¿Qué diferencia hay entre "Salir del juego" y cerrar el día?</strong> "Salir del juego" es la acción principal. Al salir, puedes conservar la partida (día sigue activo) o cerrar el día definitivamente (día inactivo).</li>
-        <li><strong>¿Puedo jugar con más de 4 jugadores rotando?</strong> No está soportado directamente, pero puedes sustituir jugadores manualmente usando la función de sustitución.</li>
-        <li><strong>¿La app guarda la hora exacta de cada mano?</strong> Sí, cada mano registra un timestamp ISO completo, visible en el historial.</li>
-        <li><strong>¿Qué significa "pollona"?</strong> Es un mach en el que el ganador hizo todas las patas y ningún otro jugador sumó ninguna pata (todos los demás quedaron en 0). Aporta un punto extra en las estadísticas.</li>
-        <li><strong>¿Puedo ver las estadísticas de días anteriores?</strong> Sí, desde "Estadísticas globales" puedes seleccionar un rango de fechas y ver todos los machs de ese período.</li>
-        <li><strong>¿Los backups automáticos se guardan en la nube?</strong> No, se descargan localmente en la carpeta de descargas del dispositivo. Debes guardarlos manualmente.</li>
-        <li><strong>¿Qué hago si la app se vuelve lenta?</strong> Intenta exportar un respaldo, luego borra los datos y vuelve a importar el respaldo. Esto limpia posibles basuras en localStorage.</li>
-        <li><strong>¿Puedo usar la app en varios dispositivos a la vez?</strong> No, los datos se almacenan localmente en cada dispositivo. Para compartir datos, exporta/importa el JSON.</li>
-        <li><strong>¿Por qué el botón de ayuda a veces no muestra el manual?</strong> En v5.0.2 está corregido; el manual se recarga cada vez que se abre el modal.</li>
-        <li><strong>¿Cómo actualizo la PWA a una nueva versión?</strong> Si publicas nuevos archivos, el Service Worker los detectará y los actualizará en segundo plano. El usuario debe recargar la página o cerrar y volver a abrir la app.</li>
-    </ul>
-
-    <h2 id="creditos">32. CRÉDITOS Y AGRADECIMIENTOS</h2>
-    <p><strong>Desarrollador:</strong> Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba.</p>
-    <p><strong>Colaboradores y probadores:</strong> Tito, Noel, Idiol, Osvaldo, Mario, Reinier, Osmany, Marisol y todos los miembros de la peña de dominó de La Demajagua. Gracias por sus ideas, pruebas y paciencia.</p>
-    <p><strong>Tecnologías utilizadas:</strong> HTML5, CSS3, JavaScript (Vanilla), Chart.js, jsPDF, AutoTable, localStorage, Service Workers, Manifest.json.</p>
-    <p>¡Gracias por usar Dominó Pintintín! Que nunca falte una buena "agua" para revolucionar las fichas.</p>
-
-    <div class="footer">
-        <p>🎲 ¡A BOTAR GORDA! 🎲</p>
-        <p>Hecho en La Demajagua, Isla de la Juventud, Cuba</p>
-        <p><strong>Versión 5.0.2 - Junio 2026</strong></p>
-    </div>
-</div>
-</body>
-</html>`;
+// ==================== MANUAL DE USUARIO EXTERNO (solo referencias) ====================
+// El manual se carga mediante fetch al pulsar el botón de ayuda, por lo que no es necesario incluirlo aquí.
 
 // ==================== EVENTO PRINCIPAL ====================
 window.onload = () => {
-    console.log("🚀 Iniciando Dominó Pintintín v5.0.2 (corregida)");
+    console.log("🚀 Iniciando Dominó Pintintín v5.2.0");
     cargarTodoDesdeLocalStorage();
     validarConsistenciaMachs();
     
@@ -2570,24 +1984,41 @@ window.onload = () => {
     if(terminacionCapicua) terminacionCapicua.onclick = () => aplicarModalTerminacion('capicua');
     if(cancelarTerminacion) cancelarTerminacion.onclick = () => { cerrarModalTerminacion(); ganadorPendiente = null; };
     if(contenidoAyuda) {
-        contenidoAyuda.innerHTML = manualHTML;
-        const links = contenidoAyuda.querySelectorAll('a[href="#"]');
-        links.forEach(link => {
-            const onclickAttr = link.getAttribute('onclick');
-            if (onclickAttr) {
-                const idMatch = onclickAttr.match(/scrollToSection\('([^']+)'\)/);
-                if (idMatch) {
-                    const id = idMatch[1];
-                    link.onclick = (e) => {
-                        e.preventDefault();
-                        const target = contenidoAyuda.querySelector(`#${id}`);
-                        if (target) target.scrollIntoView({ behavior: 'smooth' });
-                    };
-                }
-            }
-        });
+        // El manual se cargará dinámicamente al hacer clic en btnAyuda
     }
-    if(btnAyuda) btnAyuda.onclick = () => { if(modalAyuda) modalAyuda.style.display = 'flex'; if(contenidoAyuda) contenidoAyuda.scrollTop = 0; };
+    if(btnAyuda) btnAyuda.onclick = () => {
+        if(modalAyuda) {
+            if(contenidoAyuda) {
+                contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem;">Cargando manual...</div>';
+                fetch('manual_pintintin.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        contenidoAyuda.innerHTML = html;
+                        const links = contenidoAyuda.querySelectorAll('a[href="#"]');
+                        links.forEach(link => {
+                            const onclickAttr = link.getAttribute('onclick');
+                            if (onclickAttr) {
+                                const idMatch = onclickAttr.match(/scrollToSection\('([^']+)'\)/);
+                                if (idMatch) {
+                                    const id = idMatch[1];
+                                    link.onclick = (e) => {
+                                        e.preventDefault();
+                                        const target = contenidoAyuda.querySelector(`#${id}`);
+                                        if (target) target.scrollIntoView({ behavior: 'smooth' });
+                                    };
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error cargando manual:', err);
+                        contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">❌ Error al cargar el manual. Verifica tu conexión.</div>';
+                    });
+            }
+            modalAyuda.style.display = 'flex';
+            if(contenidoAyuda) contenidoAyuda.scrollTop = 0;
+        }
+    };
     if(cerrarAyuda) cerrarAyuda.onclick = () => { if(modalAyuda) modalAyuda.style.display = 'none'; };
     if(modalAyuda) modalAyuda.onclick = (e) => { if (e.target === modalAyuda) modalAyuda.style.display = 'none'; };
     if(btnTransponer) {
