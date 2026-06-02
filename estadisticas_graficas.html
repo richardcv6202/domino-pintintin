@@ -37,6 +37,27 @@
             font-size: 0.75rem;
             outline: none;
         }
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 0;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .radio-group input {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+        }
         .selector-jugadores {
             display: flex;
             flex-wrap: wrap;
@@ -177,6 +198,9 @@
             .selector-jugadores label {
                 min-width: 100%;
             }
+            .radio-group {
+                flex-wrap: wrap;
+            }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -198,12 +222,22 @@
             
             <span class="filtro-etiqueta">📐 Tipo gráfico</span>
             <select id="tipoGrafico" class="filtro-control">
-                <option value="line" selected>📈 Líneas</option>
-                <option value="bar">📊 Barras (múltiples indicadores)</option>
+                <option value="line">📈 Líneas</option>
+                <option value="bar" selected>📊 Barras</option>
                 <option value="radar">🕸️ Radar</option>
                 <option value="pie">🥧 Pastel</option>
                 <option value="polarArea">🌀 Polar</option>
             </select>
+            
+            <span class="filtro-etiqueta">🎯 Modo gráfico</span>
+            <div class="radio-group" id="modoGrupo">
+                <label>
+                    <input type="radio" name="modo" value="juego" checked> 🎲 Indicadores de juego
+                </label>
+                <label>
+                    <input type="radio" name="modo" value="tiempo"> ⏱️ Métricas de tiempo
+                </label>
+            </div>
         </div>
 
         <div id="indicadorPanel" style="margin: 0.2rem 0 0.5rem 0;"></div>
@@ -235,11 +269,13 @@
     let jugadores = [];
     let dias = [];
     let participaciones = [];
+    let machs = [];
 
     function cargarDatosLocales() {
         jugadores = JSON.parse(localStorage.getItem('pintintin_jugadores')) || [];
         dias = JSON.parse(localStorage.getItem('pintintin_dias')) || [];
         participaciones = JSON.parse(localStorage.getItem('pintintin_participaciones')) || [];
+        machs = JSON.parse(localStorage.getItem('pintintin_machs')) || [];
         for (let p of participaciones) {
             if (p.empatesParticipados === undefined) p.empatesParticipados = 0;
             if (p.empatesGanados === undefined) p.empatesGanados = 0;
@@ -247,7 +283,17 @@
         }
     }
 
-    // ---------- 2. Fechas ----------
+    // ---------- 2. Utilidad: formatear minutos a horas y minutos ----------
+    function formatearMinutosAHoras(minutos) {
+        if (minutos === null || minutos === undefined || isNaN(minutos)) return '0 min';
+        if (minutos < 60) return `${minutos} min`;
+        const horas = Math.floor(minutos / 60);
+        const mins = minutos % 60;
+        if (mins === 0) return `${horas} h`;
+        return `${horas} h ${mins} min`;
+    }
+
+    // ---------- 3. Fechas ----------
     function obtenerMinFecha() {
         const fechas = dias.map(d => d.fecha).filter(f => f).sort();
         return fechas[0] || obtenerFechaActual();
@@ -268,7 +314,7 @@
         document.getElementById('fechaHasta').value = max;
     }
 
-    // ---------- 3. Indicadores ----------
+    // ---------- 4. Indicadores de juego ----------
     const TODOS_INDICADORES = [
         { key: 'machsGanados', label: '🏆 Machs' },
         { key: 'patasNetas', label: '🦶 Patas netas' },
@@ -285,29 +331,121 @@
         { key: 'patasPorEmpate', label: '🧩 Patas por Empate' }
     ];
 
+    // ---------- 5. Métricas de tiempo por jugador ----------
+    const METRICAS_TIEMPO = [
+        { key: 'tiempoTotal', label: '⏱️ Tiempo total jugado' },
+        { key: 'promedioPorMach', label: '📊 Promedio de tiempo por mach' },
+        { key: 'tiempoPorMachGanado', label: '🏆 Tiempo por mach ganado' }
+    ];
+
     let indicadoresMulti = ['machsGanados', 'patasNetas', 'aguas'];
+    let metricaTiempoActual = 'tiempoTotal';
+
+    // Calcular duración de un mach (si tiene inicio y fin)
+    function calcularDuracionMach(mach) {
+        if (!mach.fechaHoraInicio || !mach.fechaHora) return null;
+        const inicio = new Date(mach.fechaHoraInicio);
+        const fin = new Date(mach.fechaHora);
+        const diffMs = fin - inicio;
+        if (diffMs <= 0) return null;
+        return Math.round(diffMs / 60000); // minutos
+    }
+
+    // Obtener datos de tiempo por jugador
+    function obtenerDatosTiempoPorJugador(idsJugadores, desde, hasta) {
+        let diasFiltrados = dias;
+        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
+        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
+        const idsDias = new Set(diasFiltrados.map(d => d.id));
+        let machsFiltrados = machs.filter(m => idsDias.has(m.diaId));
+        
+        const statsJugador = new Map();
+        for (let id of idsJugadores) {
+            const jug = jugadores.find(j => j.id === id);
+            if (jug) {
+                statsJugador.set(id, {
+                    nombre: jug.nombre,
+                    tiempoTotal: 0,
+                    cantidadMachs: 0,
+                    tiempoMachsGanados: 0,
+                    cantidadMachsGanados: 0
+                });
+            }
+        }
+        
+        for (let mach of machsFiltrados) {
+            const duracion = calcularDuracionMach(mach);
+            if (duracion === null) continue;
+            
+            if (mach.participantes) {
+                for (let p of mach.participantes) {
+                    if (!p.jugadorId) continue;
+                    if (statsJugador.has(p.jugadorId)) {
+                        const stats = statsJugador.get(p.jugadorId);
+                        stats.tiempoTotal += duracion;
+                        stats.cantidadMachs++;
+                        
+                        if (p.jugadorId === mach.ganadorId) {
+                            stats.tiempoMachsGanados += duracion;
+                            stats.cantidadMachsGanados++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        const resultados = [];
+        for (let [id, stats] of statsJugador) {
+            const promedioPorMach = stats.cantidadMachs > 0 ? Math.round(stats.tiempoTotal / stats.cantidadMachs) : 0;
+            const tiempoPorMachGanado = stats.cantidadMachsGanados > 0 ? Math.round(stats.tiempoMachsGanados / stats.cantidadMachsGanados) : 0;
+            
+            resultados.push({
+                nombre: stats.nombre,
+                tiempoTotal: stats.tiempoTotal,
+                promedioPorMach: promedioPorMach,
+                tiempoPorMachGanado: tiempoPorMachGanado
+            });
+        }
+        
+        return resultados;
+    }
 
     function actualizarPanelIndicador() {
-        const tipo = document.getElementById('tipoGrafico').value;
+        const modo = document.querySelector('input[name="modo"]:checked').value;
         const panel = document.getElementById('indicadorPanel');
-        if (tipo === 'bar') {
-            panel.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <span class="filtro-etiqueta">📊 Indicadores</span>
-                    <button id="btnSeleccionarIndicadores" class="boton-seleccion">Seleccionar indicadores</button>
-                    <span id="contadorIndicadores" class="contador-indicadores">${indicadoresMulti.length} seleccionados</span>
-                </div>
-            `;
-            document.getElementById('btnSeleccionarIndicadores').addEventListener('click', () => abrirModalIndicadores());
+        
+        if (modo === 'juego') {
+            const tipo = document.getElementById('tipoGrafico').value;
+            if (tipo === 'bar') {
+                panel.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="filtro-etiqueta">📊 Indicadores</span>
+                        <button id="btnSeleccionarIndicadores" class="boton-seleccion">Seleccionar indicadores</button>
+                        <span id="contadorIndicadores" class="contador-indicadores">${indicadoresMulti.length} seleccionados</span>
+                    </div>
+                `;
+                document.getElementById('btnSeleccionarIndicadores').addEventListener('click', () => abrirModalIndicadores());
+            } else {
+                const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsGanados';
+                panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
+                    <span class="filtro-etiqueta">📊 Indicador</span>
+                    <select id="indicadorUnico" class="filtro-control">
+                        ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}" ${ind.key === indicadorUnico ? 'selected' : ''}>${ind.label}</option>`).join('')}
+                    </select>
+                </div>`;
+                document.getElementById('indicadorUnico').addEventListener('change', () => dibujarGrafico());
+            }
         } else {
-            const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsGanados';
             panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
-                <span class="filtro-etiqueta">📊 Indicador</span>
-                <select id="indicadorUnico" class="filtro-control">
-                    ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}" ${ind.key === indicadorUnico ? 'selected' : ''}>${ind.label}</option>`).join('')}
+                <span class="filtro-etiqueta">⏱️ Métrica de tiempo</span>
+                <select id="metricaTiempo" class="filtro-control">
+                    ${METRICAS_TIEMPO.map(met => `<option value="${met.key}" ${met.key === metricaTiempoActual ? 'selected' : ''}>${met.label}</option>`).join('')}
                 </select>
             </div>`;
-            document.getElementById('indicadorUnico').addEventListener('change', () => dibujarGrafico());
+            document.getElementById('metricaTiempo').addEventListener('change', (e) => {
+                metricaTiempoActual = e.target.value;
+                dibujarGrafico();
+            });
         }
     }
 
@@ -357,7 +495,7 @@
         };
     }
 
-    // ---------- 4. Orden de jugadores ----------
+    // ---------- 6. Orden de jugadores ----------
     function ordenarJugadoresPorPrioridad(jugadoresArray) {
         const statsMap = new Map();
         for (let p of participaciones) {
@@ -446,7 +584,7 @@
         dibujarGrafico();
     }
 
-    // ---------- 5. Datos agregados ----------
+    // ---------- 7. Datos agregados para indicadores de juego ----------
     function filtrarParticipacionesPorFecha(desde, hasta) {
         if (!desde && !hasta) return participaciones;
         let diasFiltrados = dias;
@@ -489,7 +627,7 @@
         return Array.from(mapa.values());
     }
 
-    // ---------- 6. Colores ----------
+    // ---------- 8. Colores ----------
     const coloresBase = [
         { bg: 'rgba(239, 68, 68, 0.7)', border: 'rgb(220, 38, 38)' },
         { bg: 'rgba(59, 130, 246, 0.7)', border: 'rgb(37, 99, 235)' },
@@ -501,7 +639,7 @@
         { bg: 'rgba(249, 115, 22, 0.7)', border: 'rgb(234, 88, 12)' }
     ];
 
-    // ---------- 7. Dibujar gráfico ----------
+    // ---------- 9. Dibujar gráfico ----------
     let chartInstance = null;
     const ctx = document.getElementById('miGrafica').getContext('2d');
 
@@ -517,8 +655,10 @@
         actualizarInfoRango(desde, hasta);
         
         const tipo = document.getElementById('tipoGrafico').value;
+        const modo = document.querySelector('input[name="modo"]:checked').value;
         const checksJugadores = document.querySelectorAll('.check-jugador:checked');
         const idsJugadores = Array.from(checksJugadores).map(cb => parseInt(cb.value));
+        
         if (idsJugadores.length === 0) {
             if (chartInstance) chartInstance.destroy();
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -527,7 +667,123 @@
             ctx.fillText('Selecciona al menos un jugador', 10, 50);
             return;
         }
-
+        
+        // MODO TIEMPO
+        if (modo === 'tiempo') {
+            const datosTiempo = obtenerDatosTiempoPorJugador(idsJugadores, desde, hasta);
+            if (datosTiempo.length === 0) {
+                if (chartInstance) chartInstance.destroy();
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#ccc';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('No hay datos de tiempo para los jugadores seleccionados (los machs necesitan fechaHoraInicio)', 10, 50);
+                return;
+            }
+            
+            const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores)
+                .filter(j => idsJugadores.includes(j.id))
+                .map(j => j.nombre);
+            
+            const datosOrdenados = jugadoresOrden.map(nombre => datosTiempo.find(d => d.nombre === nombre)).filter(d => d);
+            
+            let valores = [];
+            let label = '';
+            let unidad = '';
+            
+            if (metricaTiempoActual === 'tiempoTotal') {
+                valores = datosOrdenados.map(d => d.tiempoTotal);
+                label = '⏱️ Tiempo total jugado';
+                unidad = 'minutos';
+            } else if (metricaTiempoActual === 'promedioPorMach') {
+                valores = datosOrdenados.map(d => d.promedioPorMach);
+                label = '📊 Promedio de tiempo por mach';
+                unidad = 'minutos';
+            } else {
+                valores = datosOrdenados.map(d => d.tiempoPorMachGanado);
+                label = '🏆 Tiempo por mach ganado';
+                unidad = 'minutos';
+            }
+            
+            // Personalizar tooltip para mostrar en horas si es necesario
+            const tooltipCallback = (context) => {
+                const valorMinutos = context.raw;
+                return `${context.dataset.label}: ${formatearMinutosAHoras(valorMinutos)}`;
+            };
+            
+            let config;
+            if (tipo === 'pie' || tipo === 'polarArea') {
+                config = {
+                    type: tipo,
+                    data: {
+                        labels: jugadoresOrden,
+                        datasets: [{
+                            data: valores,
+                            backgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].bg),
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'right' },
+                            tooltip: { callbacks: { label: tooltipCallback } }
+                        }
+                    }
+                };
+            } else if (tipo === 'radar') {
+                config = {
+                    type: 'radar',
+                    data: {
+                        labels: jugadoresOrden,
+                        datasets: [{
+                            label: label,
+                            data: valores,
+                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                            borderColor: 'rgb(79, 70, 229)',
+                            borderWidth: 2,
+                            pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: { r: { beginAtZero: true } },
+                        plugins: { tooltip: { callbacks: { label: tooltipCallback } } }
+                    }
+                };
+            } else {
+                config = {
+                    type: tipo === 'line' ? 'line' : 'bar',
+                    data: {
+                        labels: jugadoresOrden,
+                        datasets: [{
+                            label: label,
+                            data: valores,
+                            borderColor: 'rgb(79, 70, 229)',
+                            backgroundColor: tipo === 'line' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.7)',
+                            fill: tipo === 'line' ? false : undefined,
+                            tension: 0.2,
+                            pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border),
+                            pointBorderColor: '#fff',
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: { y: { beginAtZero: true, title: { display: true, text: unidad } } },
+                        plugins: { tooltip: { callbacks: { label: tooltipCallback } } }
+                    }
+                };
+            }
+            
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, config);
+            return;
+        }
+        
+        // MODO JUEGO (código original)
         if (tipo === 'bar') {
             if (indicadoresMulti.length === 0) {
                 alert('Selecciona al menos un indicador para el gráfico de barras.');
@@ -634,22 +890,32 @@
         chartInstance = new Chart(ctx, config);
     }
 
-    // ---------- 8. Utilidades ----------
-    function descargarImagen() {
-        if (!chartInstance) return alert('Primero genera un gráfico');
-        const canvas = document.getElementById('miGrafica');
-        const link = document.createElement('a');
-        link.download = `pintintin_grafico_${new Date().toISOString().slice(0,19)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    }
-
+    // ---------- 10. Exportar CSV ----------
     function exportarCSV() {
         const desde = document.getElementById('fechaDesde').value;
         const hasta = document.getElementById('fechaHasta').value;
+        const modo = document.querySelector('input[name="modo"]:checked').value;
+        
+        if (modo === 'tiempo') {
+            const checks = document.querySelectorAll('.check-jugador:checked');
+            const ids = Array.from(checks).map(cb => parseInt(cb.value));
+            if (ids.length === 0) return;
+            
+            const datosTiempo = obtenerDatosTiempoPorJugador(ids, desde, hasta);
+            let csv = "Jugador,Tiempo total (min),Promedio por mach (min),Tiempo por mach ganado (min)\n";
+            for (let d of datosTiempo) {
+                csv += `"${d.nombre}",${d.tiempoTotal},${d.promedioPorMach},${d.tiempoPorMachGanado}\n`;
+            }
+            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
+            saveAs(blob, `pintintin_tiempo_jugadores_${new Date().toISOString().slice(0,19)}.csv`);
+            return;
+        }
+        
+        // Modo juego
         const checks = document.querySelectorAll('.check-jugador:checked');
         const ids = Array.from(checks).map(cb => parseInt(cb.value));
         if (ids.length === 0) return;
+        
         const tipo = document.getElementById('tipoGrafico').value;
         if (tipo === 'bar') {
             const datosMulti = obtenerDatosMultiIndicador(ids, indicadoresMulti, desde, hasta);
@@ -672,6 +938,15 @@
         }
     }
 
+    function descargarImagen() {
+        if (!chartInstance) return alert('Primero genera un gráfico');
+        const canvas = document.getElementById('miGrafica');
+        const link = document.createElement('a');
+        link.download = `pintintin_grafico_${new Date().toISOString().slice(0,19)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -682,11 +957,10 @@
         });
     }
 
-    // ---------- 9. Inicialización ----------
+    // ---------- 11. Inicialización ----------
     async function iniciarModulo() {
         cargarDatosLocales();
         
-        // Pequeña pausa para asegurar DOM
         await new Promise(resolve => setTimeout(resolve, 100));
         
         if (jugadores.length === 0) {
@@ -698,7 +972,6 @@
         renderizarChecklistJugadores();
         actualizarPanelIndicador();
         
-        // Asegurar que el canvas existe antes de dibujar
         const canvas = document.getElementById('miGrafica');
         if (canvas) {
             await dibujarGrafico();
@@ -714,10 +987,15 @@
         });
         document.getElementById('seleccionarTodos').addEventListener('change', (e) => seleccionarTodos(e.target.checked));
         
+        const radios = document.querySelectorAll('input[name="modo"]');
+        radios.forEach(radio => radio.addEventListener('change', () => {
+            actualizarPanelIndicador();
+            dibujarGrafico();
+        }));
+        
         document.getElementById('btnDescargarImagen').addEventListener('click', descargarImagen);
         document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
         
-        // ✅ PUNTO 2: Guardar flag al volver para restaurar eventos
         document.getElementById('btnVolver').addEventListener('click', () => {
             sessionStorage.setItem('volviendoDeGraficas', 'true');
             window.location.href = 'index.html';
