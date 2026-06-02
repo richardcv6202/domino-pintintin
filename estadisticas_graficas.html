@@ -30,27 +30,28 @@
         }
         .filtro-control select, .filtro-control input {
             width: 100%;
-            padding: 0.3rem 0.4rem;
+            padding: 0.5rem 0.8rem;
             border: none;
             border-bottom: 1px solid #cbd5e1;
             background: white;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             outline: none;
         }
         .radio-group {
             display: flex;
-            gap: 1rem;
+            gap: 0.3rem;
             align-items: center;
             background: #f1f5f9;
             padding: 0.3rem 0.6rem;
             border-radius: 0.5rem;
+            flex-wrap: wrap;
         }
         .radio-group label {
             display: flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.2rem;
             margin: 0;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             cursor: pointer;
         }
         .radio-group input {
@@ -293,30 +294,31 @@
         return `${horas} h ${mins} min`;
     }
 
-    // ---------- 3. Fechas ----------
-    function obtenerMinFecha() {
-        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
-        return fechas[0] || obtenerFechaActual();
-    }
-    function obtenerMaxFecha() {
-        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
-        return fechas[fechas.length - 1] || obtenerFechaActual();
-    }
-    function obtenerFechaActual() {
-        const hoy = new Date();
-        return hoy.toISOString().slice(0,10);
+    // ---------- 3. Calcular machs jugados y perdidos ----------
+    function contarMachsReales(db, desde, hasta) {
+        let diasFiltrados = db.dias;
+        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
+        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
+        const idsDias = new Set(diasFiltrados.map(d => d.id));
+        let machsFiltrados = db.machs.filter(m => idsDias.has(m.diaId));
+        
+        const machsPorJugador = new Map();
+        for (let mach of machsFiltrados) {
+            for (let p of mach.participantes) {
+                if (p.jugadorId) {
+                    const key = `${mach.diaId}-${p.jugadorId}`;
+                    machsPorJugador.set(key, (machsPorJugador.get(key) || 0) + 1);
+                }
+            }
+        }
+        return machsPorJugador;
     }
 
-    function inicializarFechas() {
-        const min = obtenerMinFecha();
-        const max = obtenerMaxFecha();
-        document.getElementById('fechaDesde').value = min;
-        document.getElementById('fechaHasta').value = max;
-    }
-
-    // ---------- 4. Indicadores de juego ----------
+    // ---------- 4. Indicadores de juego (ACTUALIZADOS) ----------
     const TODOS_INDICADORES = [
-        { key: 'machsGanados', label: '🏆 Machs' },
+        { key: 'machsJugados', label: '🎲 Machs jugados' },
+        { key: 'machsGanados', label: '🏆 Machs ganados' },
+        { key: 'machsPerdidos', label: '❌ Machs perdidos' },
         { key: 'patasNetas', label: '🦶 Patas netas' },
         { key: 'pollonas', label: '🐔 Pollonas' },
         { key: 'capicuas', label: '🀰 Capicuas' },
@@ -338,7 +340,7 @@
         { key: 'tiempoPorMachGanado', label: '🏆 Tiempo por mach ganado' }
     ];
 
-    let indicadoresMulti = ['machsGanados', 'patasNetas', 'aguas'];
+    let indicadoresMulti = ['machsJugados', 'machsGanados', 'patasNetas'];
     let metricaTiempoActual = 'tiempoTotal';
 
     // Calcular duración de un mach (si tiene inicio y fin)
@@ -426,7 +428,7 @@
                 `;
                 document.getElementById('btnSeleccionarIndicadores').addEventListener('click', () => abrirModalIndicadores());
             } else {
-                const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsGanados';
+                const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsJugados';
                 panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
                     <span class="filtro-etiqueta">📊 Indicador</span>
                     <select id="indicadorUnico" class="filtro-control">
@@ -505,7 +507,7 @@
                 statsMap.set(jug.id, {
                     id: jug.id,
                     nombre: jug.nombre,
-                    machs: 0,
+                    machsGanados: 0,
                     patas: 0,
                     pollonas: 0,
                     capicuas: 0,
@@ -518,7 +520,7 @@
                 });
             }
             const s = statsMap.get(jug.id);
-            s.machs += p.machsGanados || 0;
+            s.machsGanados += p.machsGanados || 0;
             s.patas += p.patasNetas || 0;
             s.pollonas += p.pollonas || 0;
             s.capicuas += p.capicuas || 0;
@@ -531,7 +533,7 @@
         }
         const jugadoresConStats = Array.from(statsMap.values());
         jugadoresConStats.sort((a, b) => {
-            if (a.machs !== b.machs) return b.machs - a.machs;
+            if (a.machsGanados !== b.machsGanados) return b.machsGanados - a.machsGanados;
             if (a.patas !== b.patas) return b.patas - a.patas;
             if (a.pollonas !== b.pollonas) return b.pollonas - a.pollonas;
             if (a.capicuas !== b.capicuas) return b.capicuas - a.capicuas;
@@ -584,7 +586,102 @@
         dibujarGrafico();
     }
 
-    // ---------- 7. Datos agregados para indicadores de juego ----------
+    // ---------- 7. Datos agregados para indicadores de juego (CON MACHs JUGADOS) ----------
+    function obtenerDatosPorJugadorConMachsJugados(idsJugadores, indicadorKey, desde, hasta) {
+        // Primero obtener los machs reales (jugados) por jugador
+        const machsReales = contarMachsReales({ machs, dias }, desde, hasta);
+        
+        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
+        const mapa = new Map();
+        for (let id of idsJugadores) {
+            const jug = jugadores.find(j => j.id == id);
+            if (jug) mapa.set(id, { nombre: jug.nombre, total: 0, machsJugados: 0 });
+        }
+        
+        // Sumar machs jugados desde machsReales
+        for (let [key, valor] of machsReales) {
+            const [diaId, jugadorId] = key.split('-');
+            const jId = parseInt(jugadorId);
+            if (mapa.has(jId)) {
+                mapa.get(jId).machsJugados += valor;
+            }
+        }
+        
+        // Sumar el indicador solicitado desde participaciones
+        for (let p of participacionesFiltradas) {
+            if (mapa.has(p.jugadorId)) {
+                let valor = 0;
+                if (indicadorKey === 'machsJugados') {
+                    valor = mapa.get(p.jugadorId).machsJugados;
+                } else if (indicadorKey === 'machsPerdidos') {
+                    const machsJugados = mapa.get(p.jugadorId).machsJugados;
+                    const machsGanados = p.machsGanados || 0;
+                    valor = machsJugados - machsGanados;
+                } else {
+                    valor = p[indicadorKey] || 0;
+                }
+                mapa.get(p.jugadorId).total += valor;
+            }
+        }
+        
+        // Para machsJugados y machsPerdidos, asegurar que se calculen correctamente incluso si no hay participaciones filtradas
+        for (let [id, data] of mapa) {
+            if (indicadorKey === 'machsJugados') {
+                data.total = data.machsJugados;
+            } else if (indicadorKey === 'machsPerdidos') {
+                data.total = data.machsJugados - (data.total || 0);
+                if (data.total < 0) data.total = 0;
+            }
+        }
+        
+        return Array.from(mapa.values());
+    }
+
+    function obtenerDatosMultiIndicadorConMachsJugados(idsJugadores, indicadoresKeys, desde, hasta) {
+        const machsReales = contarMachsReales({ machs, dias }, desde, hasta);
+        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
+        
+        const mapa = new Map();
+        for (let id of idsJugadores) {
+            const jug = jugadores.find(j => j.id == id);
+            if (jug) mapa.set(id, { nombre: jug.nombre, valores: {}, machsJugados: 0 });
+        }
+        
+        // Sumar machs jugados desde machsReales
+        for (let [key, valor] of machsReales) {
+            const [diaId, jugadorId] = key.split('-');
+            const jId = parseInt(jugadorId);
+            if (mapa.has(jId)) {
+                mapa.get(jId).machsJugados += valor;
+            }
+        }
+        
+        // Sumar valores desde participaciones
+        for (let p of participacionesFiltradas) {
+            if (mapa.has(p.jugadorId)) {
+                const entry = mapa.get(p.jugadorId);
+                for (let key of indicadoresKeys) {
+                    if (key === 'machsJugados') {
+                        entry.valores[key] = (entry.valores[key] || 0) + entry.machsJugados;
+                    } else if (key === 'machsPerdidos') {
+                        const machsJugados = entry.machsJugados;
+                        const machsGanados = p.machsGanados || 0;
+                        entry.valores[key] = (entry.valores[key] || 0) + (machsJugados - machsGanados);
+                    } else {
+                        entry.valores[key] = (entry.valores[key] || 0) + (p[key] || 0);
+                    }
+                }
+            }
+        }
+        
+        // Asegurar que machsPerdidos no sea negativo
+        for (let entry of mapa.values()) {
+            if (entry.valores['machsPerdidos'] < 0) entry.valores['machsPerdidos'] = 0;
+        }
+        
+        return Array.from(mapa.values());
+    }
+
     function filtrarParticipacionesPorFecha(desde, hasta) {
         if (!desde && !hasta) return participaciones;
         let diasFiltrados = dias;
@@ -592,39 +689,6 @@
         if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
         const idsDias = new Set(diasFiltrados.map(d => d.id));
         return participaciones.filter(p => idsDias.has(p.diaId));
-    }
-
-    function obtenerDatosPorJugador(idsJugadores, indicadorKey, desde, hasta) {
-        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
-        const mapa = new Map();
-        for (let id of idsJugadores) {
-            const jug = jugadores.find(j => j.id == id);
-            if (jug) mapa.set(id, { nombre: jug.nombre, total: 0 });
-        }
-        for (let p of participacionesFiltradas) {
-            if (mapa.has(p.jugadorId)) {
-                mapa.get(p.jugadorId).total += (p[indicadorKey] || 0);
-            }
-        }
-        return Array.from(mapa.values());
-    }
-
-    function obtenerDatosMultiIndicador(idsJugadores, indicadoresKeys, desde, hasta) {
-        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
-        const mapa = new Map();
-        for (let id of idsJugadores) {
-            const jug = jugadores.find(j => j.id == id);
-            if (jug) mapa.set(id, { nombre: jug.nombre, valores: {} });
-        }
-        for (let p of participacionesFiltradas) {
-            if (mapa.has(p.jugadorId)) {
-                const entry = mapa.get(p.jugadorId);
-                for (let key of indicadoresKeys) {
-                    entry.valores[key] = (entry.valores[key] || 0) + (p[key] || 0);
-                }
-            }
-        }
-        return Array.from(mapa.values());
     }
 
     // ---------- 8. Colores ----------
@@ -704,7 +768,6 @@
                 unidad = 'minutos';
             }
             
-            // Personalizar tooltip para mostrar en horas si es necesario
             const tooltipCallback = (context) => {
                 const valorMinutos = context.raw;
                 return `${context.dataset.label}: ${formatearMinutosAHoras(valorMinutos)}`;
@@ -783,13 +846,13 @@
             return;
         }
         
-        // MODO JUEGO (código original)
+        // MODO JUEGO (con nuevos indicadores)
         if (tipo === 'bar') {
             if (indicadoresMulti.length === 0) {
                 alert('Selecciona al menos un indicador para el gráfico de barras.');
                 return;
             }
-            const datosMulti = obtenerDatosMultiIndicador(idsJugadores, indicadoresMulti, desde, hasta);
+            const datosMulti = obtenerDatosMultiIndicadorConMachsJugados(idsJugadores, indicadoresMulti, desde, hasta);
             const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
             const datosOrdenados = jugadoresOrden.map(nom => datosMulti.find(d => d.nombre === nom)).filter(d => d);
             
@@ -830,7 +893,7 @@
         if (!indicadorUnicoSelect) return;
         indicadorKey = indicadorUnicoSelect.value;
         
-        const datos = obtenerDatosPorJugador(idsJugadores, indicadorKey, desde, hasta);
+        const datos = obtenerDatosPorJugadorConMachsJugados(idsJugadores, indicadorKey, desde, hasta);
         const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
         const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
         const datosOrdenados = jugadoresOrden.map(nom => datos.find(d => d.nombre === nom)?.total || 0);
@@ -890,7 +953,7 @@
         chartInstance = new Chart(ctx, config);
     }
 
-    // ---------- 10. Exportar CSV ----------
+    // ---------- 10. Exportar CSV (ACTUALIZADO) ----------
     function exportarCSV() {
         const desde = document.getElementById('fechaDesde').value;
         const hasta = document.getElementById('fechaHasta').value;
@@ -918,7 +981,7 @@
         
         const tipo = document.getElementById('tipoGrafico').value;
         if (tipo === 'bar') {
-            const datosMulti = obtenerDatosMultiIndicador(ids, indicadoresMulti, desde, hasta);
+            const datosMulti = obtenerDatosMultiIndicadorConMachsJugados(ids, indicadoresMulti, desde, hasta);
             let csv = `"Jugador",${indicadoresMulti.map(k => `"${TODOS_INDICADORES.find(i=>i.key===k).label}"`).join(',')}\n`;
             datosMulti.forEach(j => {
                 csv += `"${j.nombre}",${indicadoresMulti.map(k => j.valores[k] || 0).join(',')}\n`;
@@ -929,7 +992,7 @@
             const indicadorUnico = document.getElementById('indicadorUnico');
             if (!indicadorUnico) return;
             const indicadorKey = indicadorUnico.value;
-            const datos = obtenerDatosPorJugador(ids, indicadorKey, desde, hasta);
+            const datos = obtenerDatosPorJugadorConMachsJugados(ids, indicadorKey, desde, hasta);
             const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
             let csv = `"Jugador","${nombreIndicador}"\n`;
             datos.forEach(d => { csv += `"${d.nombre}",${d.total}\n`; });
@@ -1000,6 +1063,28 @@
             sessionStorage.setItem('volviendoDeGraficas', 'true');
             window.location.href = 'index.html';
         });
+    }
+
+    function inicializarFechas() {
+        const min = obtenerMinFecha();
+        const max = obtenerMaxFecha();
+        document.getElementById('fechaDesde').value = min;
+        document.getElementById('fechaHasta').value = max;
+    }
+
+    function obtenerMinFecha() {
+        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
+        return fechas[0] || obtenerFechaActual();
+    }
+    
+    function obtenerMaxFecha() {
+        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
+        return fechas[fechas.length - 1] || obtenerFechaActual();
+    }
+    
+    function obtenerFechaActual() {
+        const hoy = new Date();
+        return hoy.toISOString().slice(0,10);
     }
 
     window.onload = iniciarModulo;
