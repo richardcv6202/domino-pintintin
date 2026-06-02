@@ -1,10 +1,11 @@
-// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.2.0 ====================
-// NUEVAS FUNCIONALIDADES v5.2.0:
-// - Se añade fechaHoraInicio a cada mach para calcular duración real
-// - Preparación para métricas de tiempo en gráficas y admin
-// - Compatibilidad con machs antiguos (fechaHoraInicio = null)
+// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.2.1 ====================
+// NUEVAS FUNCIONALIDADES v5.2.1:
+// - Checkbox "Mantener ubicación de los jugadores" (sin sorteo de sillas)
+// - Rediseño visual de la pantalla de inicio
+// - Botón de gráficas interactivas funcionando correctamente
+// - Mejoras en la gestión de eventos
 //
-// Creado por Ricardo Castillo (Richard) - La Demajagua, Isla de la Juventud, Cuba
+// Creado por Ricardo Castillo Valdés (Richard) - La Demajagua, Isla de la Juventud, Cuba
 
 console.log("🎲 Dominó Pintintín - Versión 5.2.1: Mejoras de usabilidad y visuales");
 
@@ -271,11 +272,7 @@ function calcularPatasConTope(ganadorId, patasBase, multiplicadorEmpate) {
 
 // ==================== PLACEHOLDER DINÁMICO ====================
 function renderInputsJugadores() {
-    const jugadoresInputsContainer = document.getElementById('jugadoresInputsContainer');
-    if(jugadoresInputsContainer) {
-        // La nueva estructura ya no usa jugadoresInputsContainer
-        // Los inputs están fijos en el HTML, solo actualizamos datalist
-    }
+    // Los inputs ahora están fijos en el HTML, solo actualizamos datalist
     actualizarDatalistJugadores();
     agregarListenersInputs();
 }
@@ -448,7 +445,7 @@ function mostrarModalCerrarDia() {
     };
 }
 
-// ==================== SORTEO E INICIAR (con inicio de tiempo) ====================
+// ==================== SORTEO E INICIAR (con checkbox mantener ubicación) ====================
 function tirarDado() { return Math.floor(Math.random() * 6) + 1; }
 
 function resolverEmpates(jugadoresConDados) {
@@ -513,7 +510,7 @@ async function sortearEIniciar() {
         actualizarColorBotonSorteo();
     }
     
-    // Obtener nombres de los inputs
+    // Obtener nombres de los inputs (ahora fijos en el HTML)
     const nombres = [
         document.getElementById('jugador1')?.value.trim(),
         document.getElementById('jugador2')?.value.trim(),
@@ -625,6 +622,7 @@ function reasignarTodosLosEventos() {
     const btnEstadisticasGlobalesJuego = document.getElementById('btnEstadisticasGlobalesJuego');
     const btnCerrarDia = document.getElementById('btnCerrarDia');
     const btnAyuda = document.getElementById('btnAyuda');
+    const btnGraficasConfig = document.getElementById('btnGraficasConfig');
     
     if (btnEmpate) btnEmpate.onclick = () => { if(diaActivo) document.getElementById('modalEmpate').style.display = 'flex'; else alert("No hay un día activo"); };
     if (btnGestionJugador) btnGestionJugador.onclick = gestionarJugador;
@@ -679,11 +677,17 @@ function reasignarTodosLosEventos() {
             if(modalAyuda) modalAyuda.style.display = 'flex';
         };
     }
+    if (btnGraficasConfig) {
+        btnGraficasConfig.onclick = () => {
+            sessionStorage.setItem('viniendoDeGraficas', 'true');
+            window.location.href = 'estadisticas_graficas.html';
+        };
+    }
     
     renderizarJugadores();
 }
 
-// --- FUNCIONES AUXILIARES (sin cambios relevantes) ---
+// --- FUNCIONES AUXILIARES ---
 function obtenerOJugador(nombre) {
     nombre = nombre.trim();
     let existente = almacenamiento.jugadores.find(j => j.nombre.toLowerCase() === nombre.toLowerCase());
@@ -787,7 +791,7 @@ function actualizarVisibilidadBotones() {
     }
 }
 
-// --- GESTIÓN DE JUGADORES (sin cambios) ---
+// --- GESTIÓN DE JUGADORES ---
 async function gestionarJugador() {
     if(!diaActivo) { alert("Primero inicia un día"); return; }
     const jugadoresActivos = contarJugadoresActivos();
@@ -994,7 +998,7 @@ function mostrarModalSalida(jugador) {
     modalSalida.onclick = (e) => { if (e.target === modalSalida) document.body.removeChild(modalSalida); };
 }
 
-// ==================== MOSTRAR HISTORIAL (completo) ====================
+// ==================== MOSTRAR HISTORIAL ====================
 function mostrarHistorialGanadores() {
     if (!diaActivo) {
         alert("No hay un día activo");
@@ -1030,7 +1034,7 @@ function mostrarHistorialGanadores() {
         html += `<tr>
             <td>${idx+1}</td>
             <td>${escapeHtml(item.nombre)}</td>
-            <td>${formaMostrada}</td>
+            <td class="text-center">${formaMostrada}</td>
             <td class="text-center">${item.patasGanadas}</td>
             <td class="text-center">${machOrdinal}</td>
             <td class="text-center">${hora}</td>
@@ -1275,7 +1279,7 @@ async function verificarFinMach(ganadorId) {
             diaId: diaActivo.id, 
             numeroMach: estadoMachActual.numero, 
             fechaHora: new Date().toISOString(),
-            fechaHoraInicio: estadoMachActual.fechaHoraInicio,   // NUEVO
+            fechaHoraInicio: estadoMachActual.fechaHoraInicio,
             ganadorId, 
             participantes: participantesMach, 
             manos: JSON.parse(JSON.stringify(estadoMachActual.historialManos)) 
@@ -1312,7 +1316,7 @@ async function verificarFinMach(ganadorId) {
         
         // Incrementar número de mach y reiniciar hora de inicio para el siguiente mach
         estadoMachActual.numero++;
-        estadoMachActual.fechaHoraInicio = new Date().toISOString();   // NUEVO: hora de inicio del siguiente mach
+        estadoMachActual.fechaHoraInicio = new Date().toISOString();
         estadoMachActual.patasActuales.clear();
         jugadoresActuales.forEach(j => { if(j.jugadorId) estadoMachActual.patasActuales.set(j.jugadorId, 0); });
         estadoMachActual.historialManos = [];
@@ -1327,6 +1331,7 @@ async function verificarFinMach(ganadorId) {
     }
     guardarSesionCompleta();
 }
+
 // ==================== NUEVA LÓGICA DE EMPATE ====================
 function procesarEmpateConAguaYSalida(jugadoresEmpatadosIds) {
     const jugadoresActivos = jugadoresActuales.filter(j => j.jugadorId !== null);
@@ -1554,7 +1559,7 @@ function renderizarTablaResumen(statsTotales, modoTranspuesto) {
             html += `<td><strong>${metrica.icono} ${metrica.nombre}</strong></td>`;
             for (let nombre of nombres) html += `<td class="text-center">${statsTotales.get(nombre)[metrica.key] || 0}</td>`;
             html += `<td class="text-center" style="background:#f1f5f9; font-weight:bold;">${totalesPorMetrica[metrica.key]}</td>`;
-            html += `</tr>`;
+            html += `<tr>`;
         }
         html += `</tbody></table>`;
     } else {
@@ -1782,23 +1787,41 @@ function agregarBotonVolverSuperior() {
 }
 
 function agregarBotonGraficasYHistorial() {
-    const botonesSecundarios = document.querySelector('.botones-secundarios');
-    if (botonesSecundarios && !document.getElementById('btnGraficasConfig')) {
-        const btnGraficas = document.createElement('button');
-        btnGraficas.id = 'btnGraficasConfig';
-        btnGraficas.className = 'secundario';
-        btnGraficas.innerHTML = '📈 Gráficas interactivas';
-        btnGraficas.onclick = () => {
-            sessionStorage.setItem('viniendoDeGraficas', 'true');
-            window.location.href = 'estadisticas_graficas.html';
-        };
-        const estadisticasBtn = document.getElementById('irAEstadisticas');
-        if (estadisticasBtn && estadisticasBtn.nextSibling) {
-            botonesSecundarios.insertBefore(btnGraficas, estadisticasBtn.nextSibling);
-        } else {
-            botonesSecundarios.appendChild(btnGraficas);
+    // Forzar asignación del botón de gráficas de forma más directa
+    const forzarBotonGraficas = () => {
+        const btn = document.getElementById('btnGraficasConfig');
+        if (btn) {
+            // Eliminar cualquier evento existente
+            const nuevoBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(nuevoBtn, btn);
+            // Asignar el nuevo evento
+            nuevoBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log("🖱️ Botón de gráficas pulsado (desde forzador)");
+                sessionStorage.setItem('viniendoDeGraficas', 'true');
+                window.location.href = 'estadisticas_graficas.html';
+                return false;
+            };
+            console.log("✅ Botón de gráficas configurado correctamente");
+            return true;
         }
+        return false;
+    };
+    
+    // Intentar inmediatamente
+    if (!forzarBotonGraficas()) {
+        // Si no funciona, intentar cada 100ms hasta que exista
+        let intentos = 0;
+        const intervalo = setInterval(() => {
+            intentos++;
+            if (forzarBotonGraficas() || intentos > 50) {
+                clearInterval(intervalo);
+                if (intentos > 50) console.log("❌ No se pudo configurar el botón de gráficas");
+            }
+        }, 100);
     }
+    
+    // Resto del código original para el botón de historial...
     const accionesGlobales = document.querySelector('.acciones-globales');
     if (accionesGlobales && !document.getElementById('btnHistorial')) {
         const btnHistorial = document.createElement('button');
@@ -1830,12 +1853,16 @@ function getFechaLocal() {
     return `${año}-${mes}-${dia}`;
 }
 
-// ==================== MANUAL DE USUARIO EXTERNO (solo referencias) ====================
-// El manual se carga mediante fetch al pulsar el botón de ayuda, por lo que no es necesario incluirlo aquí.
+// ==================== FUNCIÓN GLOBAL PARA GRÁFICAS ====================
+window.abrirGraficas = function() {
+    console.log("🖱️ Abriendo gráficas desde función global");
+    sessionStorage.setItem('viniendoDeGraficas', 'true');
+    window.location.href = 'estadisticas_graficas.html';
+};
 
 // ==================== EVENTO PRINCIPAL ====================
 window.onload = () => {
-    console.log("🚀 Iniciando Dominó Pintintín v5.2.0");
+    console.log("🚀 Iniciando Dominó Pintintín v5.2.1");
     cargarTodoDesdeLocalStorage();
     validarConsistenciaMachs();
     
@@ -1880,12 +1907,6 @@ window.onload = () => {
     actualizarColorBotonSorteo();
     
     iniciarDeteccionAccesoAdmin();
-	
-	// Listener para el checkbox de mantener ubicación
-	const chkMantener = document.getElementById('mantenerUbicacion');
-	if (chkMantener) {
-		chkMantener.addEventListener('change', actualizarColorBotonSorteo);
-	}
     
     // Asignar eventos globales
     const btnSortearEIniciar = document.getElementById('btnSortearEIniciar');
@@ -1919,6 +1940,16 @@ window.onload = () => {
     const checkEmpateDiv = document.getElementById('checkEmpate');
     const btnTransponer = document.getElementById('btnTransponer');
     const btnVerMachsPorDia = document.getElementById('btnVerMachsPorDia');
+    const btnGraficasConfig = document.getElementById('btnGraficasConfig');
+    const chkMantenerUbicacion = document.getElementById('mantenerUbicacion');
+    
+    if (chkMantenerUbicacion) {
+        chkMantenerUbicacion.addEventListener('change', actualizarColorBotonSorteo);
+    }
+    
+    if (btnGraficasConfig) {
+        btnGraficasConfig.onclick = window.abrirGraficas;
+    }
     
     if (btnVerMachsPorDia) {
         btnVerMachsPorDia.onclick = () => { window.location.href = 'ver_machs_por_dia.html'; };
