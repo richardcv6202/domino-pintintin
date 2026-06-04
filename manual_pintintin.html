@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual de Usuario - Dominó Pintintín v5.2.1</title>
+    <title>Manual de Usuario - Dominó Pintintín v6.0.0</title>
     <style>
         * {
             margin: 0;
@@ -46,6 +46,9 @@
             font-size: 0.8rem;
             margin-left: 0.5rem;
         }
+        .version-final {
+            background: #10b981;
+        }
         .creador {
             text-align: center;
             background: #e0e7ff;
@@ -71,6 +74,12 @@
             color: #475569;
             margin-top: 1.2rem;
             margin-bottom: 0.5rem;
+        }
+        h4 {
+            color: #64748b;
+            margin-top: 1rem;
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
         }
         table {
             width: 100%;
@@ -135,6 +144,13 @@
             margin: 1rem 0;
             border-left: 4px solid #8b5cf6;
         }
+        .ejemplo-tabla {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
         .indice {
             background: #f8fafc;
             padding: 1rem;
@@ -190,6 +206,14 @@
         .faq-respuesta.visible {
             display: block;
         }
+        .faq-categoria {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #e2e8f0;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
         .glosario {
             background: #f8fafc;
             padding: 1rem;
@@ -204,6 +228,46 @@
         .glosario dd {
             margin-left: 1rem;
             color: #475569;
+        }
+        .indicador-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .indicador-titulo {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .indicador-formula {
+            background: #e2e8f0;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin: 0.3rem 0;
+        }
+        .valor-bueno { color: #10b981; font-weight: bold; }
+        .valor-malo { color: #ef4444; font-weight: bold; }
+        .valor-regular { color: #f59e0b; font-weight: bold; }
+        .insight-card {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .insight-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: #92400e;
         }
         @media (max-width: 768px) {
             body {
@@ -220,14 +284,14 @@
 </head>
 <body>
 <div class="manual-container">
-    <h1>📖 MANUAL DE USUARIO <span class="version-badge">Versión 5.2.1</span></h1>
+    <h1>📖 MANUAL DE USUARIO <span class="version-badge version-final">Versión 6.0.0 FINAL</span></h1>
     <div class="subtitulo">🀰 DOMINÓ PINTINTÍN - Aplicación para Campeonato de Dominó (4 jugadores individuales)</div>
     <div class="creador">
         <strong>Creado por:</strong> Ricardo Castillo Valdés (<span id="manualAdminLink">Richard</span>)<br>
         <strong>Email:</strong> <a href="mailto:3sayricardo@gmail.com">3sayricardo@gmail.com</a><br>
         <strong>WhatsApp:</strong> <a href="https://wa.me/5355031725">+53 55031725</a><br>
         <strong>Ubicación:</strong> La Demajagua, Isla de la Juventud, Cuba<br>
-        <strong>Versión actual:</strong> 5.2.1 - "Mejoras de usabilidad y visuales"
+        <strong>Versión actual:</strong> 6.0.0 FINAL - "Versión Estable Definitiva"
     </div>
 
     <script>
@@ -250,7 +314,7 @@
     <div class="indice">
         <ol>
             <li><a href="#intro">Introducción y filosofía del juego</a></li>
-            <li><a href="#novedades521">🎉 Novedades de la versión 5.2.1</a></li>
+            <li><a href="#novedades600">🎉 Novedades de la versión 6.0.0 FINAL</a></li>
             <li><a href="#historia">Historia y evolución del Pintintín</a></li>
             <li><a href="#versiones">Historial completo de versiones</a></li>
             <li><a href="#pwa">¿Qué es una PWA? Ventajas</a></li>
@@ -269,6 +333,8 @@
             <li><a href="#pase-mano">Pase de mano automático (cómo funciona)</a></li>
             <li><a href="#estadisticas">Estadísticas (del día, globales, exportación)</a></li>
             <li><a href="#graficas">📈 Módulo de gráficas interactivas (incluye tiempo)</a></li>
+            <li><a href="#analisis-rendimiento">🎯 ANÁLISIS DE RENDIMIENTO - GUÍA COMPLETA</a></li>
+            <li><a href="#eficiencia-relativa">📊 ANÁLISIS DE EFICIENCIA RELATIVA (NUEVO)</a></li>
             <li><a href="#machsPorDia">📋 Ver Machs por Día – Explicación detallada</a></li>
             <li><a href="#tiempo">⏱️ Métricas de tiempo (gráficas y admin)</a></li>
             <li><a href="#admin">🛠️ Panel de administración – Funciones avanzadas</a></li>
@@ -280,29 +346,49 @@
             <li><a href="#borrar">⚠️ Borrar todos los datos (con contraseña)</a></li>
             <li><a href="#ayudaIntegrada">❓ Ayuda integrada</a></li>
             <li><a href="#problemasComunes">🔧 Solución de problemas comunes</a></li>
-            <li><a href="#faq">❓ Preguntas frecuentes (más de 30 preguntas)</a></li>
+            <li><a href="#faq">❓ Preguntas frecuentes (más de 45 preguntas)</a></li>
             <li><a href="#creditos">🙏 Créditos y agradecimientos</a></li>
         </ol>
     </div>
 
-    <!-- ==================== SECCIONES ==================== -->
+    <!-- ==================== SECCIONES PRINCIPALES ==================== -->
 
     <h2 id="intro">1. INTRODUCCIÓN Y FILOSOFÍA DEL JUEGO</h2>
     <p><strong>Dominó Pintintín</strong> es una aplicación diseñada específicamente para <strong>campeonatos de dominó individual</strong> (4 jugadores, cada uno juega para sí mismo). Nace en la peña de dominó de La Demajagua, Isla de la Juventud, Cuba, donde se juega con reglas propias: "agache", "botar gorda", "sin respeto de reglas". La aplicación automatiza el registro de puntos, patas, machs, forros, aguas, pases de mano y empates, permitiendo a los jugadores concentrarse en el juego.</p>
     <p>La app es una <strong>PWA (Progressive Web App)</strong>, por lo que puede instalarse en el móvil y funciona sin conexión a internet después de la primera carga. También es totalmente responsive, adaptándose a cualquier tamaño de pantalla.</p>
     <div class="nota">📌 <strong>Filosofía:</strong> "El dominó no se juega con las manos, se juega con la cabeza". La aplicación está pensada para ser justa, rápida y transparente, con trazabilidad completa de cada mano.</div>
 
-    <h2 id="novedades521">🎉 2. NOVEDADES DE LA VERSIÓN 5.2.1</h2>
+    <h2 id="novedades600">🎉 2. NOVEDADES DE LA VERSIÓN 6.0.0 FINAL</h2>
     <table>
         <thead><tr><th>Característica</th><th>Descripción</th></tr></thead>
         <tbody>
-            <tr><td class="text-center"><strong>🎲 Mantener ubicación de jugadores</strong></td><td>Nuevo checkbox en la pantalla de inicio que permite iniciar el juego SIN sortear las sillas, manteniendo el orden de ingreso de los nombres (Jugador 1 → Silla 1, etc.). Ideal para partidas rápidas o cuando los jugadores ya tienen posiciones preferidas.</td></tr>
-            <tr><td class="text-center"><strong>📐 Rediseño visual de la pantalla de inicio</strong></td><td>Interfaz más compacta y organizada: campos con bordes, separación entre jugadores obligatorios y opcionales, reducción de espacios verticales para aprovechar mejor la pantalla.</td></tr>
-            <tr><td class="text-center"><strong>🕐 Horas de inicio/fin en detalle de machs</strong></td><td>En el panel de administración, al ver el detalle de un mach, se muestra ahora la hora de inicio, hora de finalización y duración total. Permite analizar la duración real de cada mano.</td></tr>
-            <tr><td class="text-center"><strong>📦 Mejora en herramientas auxiliares del admin</strong></td><td>El botón "Verificar integridad" se ha movido a la sección de herramientas auxiliares, junto a las funciones afines, para una mejor organización.</td></tr>
-            <tr><td class="text-center"><strong>📚 Manual de usuario completo</strong></td><td>Se han añadido las secciones: Ayuda integrada, Solución de problemas comunes, Preguntas frecuentes (más de 30) y Créditos detallados.</td></tr>
-            <tr><td class="text-center"><strong>🔄 Actualización automática PWA</strong></td><td>Nueva versión del Service Worker (v5.2.1) para facilitar la actualización de la app en dispositivos instalados.</td></tr>
-            <tr><td class="text-center"><strong>📊 Nuevos indicadores en gráficas</strong></td><td>Añadidos "Machs jugados" y "Machs perdidos" para un análisis más completo del rendimiento de cada jugador.</td></tr>
+            <tr><td class="text-center"><strong>🎯 Análisis de Eficiencia Relativa</strong></td>
+            <td>Nuevo módulo que normaliza errores (Forros y Aguas) por Machs jugados, Machs ganados y Patas logradas. Incluye índices compuestos IER e IDC para comparación justa entre jugadores.</td>
+            </tr>
+            <tr><td class="text-center"><strong>📊 Índice de Eficiencia Relativa (IER)</strong></td>
+            <td>Fórmula: IER = (MachsGanados × 10) / (Forros × 5 + Aguas × 1). Mide la eficiencia del jugador para convertir victorias en rendimiento limpio.</td>
+            </tr>
+            <tr><td class="text-center"><strong>📈 Índice de Disciplina Corregido (IDC)</strong></td>
+            <td>Fórmula: IDC = (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10). Premia a quien maximiza patas minimizando errores.</td>
+            </tr>
+            <tr><td class="text-center"><strong>💡 Insights Estratégicos Automáticos</strong></td>
+            <td>Al comparar dos jugadores, el sistema genera automáticamente conclusiones sobre quién es más disciplinado, quién sufre más los errores, y recomendaciones personalizadas.</td>
+            </tr>
+            <tr><td class="text-center"><strong>💰 Costo de Oportunidad</strong></td>
+            <td>Calcula cuántas patas "cuesta" cada forro o cada agua, identificando qué error afecta más a cada jugador.</td>
+            </tr>
+            <tr><td class="text-center"><strong>🖨️ Exportación a PDF corregida</strong></td>
+            <td>Ahora funciona correctamente en Estadísticas Globales, Estadísticas del Día y Análisis de Rendimiento, con limpieza de emojis para mejor legibilidad.</td>
+            </tr>
+            <tr><td class="text-center"><strong>📐 Gráficas redimensionadas</strong></td>
+            <td>Las gráficas interactivas ahora ocupan todo el ancho disponible y se redimensionan automáticamente al cambiar el tamaño de la ventana.</td>
+            </tr>
+            <tr><td class="text-center"><strong>⚡ Análisis automático</strong></td>
+            <td>En el módulo de Análisis de Rendimiento, los datos se actualizan automáticamente al cambiar de jugador, fechas o modo, sin necesidad de botón "Analizar".</td>
+            </tr>
+            <tr><td class="text-center"><strong>🐛 Corrección de consistencia de datos</strong></td>
+            <td>Los indicadores (Patas, Forros, Aguas, Machs jugados) ahora se calculan directamente desde los machs, garantizando consistencia total con el historial real.</td>
+            </tr>
         </tbody>
     </table>
 
@@ -323,101 +409,53 @@
             <tr><td class="text-center">4.5.1</td><td>30/5/2026</td><td>📜 Historial de ganadores del día.</td></tr>
             <tr><td class="text-center">4.5.7</td><td>31/5/2026</td><td>Modal cerrar día con opción de conservar partida.</td></tr>
             <tr><td class="text-center">4.6.1</td><td>31/5/2026</td><td>Tablas corregidas, nuevo botón "Ver machs por día".</td></tr>
-            <tr><td class="text-center">5.0.0</td><td>31/5/2026</td><td>⚠️ Límite de 5 patas por mach, ver machs por día mejorado, acceso oculto a admin.</td></tr>
+            <tr><td class="text-center">5.0.0</td><td>31/5/2026</td><td>⚠️ Límite de 5 patas por mach, acceso oculto a admin.</td></tr>
             <tr><td class="text-center">5.0.1</td><td>1/6/2026</td><td>Corrección de continuación de partida (parcial).</td></tr>
-            <tr><td class="text-center">5.0.2</td><td>1/6/2026</td><td>Restauración definitiva, nueva lógica de salida, doble contraseña para admin.</td></tr>
-            <tr><td class="text-center">5.1.0</td><td>2/6/2026</td><td>Manual externo, métricas de tiempo (gráficas y admin), formato de fecha dd-mm-yyyy, hora de finalización en machs, numeración secuencial.</td></tr>
-            <tr><td class="text-center">5.2.0</td><td>2/6/2026</td><td>⏱️ Métricas de tiempo reales, verificación avanzada, reparación automática, herramienta actualizar_tiempos.html.</td></tr>
-            <tr><td class="text-center"><strong>5.2.1</strong></td><td><strong>3/6/2026</strong></td><td><strong>🎲 Mantener ubicación de jugadores, rediseño pantalla inicio, mejoras en admin (horas en detalle de machs, reorganización de botones), manual completo con más de 30 FAQ.</strong></td></tr>
+            <tr><td class="text-center">5.0.2</td><td>1/6/2026</td><td>Restauración definitiva, nueva lógica de salida.</td></tr>
+            <tr><td class="text-center">5.1.0</td><td>2/6/2026</td><td>Manual externo, métricas de tiempo.</td></tr>
+            <tr><td class="text-center">5.2.0</td><td>2/6/2026</td><td>⏱️ Métricas de tiempo reales, verificación avanzada.</td></tr>
+            <tr><td class="text-center">5.2.1</td><td>3/6/2026</td><td>🎲 Mantener ubicación de jugadores, rediseño pantalla inicio.</td></tr>
+            <tr><td class="text-center">5.3.0</td><td>4/6/2026</td><td>🎯 Análisis de Rendimiento con 13+ indicadores.</td></tr>
+            <tr><td class="text-center"><strong>6.0.0 FINAL</strong></td><td><strong>4/6/2026</strong></td><td><strong>🎯 Análisis de Eficiencia Relativa (IER/IDC), Insights automáticos, exportación PDF corregida, gráficas redimensionadas, análisis automático, corrección de consistencia de datos. VERSIÓN ESTABLE DEFINITIVA.</strong></td></tr>
         </tbody>
     </table>
 
     <h2 id="pwa">5. ¿QUÉ ES UNA PWA? VENTAJAS</h2>
-    <p>Una PWA (Progressive Web App) es una aplicación web que se comporta como una nativa. Ventajas:</p>
-    <ul>
-        <li><strong>Instalable</strong> en la pantalla de inicio del móvil sin pasar por una tienda de aplicaciones.</li>
-        <li><strong>Funciona offline</strong> (después de la primera carga).</li>
-        <li><strong>Actualizaciones automáticas</strong> (el Service Worker cachea los nuevos archivos).</li>
-        <li><strong>Segura</strong> (sirve a través de HTTPS en producción).</li>
-        <li><strong>Ligera</strong> (ocupa mucho menos que una app nativa).</li>
-    </ul>
+    <p>Una PWA (Progressive Web App) es una aplicación web que se comporta como una nativa. Ventajas: instalable, funciona offline, actualizaciones automáticas, segura, ligera.</p>
 
     <h2 id="instalacion">6. INSTALACIÓN DE LA APLICACIÓN</h2>
-    <h3>En tu móvil Android (recomendado)</h3>
-    <ol>
-        <li>Abre la aplicación en <strong>Chrome</strong> (desde la URL de GitHub Pages).</li>
-        <li>Toca los tres puntos ⋮ en la esquina superior derecha.</li>
-        <li>Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Agregar a pantalla de inicio"</strong>.</li>
-        <li>Confirma el nombre "Dominó Pintintín".</li>
-        <li>La app quedará instalada como una nativa y funcionará <strong>sin internet</strong> (después de la primera carga con conexión).</li>
-    </ol>
-    <div class="nota">📌 Para actualizar la app a una nueva versión, ciérrala completamente, vuelve a abrirla y el Service Worker se actualizará en segundo plano. Si no ocurre, desinstálala y vuelve a instalarla.</div>
-
-    <h3>Generar APK para distribución</h3>
-    <ol>
-        <li>Sube la app a un servidor HTTPS (GitHub Pages, Netlify).</li>
-        <li>Ve a <a href="https://pwabuilder.com" target="_blank">PWABuilder</a>.</li>
-        <li>Ingresa la URL de tu sitio.</li>
-        <li>La herramienta analizará tu PWA y te permitirá generar el APK para Android.</li>
-        <li>Descarga y distribuye el APK.</li>
-    </ol>
+    <p>En Android: Abre en Chrome → ⋮ → "Instalar aplicación" o "Agregar a pantalla de inicio". En iOS: Compartir → "Agregar a pantalla de inicio".</p>
 
     <h2 id="reglas">7. REGLAS DEL JUEGO (EXPLICACIÓN DETALLADA)</h2>
-    <p>El dominó individual se juega con 4 jugadores, cada uno con sus 7 fichas (o 5 en la variante de 55). El objetivo es sumar patas hasta alcanzar 5 patas en un "mach". Cada mano termina cuando un jugador coloca su última ficha o cuando se bloquea el juego y gana el que tenga menos puntos (pegado). También existe la capicua, que es una forma especial de pegado.</p>
-    
+    <p>El dominó individual se juega con 4 jugadores, cada uno con sus 7 fichas. El objetivo es sumar patas hasta alcanzar 5 patas en un "mach".</p>
     <h3>Formas de terminación de una mano</h3>
     <table>
         <thead><tr><th>Forma</th><th>Patas base</th><th>Descripción</th></tr></thead>
         <tbody>
-            <tr><td class="text-center">🚪 Cierre</td><td class="text-center">1</td><td>Un jugador coloca su última ficha y termina la mano. Puede ser cualquier ficha, doble o no, siempre que encaje en la cabeza correspondiente.</td></tr>
-            <tr><td class="text-center">🏃 Pegado (normal)</td><td class="text-center">1</td><td>El juego se bloquea (nadie puede jugar) y gana el que tenga menos puntos en sus fichas restantes. También ocurre cuando un jugador, con una ficha que no es doble, solo tiene una opción de colocación (una sola cabeza) y al ponerla termina la partida.</td></tr>
-            <tr><td class="text-center">🀰 Capicua (pegue especial)</td><td class="text-center">2</td><td>Ocurre cuando un jugador, con una ficha <strong>que no es doble</strong>, puede colocarla por <strong>cualquiera de las dos cabezas</strong> del tablero (es decir, la ficha encaja tanto en la cabeza izquierda como en la derecha) y con esa jugada <strong>termina la partida</strong> (se queda sin fichas). Es una variante más difícil y se premia con 2 patas.</td></tr>
+            <tr><td class="text-center">🚪 Cierre</td><td class="text-center">1</td><td>Un jugador coloca su última ficha y termina la mano.</td></tr>
+            <tr><td class="text-center">🏃 Pegado (normal)</td><td class="text-center">1</td><td>El juego se bloquea y gana el que tenga menos puntos en sus fichas restantes.</td></tr>
+            <tr><td class="text-center">🀰 Capicua</td><td class="text-center">2</td><td>Un jugador coloca una ficha no doble que encaja en ambas cabezas y se queda sin fichas.</td></tr>
         </tbody>
     </table>
-
     <div class="ejemplo">
-        <strong>📌 EJEMPLO DE CAPICUA:</strong> El tablero tiene cabezas con valores 3 y 5. Un jugador tiene la ficha [3-5] (que no es doble). Esta ficha puede colocarse tanto en la cabeza de 3 como en la de 5. Si el jugador la coloca y se queda sin fichas, <strong>es capicua</strong> y recibe 2 patas.<br>
-        <strong>📌 PEGADO NORMAL:</strong> Si la misma ficha [3-5] solo pudiera colocarse en una cabeza (por ejemplo, porque la otra cabeza no coincide), entonces sería un pegado normal y recibe 1 pata.
+        <strong>📌 EJEMPLO DE CAPICUA:</strong> El tablero tiene cabezas con valores 3 y 5. Un jugador tiene la ficha [3-5] (que no es doble). Esta ficha puede colocarse tanto en la cabeza de 3 como en la de 5. Si el jugador la coloca y se queda sin fichas, <strong>es capicua</strong> y recibe 2 patas.
     </div>
-
-    <h3>Efecto de los empates</h3>
-    <p>Cuando hay empates consecutivos sin que nadie gane una mano, el multiplicador se acumula: base × 2ⁿ donde n = número de empates acumulados por el jugador que gana. Ejemplo: si un jugador tiene 2 empates acumulados y gana con un cierre (base=1), recibirá 1 × 2² = 4 patas.</p>
-
-    <h3>⚠️ Límite de 5 patas por mach</h3>
-    <p>Si el cálculo anterior arrojara más de 5 patas (ej: base=2, n=3 → 2×8=16), el jugador solo recibe las patas necesarias para llegar a 5 (si ya tenía 0, recibe 5; si tenía 2, recibe 3). El excedente no se contabiliza para el mach, pero se guarda en la estadística "Patas por Empate" a modo informativo. Esto evita que un mach se alargue artificialmente.</p>
 
     <h2 id="glosario">📚 8. GLOSARIO DE TÉRMINOS</h2>
     <div class="glosario">
         <dl>
-            <dt>🏆 Pata</dt>
-            <dd>Unidad de puntuación. Se otorga al ganador de una mano. Se necesitan 5 patas para ganar un mach.</dd>
-            
-            <dt>🏆 Mach</dt>
-            <dd>Conjunto de 5 patas. Cuando un jugador llega a 5, gana un mach y se reinician las patas a cero para todos.</dd>
-            
-            <dt>🐔 Pollona</dt>
-            <dd>Mach en el que ningún otro jugador sumó ninguna pata (el ganador hizo todas las patas del mach). Otorga un punto extra en estadísticas.</dd>
-            
-            <dt>🧤 Forro</dt>
-            <dd>Penalización de 1 pata (se resta). Se asigna cuando un jugador comete una infracción o decide tomarlo voluntariamente.</dd>
-            
-            <dt>💧 Agua</dt>
-            <dd>Se asigna al jugador que revolvió las fichas después de una mano (no afecta las patas, solo se contabiliza en estadísticas).</dd>
-            
-            <dt>🎯 Pase de mano (PM)</dt>
-            <dd>Cuando un jugador cede su turno intencionalmente. El siguiente en sentido antihorario recibe el pase.</dd>
-            
-            <dt>⚖️ Empate</dt>
-            <dd>Se declara cuando dos o más jugadores quedan empatados en una situación (por ejemplo, ambos se quedan sin jugada al mismo tiempo). Acumula un multiplicador para la próxima mano.</dd>
-            
-            <dt>🀰 Capicua</dt>
-            <dd>Forma especial de terminar una mano que vale 2 patas. Ocurre cuando un jugador coloca una ficha no doble que encaja en ambas cabezas y se queda sin fichas.</dd>
-            
-            <dt>🚪 Cierre</dt>
-            <dd>Forma de terminar una mano colocando la última ficha (vale 1 pata).</dd>
-            
-            <dt>🏃 Pegado</dt>
-            <dd>Forma de terminar una mano cuando el juego se bloquea y gana el que tiene menos puntos (vale 1 pata).</dd>
+            <dt>🏆 Pata</dt><dd>Unidad de puntuación. Se necesitan 5 para ganar un mach.</dd>
+            <dt>🏆 Mach</dt><dd>Conjunto de 5 patas. Cuando un jugador llega a 5, gana un mach.</dd>
+            <dt>🐔 Pollona</dt><dd>Mach en el que ningún otro jugador sumó ninguna pata.</dd>
+            <dt>🧤 Forro</dt><dd>Penalización de 1 pata (se resta).</dd>
+            <dt>💧 Agua</dt><dd>Se asigna al jugador que revolvió las fichas.</dd>
+            <dt>🎯 Pase de mano (PM)</dt><dd>Cuando un jugador cede su turno intencionalmente.</dd>
+            <dt>⚖️ Empate</dt><dd>Dos o más jugadores quedan empatados. Acumula multiplicador.</dd>
+            <dt>🀰 Capicua</dt><dd>Forma especial de terminar una mano que vale 2 patas.</dd>
+            <dt>🚪 Cierre</dt><dd>Forma de terminar una mano colocando la última ficha.</dd>
+            <dt>🏃 Pegado</dt><dd>Forma de terminar una mano cuando el juego se bloquea.</dd>
+            <dt><strong>IER (Índice Eficiencia Relativa)</strong></dt><dd>Fórmula: (MachsGanados × 10) / (Forros × 5 + Aguas × 1). Mide eficiencia global.</dd>
+            <dt><strong>IDC (Índice Disciplina Corregido)</strong></dt><dd>Fórmula: (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10). Premia disciplina y eficiencia.</dd>
         </dl>
     </div>
 
@@ -429,16 +467,15 @@
         <li><strong>👥 Nombres (opcionales):</strong> Jugadores 3 y 4. Se pueden dejar vacíos.</li>
         <li><strong>🎲 Mantener ubicación de los jugadores:</strong> Al activar esta opción, los jugadores se ubicarán en las sillas según el orden de ingreso (Jugador 1 → Silla 1, Jugador 2 → Silla 2, etc.) sin sorteo aleatorio.</li>
         <li><strong>Botón principal:</strong> "🎲 Sortear sillas e iniciar" o "🎲 Iniciar juego (sin sorteo)" según el estado del checkbox.</li>
-        <li><strong>Botones secundarios:</strong> Estadísticas globales, Gráficas interactivas, Ver machs por día, Borrar datos, Exportar/Importar respaldo.</li>
+        <li><strong>Botones secundarios:</strong> Estadísticas globales, Gráficas interactivas, Análisis de rendimiento, Ver machs por día, Borrar datos, Exportar/Importar respaldo.</li>
     </ul>
 
     <h2 id="sorteo">10. SORTEO DE POSICIONES Y MODO MANTENER UBICACIÓN</h2>
     <p>Cuando se inicia un nuevo juego, hay dos modos posibles:</p>
     <ul>
         <li><strong>Modo sorteo (checkbox desactivado):</strong> Se sortean las sillas aleatoriamente. Los jugadores tiran dados virtuales y se resuelven empates hasta determinar el orden de las sillas.</li>
-        <li><strong>Modo mantener ubicación (checkbox activado):</strong> No hay sorteo. Los jugadores se ubican en las sillas en el mismo orden en que se ingresaron sus nombres (Jugador 1 → Silla 1, Jugador 2 → Silla 2, etc.).</li>
+        <li><strong>Modo mantener ubicación (checkbox activado):</strong> No hay sorteo. Los jugadores se ubican en las sillas en el mismo orden en que se ingresaron sus nombres (Jugador 1 → Silla 1, etc.).</li>
     </ul>
-    <p>En ambos modos, después de asignar las sillas, se sortea quién comienza la primera mano (lanzamiento de dados entre todos los jugadores).</p>
 
     <h2 id="juego">11. PANTALLA DE JUEGO Y SUS ELEMENTOS</h2>
     <p>Cada jugador tiene una <strong>tarjeta de color</strong> con:</p>
@@ -460,6 +497,7 @@
                 <tr><td class="text-center">📊 Estadísticas del día</td><td>Muestra una tabla con los acumulados del día actual (se puede alternar vista transpuesta).</td></tr>
                 <tr><td class="text-center">🌍 Estadísticas globales</td><td>Abre la vista de estadísticas históricas con filtro de fechas y exportación.</td></tr>
                 <tr><td class="text-center">📈 Gráficas interactivas</td><td>Abre el módulo de gráficas.</td></tr>
+                <tr><td class="text-center">🎯 Análisis de rendimiento</td><td>Abre el módulo de análisis avanzado.</td></tr>
                 <tr><td class="text-center">🚪 Salir del juego</td><td>Abre modal para salir conservando o no la partida.</td></tr>
                 <tr><td class="text-center">❓ Ayuda</td><td>Botón flotante superior derecho. Abre el manual completo.</td></tr>
                 <tr><td class="text-center">📜 Historial</td><td>Muestra todas las manos ganadas y salidas por empate del día actual.</td></tr>
@@ -473,383 +511,401 @@
         <li><strong>👑 Corona:</strong> Jugador que ganó la última mano (el que tiene el turno actual).</li>
         <li><strong>🥈 Medalla:</strong> Jugador que ganó la penúltima mano (el anterior ganador).</li>
     </ul>
-    <p>Esta información es útil para seguir el ritmo del juego y saber quién tiene el "palo" o la ventaja psicológica.</p>
 
     <h2 id="historial">📜 13. HISTORIAL DE GANADORES</h2>
-    <p>El botón <strong>📜 Historial</strong> muestra todas las manos ganadas y salidas por empate del día actual, con la siguiente información:</p>
-    <ul>
-        <li>Número de orden de la mano.</li>
-        <li>Nombre del jugador.</li>
-        <li>Motivo/Forma de terminación (cierre, pegado, capicua, empate).</li>
-        <li>Patas ganadas en esa mano.</li>
-        <li>Número de mach al que pertenece.</li>
-        <li>Hora exacta en que ocurrió.</li>
-    </ul>
-    <p>El historial se guarda automáticamente y se mantiene aunque cierres la app (si conservas la partida).</p>
+    <p>El botón <strong>📜 Historial</strong> muestra todas las manos ganadas y salidas por empate del día actual, con: número de orden, jugador, motivo/forma, patas ganadas, número de mach, hora exacta.</p>
 
     <h2 id="empate">⚖️ 14. DECLARAR EMPATE – PASO A PASO</h2>
     <ol>
         <li>Pulsa el botón <strong>⚖️ Declarar empate</strong>.</li>
-        <li>Selecciona al menos dos jugadores que hayan quedado empatados (marcando los checkboxes).</li>
+        <li>Selecciona al menos dos jugadores que hayan quedado empatados.</li>
         <li>Confirma con "Aceptar".</li>
-        <li>El sistema asigna automáticamente:
-            <ul>
-                <li>Un punto de "Empate" a cada jugador seleccionado.</li>
-                <li>Un acumulador de empate que multiplicará las patas de la próxima mano que gane alguno de ellos.</li>
-                <li>Si hay un solo jugador fuera del empate, ese jugador da agua automáticamente.</li>
-                <li>Si hay más de un jugador fuera del empate, se pregunta quién da agua.</li>
-            </ul>
-        </li>
-        <li>El jugador que sale (el que sigue después del último ganador) comienza la siguiente mano.</li>
+        <li>El sistema asigna automáticamente el agua y determina quién comienza la siguiente mano.</li>
     </ol>
 
     <h2 id="agua-empate">💧 15. ASIGNACIÓN DE AGUA DESPUÉS DEL EMPATE</h2>
-    <p>Cuando se declara un empate, es necesario determinar quién revolvió las fichas (da agua). Las reglas son:</p>
     <ul>
         <li><strong>Si hay un solo jugador fuera del empate:</strong> Ese jugador da agua automáticamente.</li>
         <li><strong>Si hay más de un jugador fuera del empate:</strong> La aplicación pregunta quién da agua (selección manual).</li>
-        <li><strong>Si todos los jugadores están empatados:</strong> No se asigna agua (situación especial, todos empatados).</li>
+        <li><strong>Si todos los jugadores están empatados:</strong> No se asigna agua.</li>
     </ul>
-    <p>El agua no afecta las patas, solo se contabiliza en estadísticas.</p>
 
     <h2 id="gestion">👥 16. GESTIÓN DE JUGADORES (AÑADIR, SUSTITUIR, RETIRAR)</h2>
-    <h3>Añadir jugador (si hay sillas vacantes)</h3>
-    <ul>
-        <li>Si hay menos de 4 jugadores, el botón dice "➕ Añadir jugador".</li>
-        <li>Al pulsarlo, se pide el nombre del nuevo jugador.</li>
-        <li>Se asigna automáticamente a una silla vacante aleatoria.</li>
-        <li>Se crea su participación en el día actual.</li>
-    </ul>
-    
-    <h3>Sustituir jugador (si ya hay 4 jugadores)</h3>
-    <ul>
-        <li>El botón cambia a "🔄 Sustituir jugador".</li>
-        <li>Se pide la posición a sustituir (1-4) y el nombre del nuevo jugador.</li>
-        <li>El jugador anterior se elimina y el nuevo ocupa su silla.</li>
-    </ul>
-    
-    <h3>Retirar jugador</h3>
-    <ul>
-        <li>Solo disponible si hay al menos 3 jugadores activos.</li>
-        <li>Se selecciona la posición del jugador que se retira.</li>
-        <li>Su silla queda vacante y puede ser ocupada más tarde.</li>
-    </ul>
+    <p><strong>Añadir jugador:</strong> Si hay menos de 4 jugadores, el botón dice "➕ Añadir jugador". Se pide el nombre y se asigna a una silla vacante aleatoria.</p>
+    <p><strong>Sustituir jugador:</strong> Si ya hay 4 jugadores, el botón cambia a "🔄 Sustituir jugador". Se pide la posición y el nombre del nuevo jugador.</p>
+    <p><strong>Retirar jugador:</strong> Solo disponible si hay al menos 3 jugadores activos. Se selecciona la posición del jugador que se retira.</p>
 
     <h2 id="pata">🏆 17. REGISTRO DE UNA PATA – FLUJO COMPLETO</h2>
     <ol>
-        <li>El jugador que gana la mano pulsa el botón <strong>🏆 Pata</strong> en su tarjeta.</li>
-        <li>Se abre un modal preguntando <strong>"¿Cómo terminó la mano?"</strong>:
-            <ul>
-                <li>🚪 Cierre (1 pata base).</li>
-                <li>🏃 Pegado (1 pata base).</li>
-                <li>🀰 Capicua (2 patas base).</li>
-            </ul>
-        </li>
-        <li>El sistema calcula las patas reales: <strong>Base × 2ⁿ</strong> donde n es el número de empates acumulados del jugador.</li>
-        <li>Si el jugador tiene empates acumulados, se le suman patas extra y se registran en "Patas por Empate".</li>
-        <li>Se pregunta quién da <strong>💧 Agua</strong> (revolvió las fichas):
-            <ul>
-                <li>Si solo hay 2 jugadores activos, el otro jugador da agua automáticamente.</li>
-                <li>Si hay más de 2 jugadores, se muestra un modal para seleccionar al que da agua.</li>
-            </ul>
-        </li>
-        <li>Se actualizan las patas del ganador (respetando el límite de 5).</li>
-        <li>Se registran las estadísticas (aguas, forros, etc.).</li>
-        <li>Se resetean los empates acumulados de todos los jugadores.</li>
+        <li>El jugador que gana la mano pulsa <strong>🏆 Pata</strong>.</li>
+        <li>Selecciona cómo terminó la mano: Cierre, Pegado o Capicua.</li>
+        <li>El sistema calcula las patas reales: Base × 2ⁿ (n = empates acumulados).</li>
+        <li>Se pregunta quién da 💧 Agua.</li>
+        <li>Se actualizan las patas (respetando el límite de 5).</li>
         <li>Se verifica si el jugador alcanzó 5 patas (mach).</li>
     </ol>
 
     <h2 id="pase-mano">🎯 18. PASE DE MANO AUTOMÁTICO (CÓMO FUNCIONA)</h2>
-    <p>Cuando un jugador pulsa <strong>🎯 Da PM</strong> en su tarjeta:</p>
+    <p>Cuando un jugador pulsa <strong>🎯 Da PM</strong>:</p>
     <ul>
         <li>Se registra un "Pase de mano dado" para ese jugador.</li>
         <li>Se determina automáticamente quién recibe el pase (el siguiente jugador activo en sentido antihorario).</li>
-        <li>Si hay receptor, se registra un "Pase de mano recibido" para ese jugador.</li>
-        <li>Si no hay receptor (por ejemplo, si el jugador es el único activo), solo se registra el pase dado.</li>
-        <li>Se muestra una alerta informando quién dio y quién recibió el pase.</li>
+        <li>Si hay receptor, se registra un "Pase de mano recibido".</li>
     </ul>
 
     <h2 id="estadisticas">📊 19. ESTADÍSTICAS (DEL DÍA, GLOBALES, EXPORTACIÓN)</h2>
-    <h3>Estadísticas del día</h3>
-    <p>Muestra los acumulados del día actual, incluyendo todas las estadísticas de cada jugador. Se puede alternar entre vista normal y transpuesta (botón 🔄).</p>
-    
-    <h3>Estadísticas globales</h3>
-    <p>Permite seleccionar un rango de fechas y ver los acumulados históricos. También se puede alternar la vista y exportar a CSV o PDF.</p>
+    <p><strong>Estadísticas del día:</strong> Muestra los acumulados del día actual. Se puede alternar entre vista normal y transpuesta.</p>
+    <p><strong>Estadísticas globales:</strong> Permite seleccionar un rango de fechas y ver los acumulados históricos. Exportación a CSV y PDF.</p>
 
     <h2 id="graficas">📈 20. MÓDULO DE GRÁFICAS INTERACTIVAS (INCLUYE TIEMPO)</h2>
-    <p>El módulo de gráficas permite visualizar datos de forma gráfica. Características:</p>
+    <p>Características:</p>
     <ul>
-        <li><strong>Filtros por fechas:</strong> Selecciona el rango de fechas a analizar.</li>
-        <li><strong>Selección de jugadores:</strong> Elige qué jugadores comparar (orden prioritario).</li>
-        <li><strong>Tipos de gráfico:</strong> Líneas, Barras (múltiples indicadores), Radar, Pastel, Polar.</li>
-        <li><strong>Modo juego:</strong> Indicadores tradicionales (Machs jugados, Machs ganados, Machs perdidos, Patas, etc.).</li>
-        <li><strong>Modo tiempo (NUEVO):</strong> Tiempo total jugado, Promedio por mach, Tiempo por mach ganado.</li>
-        <li><strong>Exportación:</strong> PNG (imagen) y CSV (datos subyacentes).</li>
+        <li>Filtros por fechas</li>
+        <li>Selección de jugadores (orden prioritario)</li>
+        <li>Tipos de gráfico: Líneas, Barras, Radar, Pastel, Polar</li>
+        <li>Modo juego: Indicadores tradicionales</li>
+        <li>Modo tiempo: Tiempo total jugado, Promedio por mach, Tiempo por mach ganado</li>
+        <li>Exportación: PNG, CSV, PDF</li>
     </ul>
 
-    <h2 id="machsPorDia">📋 21. VER MACHS POR DÍA – EXPLICACIÓN DETALLADA</h2>
-    <p>Este módulo muestra el historial completo de machs de una fecha específica:</p>
-    <ul>
-        <li><strong>Selector de fechas:</strong> Solo aparecen días con machs registrados. Carga automáticamente la última fecha jugada.</li>
-        <li><strong>Tabla de machs:</strong> Número de mach, ganador, participantes y patas finales. <strong>NUEVO:</strong> Columna con hora de finalización.</li>
-        <li><strong>Información de tiempo:</strong> Duración total de la sesión y promedio por mach (si hay al menos 2 machs con hora).</li>
-        <li><strong>Exportación a CSV</strong> de los machs mostrados.</li>
-        <li><strong>Resumen del día:</strong> Solo jugadores reales (excluye sillas vacías), con machs ganados y patas totales.</li>
-        <li><strong>Resumen acumulado general:</strong> Suma de todos los días.</li>
-        <li><strong>Formato de fecha dd-mm-yyyy</strong> (formato cubano).</li>
-    </ul>
+    <!-- ==================== SECCIÓN ANÁLISIS DE RENDIMIENTO ==================== -->
 
-    <h2 id="tiempo">⏱️ 22. MÉTRICAS DE TIEMPO (GRÁFICAS Y ADMIN)</h2>
-    <p>A partir de la versión 5.2.1, se han incorporado dos módulos para analizar el tiempo de juego:</p>
+    <h2 id="analisis-rendimiento">🎯 21. ANÁLISIS DE RENDIMIENTO - GUÍA COMPLETA</h2>
     
-    <h3>En el módulo de gráficas interactivas</h3>
-    <ul>
-        <li><strong>Tiempo total jugado (minutos):</strong> Suma de la duración de todos los machs en los que participó el jugador.</li>
-        <li><strong>Promedio de tiempo por mach (minutos):</strong> Tiempo total dividido entre la cantidad de machs jugados.</li>
-        <li><strong>Tiempo por mach ganado (minutos):</strong> Promedio de tiempo de los machs que el jugador ganó.</li>
-    </ul>
+    <p>El <strong>Módulo de Análisis de Rendimiento</strong> evalúa el desempeño de cada jugador con <strong>13+ indicadores estadísticos</strong>, genera <strong>recomendaciones personalizadas</strong>, compara jugadores y visualiza un <strong>radar de habilidades</strong>.</p>
     
-    <h3>En el panel de administración (pestaña "⏱️ Tiempo")</h3>
-    <ul>
-        <li>Fecha (dd-mm-yyyy)</li>
-        <li>Total de machs</li>
-        <li>Hora del primer mach (hh:mm a.m./p.m.)</li>
-        <li>Hora del último mach (hh:mm a.m./p.m.)</li>
-        <li>Duración total de la sesión (minutos)</li>
-        <li>Promedio por mach (minutos)</li>
-    </ul>
-    <p>Se puede filtrar por rango de fechas y exportar a CSV.</p>
+    <div class="nota">📌 <strong>Acceso:</strong> Botón <strong>"🎯 Análisis de rendimiento"</strong> en la pantalla de inicio o juego.</div>
 
-    <h2 id="admin">🛠️ 23. PANEL DE ADMINISTRACIÓN – FUNCIONES AVANZADAS</h2>
-    <p>Accede mediante <code>admin.html</code> con contraseña <strong><code>admin</code></strong> (después de haber accedido por el método oculto).</p>
-    
+    <h3>📊 21.1 Indicadores disponibles</h3>
     <table>
-        <thead><tr><th>Función</th><th>Descripción</th></tr></thead>
+        <thead><tr><th>Indicador</th><th>Descripción</th></tr></thead>
         <tbody>
-            <tr><td class="text-center">📊 Machs</td><td>Ver, filtrar, cambiar ganador, eliminar mach (solo el registro) o eliminar completamente (resta estadísticas). Botón "Ver detalle" con información completa (hora inicio/fin).</td></tr>
-            <tr><td class="text-center">👥 Jugadores</td><td>CRUD completo, nombre único. Al eliminar un jugador, se borran sus participaciones y machs ganados.</td></tr>
-            <tr><td class="text-center">📅 Días</td><td>Crear, activar/desactivar (checkbox), forzar cierre de día, eliminar.</td></tr>
-            <tr><td class="text-center">📈 Participaciones</td><td>Editar todos los campos estadísticos de cada jugador por día.</td></tr>
-            <tr><td class="text-center">📊 Reporte General</td><td>Totales acumulados por jugador con filtro de fechas, ordenado por machs y patas, exportable a CSV.</td></tr>
-            <tr><td class="text-center">⏱️ Tiempo</td><td>Estadísticas de tiempo por día (nuevo en v5.2.1).</td></tr>
-            <tr><td class="text-center">🔍 Verificar integridad</td><td>Detecta y repara inconsistencias (machs huérfanos, participaciones mal contadas).</td></tr>
-            <tr><td class="text-center">🔬 Verificación Avanzada</td><td>Detecta duplicados, fantasmas e inconsistencias profundas.</td></tr>
-            <tr><td class="text-center">🔨 Reparación Automática</td><td>Corrige automáticamente los problemas detectados.</td></tr>
-            <tr><td class="text-center">💾 Importar/Exportar</td><td>Respaldo completo de la base de datos en JSON.</td></tr>
+            <tr><td class="text-center">🎲 Machs jugados</td><td>Total de machs en que participó el jugador</td></tr>
+            <tr><td class="text-center">🏆 Machs ganados</td><td>Cantidad de machs que ganó</td></tr>
+            <tr><td class="text-center">❌ Machs perdidos</td><td>Machs jugados - Machs ganados</td></tr>
+            <tr><td class="text-center">📈 Efectividad (%)</td><td>(Machs ganados / Machs jugados) × 100</td></tr>
+            <tr><td class="text-center">🦶 Patas netas</td><td>Suma total de patas acumuladas</td></tr>
+            <tr><td class="text-center">🎯 Eficiencia</td><td>(Machs ganados × 5 / Patas netas) × 100</td></tr>
+            <tr><td class="text-center">🔥 Racha máxima</td><td>Mayor cantidad de machs consecutivos ganados</td></tr>
+            <tr><td class="text-center">📐 Consistencia (σ)</td><td>Desviación estándar de patas por mach</td></tr>
+            <tr><td class="text-center">🧤 Forros</td><td>Cantidad de forros recibidos</td></tr>
+            <tr><td class="text-center">💧 Aguas</td><td>Cantidad de aguas dadas</td></tr>
+            <tr><td class="text-center">🧩 Patas por Empate</td><td>Patas extra por empates acumulados</td></tr>
+            <tr><td class="text-center">🧹 Disciplina</td><td>(Forros + Aguas) / Machs jugados</td></tr>
         </tbody>
     </table>
 
-    <h2 id="adminAvanzado">🔬 24. VERIFICACIÓN AVANZADA Y REPARACIÓN AUTOMÁTICA</h2>
-    <h3>🔍 Verificación Avanzada</h3>
-    <p>Detecta automáticamente:</p>
-    <ul>
-        <li><strong>Participaciones duplicadas:</strong> Mismo (día, jugador) con dos registros diferentes.</li>
-        <li><strong>Participaciones fantasma:</strong> Todos los valores estadísticos en cero (posibles errores de registro).</li>
-        <li><strong>Días duplicados:</strong> Misma fecha con diferentes IDs.</li>
-        <li><strong>Inconsistencias:</strong> MachsGanados que exceden los machs reales, o participaciones fantasma que tienen machs asociados.</li>
-        <li><strong>Jugadores sin participación:</strong> Aparecen en machs pero no tienen registro en participaciones.</li>
-    </ul>
-    
-    <h3>🔨 Reparación Automática</h3>
-    <p>Al ejecutarla, realiza las siguientes acciones:</p>
-    <ul>
-        <li>Elimina participaciones fantasma.</li>
-        <li>Unifica días duplicados (actualiza referencias en participaciones y machs).</li>
-        <li>Recalcula machsGanados desde los machs reales.</li>
-        <li>Reconstruye participaciones faltantes desde los machs.</li>
-        <li>Reindexa IDs para mantener consistencia.</li>
-    </ul>
-    <div class="nota">⚠️ <strong>Recomendación:</strong> Siempre exporta un backup antes de ejecutar la reparación automática.</div>
+    <h3>⭐ 21.2 Sistema de calificación (0-100 puntos)</h3>
+    <table>
+        <thead><tr><th>Factor</th><th>Ponderación</th><th>Criterio</th></tr></thead>
+        <tbody>
+            <tr><td class="text-center">Eficiencia</td><td class="text-center">30 puntos</td><td>>40% = 30 pts, >35% = 20 pts, >30% = 15 pts</td></tr>
+            <tr><td class="text-center">Consistencia</td><td class="text-center">30 puntos</td><td>σ < 3 = 30 pts, σ < 5 = 20 pts, σ < 7 = 15 pts</td></tr>
+            <tr><td class="text-center">Efectividad</td><td class="text-center">20 puntos</td><td>>55% = 20 pts, >45% = 15 pts, >35% = 10 pts</td></tr>
+            <tr><td class="text-center">Disciplina</td><td class="text-center">20 puntos</td><td><0.5 = 20 pts, <1.0 = 15 pts, <1.5 = 10 pts</td></tr>
+            <tr><td class="text-center">Bonus (Racha)</td><td class="text-center">+10 extra</td><td>Racha ≥ 5 = +10 pts, Racha ≥ 3 = +5 pts</td></tr>
+        </tbody>
+    </table>
 
-    <h2 id="actualizarTiempos">⏰ 25. HERRAMIENTA ACTUALIZAR_TIEMPOS.HTML</h2>
-    <p>Esta es una herramienta <strong>de USO ÚNICO</strong> diseñada para corregir machs antiguos que no tienen <code>fechaHoraInicio</code> (creados antes de la versión 5.2.0).</p>
+    <!-- ==================== NUEVA SECCIÓN: EFICIENCIA RELATIVA ==================== -->
+
+    <h2 id="eficiencia-relativa">📊 22. ANÁLISIS DE EFICIENCIA RELATIVA (NUEVO)</h2>
     
-    <h3>¿Cómo funciona?</h3>
-    <ol>
-        <li>Abre el archivo <code>actualizar_tiempos.html</code> desde el panel de administración o directamente.</li>
-        <li>Haz clic en <strong>"🔍 Analizar machs antiguos"</strong> para ver cuántos machs necesitan actualización.</li>
-        <li>Haz clic en <strong>"🔄 Actualizar machs"</strong> para asignar horas de inicio aleatorias (entre 8 y 15 minutos antes de su hora de finalización).</li>
-        <li>Verifica en la aplicación que los machs tengan hora de inicio visible.</li>
-    </ol>
+    <p>El <strong>Análisis de Eficiencia Relativa</strong> normaliza los errores (Forros y Aguas) por la exposición del jugador, permitiendo una <strong>comparación justa entre jugadores con diferente número de partidas</strong>.</p>
+    
+    <div class="nota">📌 <strong>¿Por qué es necesario?</strong> Un jugador que juega 100 machs tendrá naturalmente más errores absolutos que uno que juega 20. La eficiencia relativa nivela el campo de juego.</div>
+
+    <h3>📐 22.1 Normalización por Machs Jugados</h3>
+    <p><strong>¿Cada cuántos machs comete un error?</strong></p>
+    <td>
+        <thead><tr><th>Métrica</th><th>Fórmula</th><th>Interpretación</th></tr></thead>
+        <tbody>
+            <tr><td class="text-center">🧤 Forros / Mach</td><td>Forros / Machs jugados</td><td>Menor es mejor. Indica disciplina.</td></tr>
+            <tr><td class="text-center">💧 Aguas / Mach</td><td>Aguas / Machs jugados</td><td>Menor es mejor. Indica capacidad para no quedarse sin jugada.</td></tr>
+            <tr><td class="text-center">⚠️ Errores totales / Mach</td><td>(Forros + Aguas) / Machs jugados</td><td>Menor es mejor. Métrica compuesta.</td></tr>
+        </tbody>
+    </table>
+
     <div class="ejemplo">
-        <strong>📌 EJEMPLO:</strong> Un mach que terminó a las 21:30 tendrá asignada una hora de inicio aleatoria entre 21:15 y 21:22.
+        <strong>📌 EJEMPLO:</strong> Jugador A: 10 forros en 100 machs → 0.10 forros/mach.<br>
+        Jugador B: 5 forros en 40 machs → 0.125 forros/mach.<br>
+        <strong>Conclusión:</strong> A pesar de tener más forros en valor absoluto, el Jugador A es más disciplinado (0.10 vs 0.125).
     </div>
-    <div class="nota">⚠️ <strong>Importante:</strong> Esta herramienta NO afecta los machs que ya tienen <code>fechaHoraInicio</code>. Es segura de usar.</div>
 
-    <h2 id="backup">💾 26. RESPALDO DE DATOS (BACKUP)</h2>
-    <h3>Automático</h3>
-    <p>Cada vez que se <strong>cierra un día definitivamente</strong> (saliendo sin conservar partida), la aplicación genera un archivo JSON con nombre <code>Pinti_v521_XXX.json</code> donde <code>XXX</code> es el día de la semana abreviado (lun, mar, mié, …). Si se juega el mismo día de la semana, el archivo se sobrescribe (solo se mantiene el último backup de ese día).</p>
+    <h3>🏆 22.2 Normalización por Machs Ganados</h3>
+    <p><strong>¿Cada cuántos machs ganados comete un error?</strong></p>
+    <table>
+        <thead><tr><th>Métrica</th><th>Fórmula</th><th>Interpretación</th></tr></thead>
+        <tbody>
+            <tr><td class="text-center">🧤 Forros / Mach ganado</td><td>Forros / Machs ganados</td><td>Menor es mejor. Limpieza en victorias.</td></tr>
+            <tr><td class="text-center">💧 Aguas / Mach ganado</td><td>Aguas / Machs ganados</td><td>Menor es mejor. Eficiencia en victorias.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>🦶 22.3 Normalización por Patas Logradas</h3>
+    <p><strong>¿Cuántos errores comete por cada pata que logra?</strong></p>
     
-    <h3>Manual</h3>
-    <ul>
-        <li><strong>Exportar:</strong> Botón "💾 Exportar respaldo" → genera <code>Pinti_v521_ddmmyy.json</code>.</li>
-        <li><strong>Importar:</strong> Botón "📂 Importar respaldo" → permite cargar un JSON previamente exportado (reemplaza toda la base de datos).</li>
-    </ul>
-    <div class="nota">⚠️ La importación borra los datos actuales. Siempre haz una copia de seguridad antes.</div>
-
-    <h2 id="persistencia">💾 27. PERSISTENCIA Y CONTINUACIÓN DE PARTIDAS</h2>
-    <p>La aplicación guarda automáticamente el estado de la partida en curso en <code>sessionStorage</code>. Esto permite:</p>
-    <ul>
-        <li><strong>Continuar una partida:</strong> Si cierras la app sin cerrar el día, al volver a abrir verás un botón verde "🎲 Continuar partida guardada".</li>
-        <li><strong>Salir sin perder progreso:</strong> Al salir del juego, marca "💾 Conservar partida para continuar después" para guardar el estado.</li>
-        <li><strong>Recuperación automática:</strong> Si la app se cierra inesperadamente (por error, por actualización del navegador, etc.), al recargar se restaurará la partida.</li>
-    </ul>
-
-    <h2 id="adminAcceso">🔐 28. ACCESO OCULTO AL PANEL DE ADMINISTRACIÓN</h2>
-    <p>Para evitar que los jugadores comunes accedan al panel, se han implementado <strong>tres métodos ocultos</strong>, todos protegidos por la misma contraseña: <strong><code>administrador</code></strong> (minúsculas, sin comillas). Una vez dentro del panel, se pide la contraseña <code>admin</code> (doble autenticación).</p>
-    <ol>
-        <li><strong>Parámetro en URL:</strong> Añade <code>?admin=true</code> a la URL principal. Ej: <code>index.html?admin=true</code>.</li>
-        <li><strong>5 taps en el marcador de puntos:</strong> En la pantalla de juego, haz clic 5 veces rápidamente en el <strong>número grande de patas (🦶)</strong> del jugador 1.</li>
-        <li><strong>Enlace en los créditos:</strong> En la pantalla de inicio, al final, el nombre <strong>Richard</strong> aparece subrayado en morado. Haz clic en él.</li>
-    </ol>
-
-    <h2 id="borrar">⚠️ 29. BORRAR TODOS LOS DATOS (CON CONTRASEÑA)</h2>
-    <p>Botón <strong>"⚠️ Borrar datos"</strong> en la pantalla de configuración. Pide la contraseña <strong><code>pintintin</code></strong>. Esta acción es <strong>irreversible</strong> y elimina todos los registros de jugadores, días, participaciones y machs. Siempre exporta un respaldo antes de borrar.</p>
-
-    <h2 id="ayudaIntegrada">❓ 30. AYUDA INTEGRADA</h2>
-    <p>La aplicación incluye un botón de ayuda <strong>❓</strong> en la esquina superior derecha de todas las pantallas principales. Al pulsarlo, se abre este manual de usuario de forma dinámica, permitiendo consultar las reglas, solución de problemas y preguntas frecuentes sin salir de la app.</p>
-
-    <h2 id="problemasComunes">🔧 31. SOLUCIÓN DE PROBLEMAS COMUNES</h2>
-
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> La app no carga o muestra "Sin conexión".<br>
-        <strong>✅ Solución:</strong> Asegúrate de tener conexión a internet la primera vez que la abres. Después funcionará offline. Si persiste, borra la caché del navegador o reinstala la app.
+    <h3>📈 22.4 Índices Compuestos</h3>
+    
+    <div class="indicador-card">
+        <div class="indicador-titulo">
+            <span>🏆</span> Índice de Eficiencia Relativa (IER)
+        </div>
+        <div class="indicador-formula">IER = (MachsGanados × 10) / (Forros × 5 + Aguas × 1)</div>
+        <p><strong>Interpretación:</strong> <span class="valor-bueno">Mayor es mejor</span>. Penaliza más los forros (×5) que las aguas (×1).</p>
+        <div class="ejemplo">
+            <strong>📌 EJEMPLO:</strong> 20 machs ganados, 10 forros, 100 aguas → IER = 200 / (50+100) = 1.33<br>
+            15 machs ganados, 5 forros, 50 aguas → IER = 150 / (25+50) = 2.00 → ¡mucho mejor!
+        </div>
     </div>
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> Los datos no se guardan o se pierden al cerrar la app.<br>
-        <strong>✅ Solución:</strong> Verifica que tu navegador soporta localStorage (todos los modernos lo hacen). No uses el modo incógnito para jugar, ya que los datos se borran al cerrar.
+    <div class="indicador-card">
+        <div class="indicador-titulo">
+            <span>📊</span> Índice de Disciplina Corregido (IDC)
+        </div>
+        <div class="indicador-formula">IDC = (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10)</div>
+        <p><strong>Interpretación:</strong> <span class="valor-bueno">Mayor es mejor</span>. Premia a quien maximiza patas minimizando errores.</p>
     </div>
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> El panel de administración no carga o aparece un modal en blanco.<br>
-        <strong>✅ Solución:</strong> Borra la caché del navegador (en Android: Ajustes → Chrome → Borrar datos de navegación → Caché). Luego recarga la página.
+    <div class="indicador-card">
+        <div class="indicador-titulo">
+            <span>💰</span> Costo de Oportunidad
+        </div>
+        <div class="indicador-formula">Costo por Forro = Patas totales / Forros<br>Costo por Agua = Patas totales / Aguas</div>
+        <p><strong>Interpretación:</strong> <span class="valor-malo">Mayor es peor</span> (significa que cada error le cuesta más patas).</p>
     </div>
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> La app se actualizó en GitHub pero mi móvil sigue mostrando la versión antigua.<br>
-        <strong>✅ Solución:</strong> Cierra completamente la app (desliza para cerrar), vuelve a abrirla. Si no funciona, desinstala la app y vuelve a instalarla desde el navegador.
+    <h3>💡 22.5 Insights Estratégicos Automáticos</h3>
+    <div class="insight-card">
+        <h4>📌 EJEMPLO REAL: Comparativa Tito vs Richard</h4>
+        <p><strong>Insights generados automáticamente:</strong></p>
+        <p>• ✅ Richard tiene MENOS forros por mach (0.133 vs 0.216) → es más disciplinado en evitar forros.</p>
+        <p>• ✅ Richard tiene MENOS aguas por mach (4.667 vs 5.203) → da menos agua.</p>
+        <p>• 🏆 Tito tiene mejor Índice de Eficiencia Relativa (IER: 0.430 vs 0.425) → convierte mejor sus victorias en eficiencia.</p>
+        <p>• 💪 Los forros de Richard son "más costosos" (18.1 patas perdidas vs 14.25 de Tito) → cada forro le duele más.</p>
+        <p><strong>Conclusión final:</strong> Richard es más disciplinado (menos errores por mach), pero Tito es más eficiente convirtiendo patas en victorias a pesar de sus errores.</p>
     </div>
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> Los machs antiguos no tienen hora de inicio.<br>
-        <strong>✅ Solución:</strong> Ejecuta la herramienta <code>actualizar_tiempos.html</code> desde el panel de administración. Asignará horas estimadas a los machs sin hora de inicio.
-    </div>
+    <!-- ==================== RESTO DE SECCIONES ==================== -->
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> El botón de "Gráficas interactivas" no funciona.<br>
-        <strong>✅ Solución:</strong> Asegúrate de que el archivo <code>estadisticas_graficas.html</code> existe en la misma carpeta. Si persiste, recarga forzadamente (Ctrl+F5).
-    </div>
+    <h2 id="machsPorDia">📋 23. VER MACHS POR DÍA – EXPLICACIÓN DETALLADA</h2>
+    <p>Módulo que muestra el historial completo de machs de una fecha específica, con hora de finalización, duración total, exportación a CSV y PDF.</p>
 
-    <div class="problema-solucion">
-        <strong>⚠️ Problema:</strong> Los datos de tiempo (duración de machs) no aparecen.<br>
-        <strong>✅ Solución:</strong> Solo los machs creados con la versión 5.2.0 o superior tienen <code>fechaHoraInicio</code>. Ejecuta la herramienta <code>actualizar_tiempos.html</code> para estimar horas a los machs antiguos.
-    </div>
+    <h2 id="tiempo">⏱️ 24. MÉTRICAS DE TIEMPO (GRÁFICAS Y ADMIN)</h2>
+    <p>Permiten analizar la duración de las partidas: tiempo total jugado, promedio por mach, tiempo por mach ganado.</p>
 
-    <h2 id="faq">❓ 32. PREGUNTAS FRECUENTES (MÁS DE 30 PREGUNTAS)</h2>
+    <h2 id="admin">🛠️ 25. PANEL DE ADMINISTRACIÓN – FUNCIONES AVANZADAS</h2>
+    <p>Acceso con contraseña <code>admin</code> (después de autenticación oculta). CRUD completo de jugadores, días, participaciones, machs, reportes, verificación avanzada y reparación automática.</p>
+
+    <h2 id="adminAvanzado">🔬 26. VERIFICACIÓN AVANZADA Y REPARACIÓN AUTOMÁTICA</h2>
+    <p>Detecta participaciones duplicadas, fantasmas, días duplicados e inconsistencias. La reparación automática corrige estos problemas.</p>
+
+    <h2 id="actualizarTiempos">⏰ 27. HERRAMIENTA ACTUALIZAR_TIEMPOS.HTML</h2>
+    <p>Herramienta de USO ÚNICO para asignar horas de inicio a machs antiguos (anteriores a v5.2.0).</p>
+
+    <h2 id="backup">💾 28. RESPALDO DE DATOS (BACKUP)</h2>
+    <p>Exportación manual e importación de toda la base de datos en JSON. Backups automáticos al cerrar días definitivamente.</p>
+
+    <h2 id="persistencia">💾 29. PERSISTENCIA Y CONTINUACIÓN DE PARTIDAS</h2>
+    <p>La app guarda automáticamente el estado de la partida, permitiendo continuar después de cerrar la aplicación.</p>
+
+    <h2 id="adminAcceso">🔐 30. ACCESO OCULTO AL PANEL DE ADMINISTRACIÓN</h2>
+    <p>Métodos: <code>?admin=true</code> en URL, 5 taps en las patas del jugador 1, o clic en el nombre "Richard" en los créditos. Contraseña: <strong>administrador</strong>.</p>
+
+    <h2 id="borrar">⚠️ 31. BORRAR TODOS LOS DATOS (CON CONTRASEÑA)</h2>
+    <p>Botón "⚠️ Borrar datos" con contraseña <strong>pintintin</strong>. Acción irreversible.</p>
+
+    <h2 id="ayudaIntegrada">❓ 32. AYUDA INTEGRADA</h2>
+    <p>Botón ❓ en la esquina superior derecha que abre este manual de usuario de forma dinámica.</p>
+
+    <h2 id="problemasComunes">🔧 33. SOLUCIÓN DE PROBLEMAS COMUNES</h2>
+    <div class="problema-solucion"><strong>⚠️ Problema:</strong> La app no carga o muestra "Sin conexión".<br><strong>✅ Solución:</strong> Asegúrate de tener conexión la primera vez. Después funciona offline.</div>
+    <div class="problema-solucion"><strong>⚠️ Problema:</strong> Los datos no se guardan o se pierden.<br><strong>✅ Solución:</strong> No uses modo incógnito. Verifica que localStorage esté habilitado.</div>
+    <div class="problema-solucion"><strong>⚠️ Problema:</strong> La exportación a PDF no funciona.<br><strong>✅ Solución:</strong> Verifica que tu navegador tenga conexión a internet para cargar las librerías jsPDF. Recarga la página con Ctrl+F5.</div>
+    <div class="problema-solucion"><strong>⚠️ Problema:</strong> Las gráficas se ven pequeñas.<br><strong>✅ Solución:</strong> En v6.0.0 esto está corregido. Si persiste, actualiza la app.</div>
+    <div class="problema-solucion"><strong>⚠️ Problema:</strong> El análisis de rendimiento muestra datos incorrectos.<br><strong>✅ Solución:</strong> Ejecuta la herramienta "Verificación Avanzada" desde el panel de administración.</div>
+
+    <!-- ==================== FAQ EXTENDIDO (45+ PREGUNTAS) ==================== -->
+
+    <h2 id="faq">❓ 34. PREGUNTAS FRECUENTES (MÁS DE 45 PREGUNTAS)</h2>
+
+    <!-- Categoría: Instalación y configuración -->
+    <div class="faq-categoria">📱 INSTALACIÓN Y CONFIGURACIÓN</div>
 
     <div class="faq-item">
         <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se instala la app en el móvil? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Abre la app en Chrome, toca los tres puntos ⋮ y selecciona "Instalar aplicación" o "Agregar a pantalla de inicio".</div>
+        <div class="faq-respuesta">Abre la app en Chrome, toca los tres puntos ⋮ y selecciona "Instalar aplicación" o "Agregar a pantalla de inicio". En iOS (iPhone), usa "Compartir" → "Agregar a pantalla de inicio". La app funciona sin internet después de la primera carga.</div>
     </div>
 
     <div class="faq-item">
         <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Se puede jugar sin conexión a internet? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, después de la primera carga con conexión, la app funciona completamente offline.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo accedo al panel de administración? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Hay tres formas ocultas: 5 taps rápidos en las patas del jugador 1, añadir <code>?admin=true</code> a la URL, o hacer clic en el nombre "Richard" en los créditos. La contraseña es <strong>administrador</strong>. Luego dentro del panel, la contraseña es <strong>admin</strong>.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "Mantener ubicación de los jugadores"? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Es una nueva opción en la pantalla de inicio (v5.2.1). Al marcarla, los jugadores se ubicarán en las sillas según el orden en que se ingresaron sus nombres (Jugador 1 → Silla 1, etc.), sin sorteo aleatorio.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo recupero una partida que dejé a medias? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Si saliste del juego marcando "Conservar partida", al volver a abrir la app el botón principal será verde y dirá "Continuar partida guardada". Pulsa para restaurar la partida.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hacer si un jugador se retira a mitad de la partida? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Usa el botón "➖ Salida de jugador" en la pantalla de juego. Selecciona la silla del jugador que se retira. Su silla quedará vacante y podrá ser ocupada por otro jugador más tarde.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se declara un empate? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Pulsa el botón ⚖️ "Declarar empate", selecciona los jugadores que quedaron empatados y confirma. El sistema asignará automáticamente quién da agua (si hay un solo jugador fuera del empate) o pedirá seleccionar quién da agua.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué información puedo ver en las gráficas? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Puedes ver gráficas de los indicadores de juego (machs jugados, machs ganados, machs perdidos, patas, etc.) y también métricas de tiempo (tiempo total jugado, promedio por mach, tiempo por mach ganado).</div>
+        <div class="faq-respuesta">Sí, después de la primera carga con conexión, la app funciona completamente offline. El Service Worker guarda en caché todos los archivos necesarios.</div>
     </div>
 
     <div class="faq-item">
         <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo actualizo la app a la última versión? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Cierra completamente la app, vuelve a abrirla. El Service Worker buscará la nueva versión automáticamente. Si no ocurre, desinstala la app y vuelve a instalarla desde el navegador.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "Machs jugados" en las gráficas? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Es el total de machs en los que el jugador participó (haya ganado o no). Es útil para calcular el porcentaje de efectividad (machs ganados / machs jugados).</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "Machs perdidos"? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Es la diferencia entre "Machs jugados" y "Machs ganados". Indica cuántos machs perdió el jugador.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se calcula el tiempo total jugado? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Es la suma de las duraciones de todos los machs en los que participó el jugador (desde el inicio hasta el fin de cada mach).</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es una "Participación fantasma"? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Es un registro de participación que tiene todos sus valores estadísticos en cero. Suele ocurrir por errores antiguos en la aplicación. La verificación avanzada las detecta y las elimina automáticamente.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hacer si veo un modal en blanco al abrir el admin? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Borra la caché del navegador y recarga. Si persiste, prueba en modo incógnito. Si aún así falla, reinstala la app.</div>
+        <div class="faq-respuesta">Cierra completamente la app (desliza para cerrar), vuelve a abrirla. El Service Worker buscará la nueva versión automáticamente. Si no ocurre, desinstala la app y vuelve a instalarla desde el navegador.</div>
     </div>
 
     <div class="faq-item">
         <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Puedo jugar con 3 jugadores? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, la app permite jugar con 2, 3 o 4 jugadores. Las sillas vacías se muestran como "Vacante" y no participan en las manos.</div>
+        <div class="faq-respuesta">Sí, la app permite 2, 3 o 4 jugadores. Las sillas vacías se muestran como "Vacante" y no participan en las manos. El mínimo es 2 jugadores.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué pasa si un jugador se desconecta en medio de una mano? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">La app guarda el estado automáticamente. Si el jugador vuelve a abrir la app, puede continuar la partida (si está en el mismo día y mismo navegador).</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "Mantener ubicación de los jugadores"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Opción que ubica a los jugadores en las sillas según el orden de ingreso (Jugador 1 → Silla 1, Jugador 2 → Silla 2, etc.), sin sorteo aleatorio. Ideal para partidas rápidas o cuando los jugadores ya tienen posiciones preferidas.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Se pueden exportar los datos a Excel? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, desde el módulo de estadísticas globales puedes exportar a CSV, que se puede abrir con Excel. También desde el panel de administración puedes exportar toda la base de datos en JSON.</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo recupero una partida guardada? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Al abrir la app, el botón principal será verde con el texto "Continuar partida guardada". Pulsa para restaurar la partida. Si saliste sin conservar la partida, no podrás recuperarla.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se interpreta la columna "Patas por Empate"? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Son las patas extra que un jugador ha recibido gracias a los empates acumulados. Es un indicador de qué tanto se benefician los jugadores de las situaciones de empate.</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿La app funciona en iOS (iPhone)? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Sí, funciona como web app. En Safari, usa "Compartir" → "Agregar a pantalla de inicio". Algunas funciones PWA pueden ser limitadas, pero el juego funciona correctamente.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "E. Ganados" en las estadísticas? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Son los empates que el jugador ha "ganado", es decir, cuando después de un empate, el jugador sale a jugar la siguiente mano (y potencialmente gana patas multiplicadas).</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Puedo usar la app en una computadora? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Sí, la app es responsive y funciona perfectamente en navegadores de escritorio (Chrome, Edge, Firefox).</div>
+    </div>
+
+    <!-- Categoría: Juego y reglas -->
+    <div class="faq-categoria">🎲 JUEGO Y REGLAS</div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se declara un empate? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Pulsa el botón ⚖️ "Declarar empate", selecciona los jugadores que quedaron empatados y confirma. El sistema asignará automáticamente quién da agua (si hay un solo jugador fuera del empate) o pedirá seleccionar quién da agua. Los empates acumulan un multiplicador para la próxima mano.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Puedo cambiar el nombre de un jugador después de haber jugado? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, desde el panel de administración puedes editar el nombre de cualquier jugador. Esto actualizará automáticamente todas sus participaciones y machs.</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es una "Pollona"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Una pollona es un mach en el que el jugador ganador sumó las 5 patas y ningún otro jugador sumó ninguna pata (todos los demás tienen 0 patas en ese mach). Se contabiliza como un logro especial en las estadísticas.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es la "Verificación Avanzada" del panel de admin? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué diferencia hay entre Cierre, Pegado y Capicua? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta"><strong>Cierre:</strong> El jugador coloca su última ficha y termina la mano (vale 1 pata). <strong>Pegado:</strong> El juego se bloquea y gana el que tiene menos puntos (vale 1 pata). <strong>Capicua:</strong> El jugador coloca una ficha no doble que encaja en ambas cabezas del tablero y se queda sin fichas (vale 2 patas).</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo funciona el límite de 5 patas por mach? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Si un jugador gana una mano y las patas que recibiría superan las necesarias para llegar a 5, solo recibe las patas necesarias. El excedente se registra en "Patas por Empate" pero no se contabiliza para el mach actual. Ejemplo: un jugador con 4 patas gana una capicua (2 patas base) con 2 empates acumulados (2×4=8 patas), pero solo recibe 1 pata para llegar a 5.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es el Pase de Mano y cómo funciona? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">El Pase de Mano (PM) es cuando un jugador cede su turno intencionalmente. La app registra automáticamente quién da el PM y quién lo recibe (el siguiente jugador activo en sentido antihorario). Se contabilizan en estadísticas como "PM Dados" y "PM Recibidos".</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué pasa si un jugador se retira a mitad de la partida? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Usa el botón "➖ Salida de jugador" en la pantalla de juego. Selecciona la silla del jugador que se retira. Su silla quedará vacante y podrá ser ocupada por otro jugador más tarde. El mínimo es 2 jugadores en la mesa.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se sortean las sillas al iniciar? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Cada jugador tira un dado virtual. Si hay empates, los jugadores empatados vuelven a tirar hasta determinar un orden. Luego se asignan las sillas aleatoriamente. Si activas "Mantener ubicación", no hay sorteo y los jugadores se ubican en el orden de ingreso.</div>
+    </div>
+
+    <!-- Categoría: Estadísticas y análisis -->
+    <div class="faq-categoria">📊 ESTADÍSTICAS Y ANÁLISIS</div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es el Análisis de Rendimiento? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Es un módulo que evalúa el desempeño de los jugadores con 13+ indicadores (machs jugados, machs ganados, efectividad, racha, consistencia, disciplina, etc.), genera recomendaciones personalizadas, permite comparar jugadores y visualiza un radar de habilidades. Los datos se calculan directamente desde los machs para garantizar consistencia.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es el Análisis de Eficiencia Relativa? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Es una herramienta avanzada que normaliza los errores (Forros y Aguas) por la cantidad de machs jugados, machs ganados y patas logradas. Permite comparar jugadores con diferente número de partidas de manera justa. Incluye índices compuestos como IER e IDC.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significan IER e IDC? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta"><strong>IER (Índice de Eficiencia Relativa):</strong> (MachsGanados × 10) / (Forros × 5 + Aguas × 1). Mide la eficiencia para convertir victorias en rendimiento limpio. <strong>IDC (Índice de Disciplina Corregido):</strong> (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10). Premia a quien maximiza patas minimizando errores. En ambos, <strong>mayor es mejor</strong>.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se calcula la "Efectividad"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">La efectividad es (Machs ganados / Machs jugados) × 100. Ejemplo: 12 ganados de 20 = 60% de efectividad. Es el indicador principal de rendimiento.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es la "Racha máxima de victorias"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Es la mayor cantidad de machs consecutivos que un jugador ha ganado. Refleja su capacidad de mantener una racha ganadora. Una racha de 5 o más es excelente.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "Consistencia" (desviación estándar)? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Mide la regularidad del jugador en la cantidad de patas que obtiene por mach. Una desviación baja (σ < 3) significa que siempre rinde similar; una alta (σ > 5) significa que es impredecible. Ejemplo: Un jugador que siempre hace 5 patas es más consistente que uno que a veces hace 5 y a veces 0.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es la "Disciplina" en el análisis? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Es (Forros + Aguas) / Machs jugados. Un valor bajo (<0.5) indica un jugador limpio que comete pocos errores; un valor alto (>1.0) indica muchos errores o sanciones.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se calcula el "Costo por Forro" o "Costo por Agua"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Se calcula como Patas totales / cantidad de errores. Un valor alto significa que cada error le cuesta más patas al jugador. Por ejemplo, si un jugador tiene 200 patas y 10 forros, cada forro le cuesta 20 patas. Es un indicador de qué error afecta más al jugador.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué significa "PM Dados" y "PM Recibidos"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">"PM Dados" son los pases de mano que el jugador dio; "PM Recibidos" los que recibió. Un exceso de PM Dados puede indicar que el jugador evita jugar o tiene mala posición.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo puedo usar el análisis para mejorar mi juego? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Identifica tus debilidades (ej: muchos forros, baja efectividad, alto costo por error) y sigue las recomendaciones personalizadas. Compara tu evolución a lo largo del tiempo usando el filtro de fechas. Estudia a tus rivales antes de enfrentarlos.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Puedo filtrar el análisis por fechas específicas? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Sí, puedes seleccionar un rango de fechas para analizar el rendimiento en un período concreto (ej: última semana, todo el torneo, o fechas específicas).</div>
+    </div>
+
+    <!-- Categoría: Exportación y respaldos -->
+    <div class="faq-categoria">💾 EXPORTACIÓN Y RESPALDOS</div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo exporto las estadísticas a PDF? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">En Estadísticas Globales, haz clic en "🖨️ Exportar PDF". En el Análisis de Rendimiento, haz clic en "📎 Exportar PDF". Los PDFs generados serán legibles (los emojis se reemplazan por texto).</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo exporto los datos a Excel? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Desde el módulo de estadísticas globales puedes exportar a CSV, que se puede abrir con Excel. También desde el panel de administración puedes exportar toda la base de datos en JSON.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo hago un respaldo de mis datos? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Usa el botón "💾 Exportar respaldo" en la pantalla de inicio. Se generará un archivo JSON con todos los datos. Para restaurar, usa "📂 Importar respaldo". La app también hace respaldos automáticos al cerrar un día definitivamente.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Dónde se guardan los respaldos automáticos? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Los respaldos automáticos se guardan en tu carpeta de descargas con el formato "Pinti_v600_lun.json" (donde "lun" es el día de la semana). Solo se mantiene el último respaldo de cada día de la semana.</div>
+    </div>
+
+    <!-- Categoría: Administración -->
+    <div class="faq-categoria">🛠️ ADMINISTRACIÓN</div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo accedo al panel de administración? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Tres formas: 5 taps rápidos en las patas del jugador 1, añadir <code>?admin=true</code> a la URL, o clic en "Richard" en los créditos. Contraseña: <strong>administrador</strong>. Luego dentro del panel, la contraseña es <strong>admin</strong>.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué puedo hacer en el panel de administración? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">CRUD completo de jugadores, días, participaciones y machs. También puedes ver reportes generales, estadísticas de tiempo, y ejecutar verificación avanzada y reparación automática.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué es la "Verificación Avanzada"? <span style="font-size:0.8rem;">▼</span></div>
         <div class="faq-respuesta">Es una herramienta que analiza la base de datos en busca de inconsistencias: participaciones duplicadas, registros fantasma, días duplicados, y desajustes entre machs y participaciones.</div>
     </div>
 
@@ -859,38 +915,36 @@
     </div>
 
     <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hago si olvido la contraseña de administrador? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">La contraseña está fija: <strong>administrador</strong> para el acceso oculto y <strong>admin</strong> para el panel. No hay forma de recuperarla, pero puedes borrar los datos del navegador para restablecer la app (aunque perderás los datos guardados).</div>
+    </div>
+
+    <!-- Categoría: Solución de problemas -->
+    <div class="faq-categoria">🐛 SOLUCIÓN DE PROBLEMAS</div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hago si el análisis muestra datos incorrectos? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Ejecuta la herramienta "Verificación Avanzada" y "Reparación Automática" desde el panel de administración. Luego asegúrate de que todos los machs tengan fechaHoraInicio (usa la herramienta actualizar_tiempos.html).</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Por qué no aparece el botón "Analizar"? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">En la versión 6.0.0, el análisis se actualiza automáticamente al cambiar de jugador, fechas o modo. No es necesario pulsar un botón adicional.</div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué versión de la app tengo instalada? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Abre la consola del navegador (F12) y busca el mensaje: <code>🎲 Dominó Pintintín - Versión 6.0.0</code>. También en la pantalla de inicio, en los créditos, se muestra la versión.</div>
+    </div>
+
+    <div class="faq-item">
         <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo puedo colaborar con el desarrollo? <span style="font-size:0.8rem;">▼</span></div>
         <div class="faq-respuesta">Puedes reportar errores o sugerir mejoras a través del email o WhatsApp del desarrollador.</div>
     </div>
 
     <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿La app funciona en iOS (iPhone)? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, funciona como una web app. En Safari, puedes agregarla a la pantalla de inicio usando "Compartir" → "Agregar a pantalla de inicio". Sin embargo, algunas funciones PWA pueden ser limitadas.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hago si olvido la contraseña de administrador? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">La contraseña está fija: <strong>administrador</strong> para el acceso oculto y <strong>admin</strong> para el panel. No hay forma de recuperarla, pero puedes borrar los datos del navegador para restablecer la app (aunque perderás los datos guardados).</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo sé qué versión de la app tengo instalada? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Abre la consola del navegador (F12) y busca el mensaje: <code>🎲 Dominó Pintintín - Versión X.X.X</code>. También en la pantalla de inicio, en los créditos, se muestra la versión.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Se puede jugar en una computadora? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Sí, la app es responsive y funciona perfectamente en navegadores de escritorio (Chrome, Edge, Firefox).</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Cómo se guarda la información de los jugadores? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Se guarda en el localStorage del navegador. Esto significa que los datos no se pierden al cerrar la app, pero tampoco se sincronizan entre diferentes dispositivos o navegadores.</div>
-    </div>
-
-    <div class="faq-item">
-        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué pasa si alguien borra los datos del navegador? <span style="font-size:0.8rem;">▼</span></div>
-        <div class="faq-respuesta">Se perderán todas las estadísticas y configuraciones. Por eso es importante hacer respaldos periódicos usando la función de exportación.</div>
+        <div class="faq-pregunta" onclick="toggleFAQ(this)">📌 ¿Qué hago si veo un modal en blanco al abrir el admin? <span style="font-size:0.8rem;">▼</span></div>
+        <div class="faq-respuesta">Borra la caché del navegador y recarga. Si persiste, prueba en modo incógnito. Si aún así falla, reinstala la app.</div>
     </div>
 
     <div class="faq-item">
@@ -903,19 +957,21 @@
         <div class="faq-respuesta">Es un script que permite que la app funcione offline y se actualice automáticamente. Sin él, la app no podría instalarse en el móvil ni funcionar sin internet.</div>
     </div>
 
-    <h2 id="creditos">🙏 33. CRÉDITOS Y AGRADECIMIENTOS</h2>
+    <!-- ==================== FIN FAQ ==================== -->
+
+    <h2 id="creditos">🙏 35. CRÉDITOS Y AGRADECIMIENTOS</h2>
     <p><strong>Desarrollador:</strong> Ricardo Castillo Valdés (Richard) — La Demajagua, Isla de la Juventud, Cuba.</p>
     <p><strong>Correo electrónico:</strong> <a href="mailto:3sayricardo@gmail.com">3sayricardo@gmail.com</a></p>
     <p><strong>WhatsApp:</strong> <a href="https://wa.me/5355031725">+53 55031725</a></p>
     <p><strong>Colaboradores y probadores:</strong> Tito, Noel, Idiol, Osvaldo, Mario, Reinier, Osmany, Marisol y todos los miembros de la peña de dominó de La Demajagua.</p>
-    <p><strong>Agradecimientos especiales:</strong> A la peña de dominó de La Demajagua por sus ideas, pruebas y pasión por el juego. A todos los que han contribuido con sugerencias y reportes de errores para hacer esta aplicación cada vez mejor.</p>
+    <p><strong>Agradecimientos especiales:</strong> A la peña de dominó de La Demajagua por sus ideas, pruebas y pasión por el juego. A todos los que han contribuido con sugerencias y reportes de errores para llegar a esta versión definitiva.</p>
     <p><strong>Tecnologías utilizadas:</strong> HTML5, CSS3, JavaScript (Vanilla), Chart.js, jsPDF, localStorage, Service Workers (PWA).</p>
 
     <div class="footer">
         <p>🎲 ¡A BOTAR GORDA! 🎲</p>
         <p>Hecho en La Demajagua, Isla de la Juventud, Cuba</p>
         <p>📧 <a href="mailto:3sayricardo@gmail.com">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725">+53 55031725</a></p>
-        <p><strong>Versión 5.2.1 - Junio 2026</strong></p>
+        <p><strong>Versión 6.0.0 FINAL - Junio 2026</strong></p>
     </div>
 </div>
 
