@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Análisis de Rendimiento - Dominó Pintintín</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0f172a; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; padding: 1rem; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 1rem; padding: 1.2rem; margin-bottom: 1.5rem; text-align: center; color: white; }
+        .header h1 { font-size: 1.6rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .header p { opacity: 0.9; font-size: 0.85rem; }
+        .panel { background: white; border-radius: 1rem; padding: 1.2rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .filtros { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; }
+        .grupo-filtro { flex: 1; min-width: 150px; }
+        .grupo-filtro label { display: block; font-size: 0.7rem; font-weight: bold; color: #475569; margin-bottom: 0.25rem; }
+        .grupo-filtro input, .grupo-filtro select, .grupo-filtro button { width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: white; font-size: 0.85rem; }
+        .grupo-filtro button { background: #8b5cf6; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .grupo-filtro button:hover { background: #7c3aed; }
+        .btn-excel { background: #10b981 !important; }
+        .btn-excel:hover { background: #059669 !important; }
+        .comparador { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .comparador .grupo-filtro { flex: 1; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem; }
+        .card { background: white; border-radius: 1rem; padding: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 1.1rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .metricas-clave { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.8rem; margin-bottom: 1rem; }
+        .metrica { text-align: center; padding: 0.6rem; background: #f8fafc; border-radius: 0.8rem; }
+        .metrica .valor { font-size: 1.6rem; font-weight: bold; color: #1e293b; }
+        .metrica .label { font-size: 0.65rem; color: #64748b; }
+        .mejor { background: #dcfce7; border: 1px solid #86efac; }
+        .peor { background: #fee2e2; border: 1px solid #fecaca; }
+        .tabla-comparativa { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .tabla-comparativa th, .tabla-comparativa td { padding: 0.4rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .tabla-comparativa th { background: #f1f5f9; }
+        .positivo { color: #10b981; font-weight: bold; }
+        .negativo { color: #ef4444; }
+        .recomendaciones-lista, .fortalezas-lista { list-style: none; padding: 0; }
+        .recomendaciones-lista li, .fortalezas-lista li { padding: 0.6rem; margin: 0.5rem 0; border-radius: 0.6rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+        .recomendaciones-lista li { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .fortalezas-lista li { background: #dcfce7; border-left: 4px solid #10b981; }
+        .prioridad-alta { background: #fee2e2 !important; border-left-color: #dc2626 !important; }
+        .prioridad-media { background: #fef3c7 !important; border-left-color: #f59e0b !important; }
+        .calificacion { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+        .estrellas { display: flex; gap: 0.2rem; }
+        .estrella { font-size: 1.2rem; color: #cbd5e1; }
+        .estrella.activa { color: #fbbf24; }
+        .radar-item { display: flex; align-items: center; gap: 0.5rem; margin: 0.6rem 0; }
+        .radar-label { width: 95px; font-size: 0.75rem; font-weight: bold; }
+        .radar-bar { flex: 1; height: 18px; background: #e2e8f0; border-radius: 20px; overflow: hidden; }
+        .radar-fill { height: 100%; background: linear-gradient(90deg, #8b5cf6, #4f46e5); border-radius: 20px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.3rem; color: white; font-size: 0.65rem; }
+        .comparacion-titulo { font-size: 1rem; font-weight: bold; text-align: center; margin: 0.5rem 0 1rem; }
+        .acciones { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+        .btn-volver { background: #475569; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.6rem; font-weight: bold; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-block; font-size: 0.9rem; }
+        .btn-volver:hover { background: #334155; }
+        .filtro-fechas { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .filtro-fechas .grupo-filtro { min-width: 120px; }
+        .footer { text-align: center; padding: 1rem; font-size: 0.7rem; color: #64748b; }
+        .nota-consistencia { background: #e0e7ff; border-left: 4px solid #8b5cf6; padding: 0.8rem; border-radius: 0.5rem; margin: 1rem 0; font-size: 0.85rem; }
+        .insight-card { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; }
+        .insight-card h4 { margin: 0 0 0.5rem 0; color: #92400e; }
+        .insight-card p { margin: 0; color: #78350f; }
+        @media (max-width: 640px) { .dashboard { grid-template-columns: 1fr; } .filtros { flex-direction: column; } .comparador { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 Análisis de Rendimiento</h1>
+        <p>Estadísticas calculadas DIRECTAMENTE desde los machs (máxima precisión)</p>
+    </div>
+
+    <div class="nota-consistencia">
+        <strong>📌 NOTA SOBRE CONSISTENCIA DE DATOS:</strong><br>
+        Este módulo calcula TODOS los indicadores recorriendo mach por mach, sin depender de tablas de participaciones que puedan estar desincronizadas.
+        Esto garantiza que los datos de Patas, Forros y Aguas sean 100% precisos y consistentes con el historial real de juego.
+    </div>
+
+    <div class="panel">
+        <div class="filtros">
+            <div class="grupo-filtro">
+                <label>👥 Modo de análisis</label>
+                <select id="modoAnalisis">
+                    <option value="individual">Jugador individual</option>
+                    <option value="comparacion" selected>Comparar dos jugadores</option>
+                </select>
+            </div>
+            <div class="filtro-fechas">
+                <div class="grupo-filtro"><label>📅 Desde</label><input type="date" id="fechaDesde"></div>
+                <div class="grupo-filtro"><label>📅 Hasta</label><input type="date" id="fechaHasta"></div>
+            </div>
+            <div id="selectorComparacion" class="comparador">
+                <div class="grupo-filtro"><label>👤 Jugador 1</label><select id="jugadorComparar1"></select></div>
+                <div class="grupo-filtro"><label>👤 Jugador 2</label><select id="jugadorComparar2"></select></div>
+            </div>
+            <div class="grupo-filtro" id="selectorIndividual" style="display:none;"><label>👤 Selecciona jugador</label><select id="jugadorIndividual"></select></div>
+            <div class="grupo-filtro"><button id="btnExportarPDF" class="btn-excel">📎 Exportar PDF</button></div>
+        </div>
+    </div>
+
+    <div id="resultados"></div>
+
+    <div class="acciones"><button id="btnCerrar" class="btn-volver">← Cerrar y volver al juego</button></div>
+    <div class="footer">Datos basados en el historial de partidas | Dominó Pintintín v5.3.0</div>
+</div>
+
+<script>
+    // ============================================
+    // ANÁLISIS DE RENDIMIENTO - VERSIÓN COMPLETA v6
+    // Incluye Análisis de Eficiencia Relativa
+    // ============================================
+
+    let datosReales = { jugadores: [], dias: [], machs: [] };
+    let promediosGlobales = {};
+
+    function cargarDatosReales() {
+        try {
+            datosReales.jugadores = JSON.parse(localStorage.getItem('pintintin_jugadores')) || [];
+            datosReales.dias = JSON.parse(localStorage.getItem('pintintin_dias')) || [];
+            datosReales.machs = JSON.parse(localStorage.getItem('pintintin_machs')) || [];
+            
+            for (let m of datosReales.machs) {
+                if (m.participantes === undefined) m.participantes = [];
+                if (m.manos === undefined) m.manos = [];
+                if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
+            }
+            
+            const fechas = datosReales.dias.map(d => d.fecha).filter(f => f).sort();
+            if (fechas.length) {
+                document.getElementById('fechaDesde').value = fechas[0];
+                document.getElementById('fechaHasta').value = fechas[fechas.length - 1];
+            }
+            return true;
+        } catch(e) { 
+            console.error("Error cargando datos:", e); 
+            return false; 
+        }
+    }
+
+    function getFechasFiltro() { 
+        return { 
+            desde: document.getElementById('fechaDesde').value, 
+            hasta: document.getElementById('fechaHasta').value 
+        }; 
+    }
+
+    function getDiasIdsFiltrados(desde, hasta) {
+        let diasFiltrados = datosReales.dias;
+        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
+        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
+        return new Set(diasFiltrados.map(d => d.id));
+    }
+
+    function getMachsFiltrados(desde, hasta) {
+        const idsDias = getDiasIdsFiltrados(desde, hasta);
+        return datosReales.machs.filter(m => idsDias.has(m.diaId));
+    }
+
+    function calcularEstadisticasDesdeMachs() {
+        const { desde, hasta } = getFechasFiltro();
+        const machsFiltrados = getMachsFiltrados(desde, hasta);
+        
+        const stats = new Map();
+        for (let j of datosReales.jugadores) {
+            stats.set(j.id, {
+                id: j.id,
+                nombre: j.nombre,
+                machsJugados: 0,
+                machsGanados: 0,
+                patasAcumuladas: 0,
+                pollonas: 0,
+                capicuas: 0,
+                cierres: 0,
+                pegado: 0,
+                forros: 0,
+                aguas: 0,
+                paseManoDados: 0,
+                paseManoRecibidos: 0,
+                historialVictorias: [],
+                patasPorMach: []
+            });
+        }
+        
+        for (let mach of machsFiltrados) {
+            let todosCero = true;
+            let ganadorDelMach = mach.ganadorId;
+            
+            for (let p of mach.participantes) {
+                if (p.jugadorId && p.jugadorId !== ganadorDelMach && (p.patasFinales || 0) > 0) {
+                    todosCero = false;
+                    break;
+                }
+            }
+            
+            for (let p of mach.participantes) {
+                if (!p.jugadorId) continue;
+                const s = stats.get(p.jugadorId);
+                if (!s) continue;
+                
+                s.machsJugados++;
+                s.patasAcumuladas += (p.patasFinales || 0);
+                s.patasPorMach.push(p.patasFinales || 0);
+                
+                if (p.jugadorId === mach.ganadorId) {
+                    s.machsGanados++;
+                    s.historialVictorias.push(1);
+                    if (todosCero) s.pollonas++;
+                } else {
+                    s.historialVictorias.push(0);
+                }
+            }
+            
+            if (mach.manos && mach.manos.length > 0) {
+                for (let mano of mach.manos) {
+                    if (!mano.jugadorId) continue;
+                    const sJugador = stats.get(mano.jugadorId);
+                    if (!sJugador) continue;
+                    
+                    switch (mano.tipo) {
+                        case 'forro': sJugador.forros++; break;
+                        case 'agua': sJugador.aguas++; break;
+                        case 'capicua': sJugador.capicuas++; break;
+                        case 'cierre': sJugador.cierres++; break;
+                        case 'pegado': sJugador.pegado++; break;
+                        case 'paseMano':
+                        case 'paseManoDado': sJugador.paseManoDados++; break;
+                        case 'paseManoRecibido': sJugador.paseManoRecibidos++; break;
+                    }
+                }
+            }
+        }
+        
+        for (let s of stats.values()) {
+            let rachaActual = 0, rachaMax = 0;
+            for (let victoria of s.historialVictorias) {
+                if (victoria === 1) { rachaActual++; if (rachaActual > rachaMax) rachaMax = rachaActual; }
+                else rachaActual = 0;
+            }
+            s.rachaMaxima = rachaMax;
+            
+            const patas = s.patasPorMach;
+            if (patas.length <= 1) s.desviacionEstandar = 0;
+            else {
+                const media = patas.reduce((a, b) => a + b, 0) / patas.length;
+                const varianza = patas.reduce((acc, val) => acc + Math.pow(val - media, 2), 0) / patas.length;
+                s.desviacionEstandar = Math.sqrt(varianza);
+            }
+        }
+        
+        const statsFiltradas = new Map();
+        for (let [id, s] of stats) if (s.machsJugados > 0) statsFiltradas.set(id, s);
+        return statsFiltradas;
+    }
+
+    function calcularPromedios(statsMap) {
+        if (statsMap.size === 0) return {};
+        const sumas = { machsGanados: 0, patasAcumuladas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, paseManoDados: 0, paseManoRecibidos: 0, rachaMaxima: 0, desviacionEstandar: 0, machsJugados: 0 };
+        for (let s of statsMap.values()) for (let key in sumas) if (s[key] !== undefined) sumas[key] += s[key];
+        const promedios = {};
+        for (let key in sumas) promedios[key] = Math.round((sumas[key] / statsMap.size) * 10) / 10;
+        let efectividadTotal = 0;
+        for (let s of statsMap.values()) efectividadTotal += (s.machsGanados / s.machsJugados) * 100;
+        promedios.efectividad = Math.round((efectividadTotal / statsMap.size) * 10) / 10;
+        return promedios;
+    }
+
+    function calcularMetricas(s) {
+        const efectividad = s.machsJugados ? (s.machsGanados / s.machsJugados * 100).toFixed(1) : 0;
+        const promedioPatas = s.machsJugados ? (s.patasAcumuladas / s.machsJugados).toFixed(1) : 0;
+        const eficiencia = s.patasAcumuladas ? (s.machsGanados * 5 / s.patasAcumuladas * 100).toFixed(1) : 0;
+        const machsPerdidos = s.machsJugados - s.machsGanados;
+        const disciplina = (s.forros + s.aguas) / Math.max(1, s.machsJugados);
+        return { efectividad, promedioPatas, eficiencia, machsPerdidos, disciplina };
+    }
+
+    // ==================== NUEVAS MÉTRICAS DE EFICIENCIA RELATIVA ====================
+    function calcularEficienciaRelativa(s) {
+        const forrosPorMach = s.machsJugados ? (s.forros / s.machsJugados).toFixed(3) : 0;
+        const aguasPorMach = s.machsJugados ? (s.aguas / s.machsJugados).toFixed(3) : 0;
+        const erroresPorMach = s.machsJugados ? ((s.forros + s.aguas) / s.machsJugados).toFixed(3) : 0;
+        
+        const forrosPorMachGanado = s.machsGanados ? (s.forros / s.machsGanados).toFixed(3) : 0;
+        const aguasPorMachGanado = s.machsGanados ? (s.aguas / s.machsGanados).toFixed(3) : 0;
+        const erroresPorMachGanado = s.machsGanados ? ((s.forros + s.aguas) / s.machsGanados).toFixed(3) : 0;
+        
+        const forrosPorPata = s.patasAcumuladas ? (s.forros / s.patasAcumuladas).toFixed(4) : 0;
+        const aguasPorPata = s.patasAcumuladas ? (s.aguas / s.patasAcumuladas).toFixed(4) : 0;
+        const erroresPorPata = s.patasAcumuladas ? ((s.forros + s.aguas) / s.patasAcumuladas).toFixed(4) : 0;
+        
+        // Índice de Eficiencia Relativa (IER)
+        // IER = (MachsGanados × 10) / (Forros × 5 + Aguas × 1)
+        const ierNumerador = s.machsGanados * 10;
+        const ierDenominador = (s.forros * 5) + (s.aguas * 1);
+        const ier = ierDenominador > 0 ? (ierNumerador / ierDenominador).toFixed(3) : 0;
+        
+        // Índice de Disciplina Corregido (IDC)
+        // IDC = (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10)
+        const idcNumerador = s.machsGanados * s.patasAcumuladas;
+        const idcDenominador = (s.forros * 100) + (s.aguas * 10);
+        const idc = idcDenominador > 0 ? (idcNumerador / idcDenominador).toFixed(3) : 0;
+        
+        // Costo de oportunidad
+        const costoPorAgua = s.aguas > 0 ? (s.patasAcumuladas / s.aguas).toFixed(2) : 0;
+        const costoPorForro = s.forros > 0 ? (s.patasAcumuladas / s.forros).toFixed(2) : 0;
+        
+        return {
+            forrosPorMach, aguasPorMach, erroresPorMach,
+            forrosPorMachGanado, aguasPorMachGanado, erroresPorMachGanado,
+            forrosPorPata, aguasPorPata, erroresPorPata,
+            ier, idc, costoPorAgua, costoPorForro
+        };
+    }
+
+    function generarInsightsEficiencia(s1, s2, e1, e2) {
+        const insights = [];
+        
+        // Comparar forros por mach
+        if (parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach)) {
+            insights.push(`✅ ${s1.nombre} tiene MENOS forros por mach (${e1.forrosPorMach} vs ${e2.forrosPorMach}) → es más disciplinado en evitar forros.`);
+        } else {
+            insights.push(`⚠️ ${s2.nombre} tiene MENOS forros por mach (${e2.forrosPorMach} vs ${e1.forrosPorMach}) → es más disciplinado en evitar forros.`);
+        }
+        
+        // Comparar aguas por mach
+        if (parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach)) {
+            insights.push(`✅ ${s1.nombre} tiene MENOS aguas por mach (${e1.aguasPorMach} vs ${e2.aguasPorMach}) → da menos agua.`);
+        } else {
+            insights.push(`⚠️ ${s2.nombre} tiene MENOS aguas por mach (${e2.aguasPorMach} vs ${e1.aguasPorMach}) → da menos agua.`);
+        }
+        
+        // Comparar IER (Índice de Eficiencia Relativa) - mayor es mejor
+        if (parseFloat(e1.ier) > parseFloat(e2.ier)) {
+            insights.push(`🏆 ${s1.nombre} tiene mejor Índice de Eficiencia Relativa (IER: ${e1.ier} vs ${e2.ier}) → convierte mejor sus victorias en eficiencia.`);
+        } else {
+            insights.push(`🏆 ${s2.nombre} tiene mejor Índice de Eficiencia Relativa (IER: ${e2.ier} vs ${e1.ier}) → convierte mejor sus victorias en eficiencia.`);
+        }
+        
+        // Comparar IDC (Índice de Disciplina Corregido) - mayor es mejor
+        if (parseFloat(e1.idc) > parseFloat(e2.idc)) {
+            insights.push(`📊 ${s1.nombre} tiene mejor Índice de Disciplina Corregido (IDC: ${e1.idc} vs ${e2.idc}) → maximiza patas minimizando errores.`);
+        } else {
+            insights.push(`📊 ${s2.nombre} tiene mejor Índice de Disciplina Corregido (IDC: ${e2.idc} vs ${e1.idc}) → maximiza patas minimizando errores.`);
+        }
+        
+        // Costo de oportunidad
+        if (parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro)) {
+            insights.push(`💪 Los forros de ${s1.nombre} son "más costosos" (${e1.costoPorForro} patas perdidas por forro vs ${e2.costoPorForro} de ${s2.nombre}) → cada forro le duele más.`);
+        } else {
+            insights.push(`💪 Los forros de ${s2.nombre} son "más costosos" (${e2.costoPorForro} patas perdidas por forro vs ${e1.costoPorForro} de ${s1.nombre}) → cada forro le duele más.`);
+        }
+        
+        return insights;
+    }
+
+    function renderizarComparativaEficiencia(s1, s2, promedios) {
+        const m1 = calcularMetricas(s1);
+        const m2 = calcularMetricas(s2);
+        const e1 = calcularEficienciaRelativa(s1);
+        const e2 = calcularEficienciaRelativa(s2);
+        const insights = generarInsightsEficiencia(s1, s2, e1, e2);
+        
+        const cal1 = calcularCalificacion(s1, m1);
+        const cal2 = calcularCalificacion(s2, m2);
+        
+        return `
+            <div class="comparacion-titulo">📊 Comparativa: ${s1.nombre} vs ${s2.nombre}</div>
+            
+            <!-- Sección 1: Métricas Básicas -->
+            <div class="dashboard">
+                <div class="card">
+                    <h3>📋 ${s1.nombre} - Resumen</h3>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s1.machsJugados}</div><div class="label">Machs jugados</div></div>
+                        <div class="metrica"><div class="valor">${s1.machsGanados}</div><div class="label">Machs ganados</div></div>
+                        <div class="metrica"><div class="valor">${m1.efectividad}%</div><div class="label">Efectividad</div></div>
+                        <div class="metrica"><div class="valor">${s1.patasAcumuladas}</div><div class="label">Patas totales</div></div>
+                    </div>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s1.forros}</div><div class="label">🧤 Forros</div></div>
+                        <div class="metrica"><div class="valor">${s1.aguas}</div><div class="label">💧 Aguas</div></div>
+                        <div class="metrica"><div class="valor">${s1.rachaMaxima}</div><div class="label">Racha máxima</div></div>
+                        <div class="metrica"><div class="valor">σ ${s1.desviacionEstandar.toFixed(1)}</div><div class="label">Consistencia</div></div>
+                    </div>
+                    <div class="calificacion">
+                        <div class="estrellas">${Array(5).fill(0).map((_,i)=>`<span class="estrella ${i<cal1.estrellas?'activa':''}">★</span>`).join('')}</div>
+                        <div>${cal1.puntuacion}/100</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📋 ${s2.nombre} - Resumen</h3>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s2.machsJugados}</div><div class="label">Machs jugados</div></div>
+                        <div class="metrica"><div class="valor">${s2.machsGanados}</div><div class="label">Machs ganados</div></div>
+                        <div class="metrica"><div class="valor">${m2.efectividad}%</div><div class="label">Efectividad</div></div>
+                        <div class="metrica"><div class="valor">${s2.patasAcumuladas}</div><div class="label">Patas totales</div></div>
+                    </div>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s2.forros}</div><div class="label">🧤 Forros</div></div>
+                        <div class="metrica"><div class="valor">${s2.aguas}</div><div class="label">💧 Aguas</div></div>
+                        <div class="metrica"><div class="valor">${s2.rachaMaxima}</div><div class="label">Racha máxima</div></div>
+                        <div class="metrica"><div class="valor">σ ${s2.desviacionEstandar.toFixed(1)}</div><div class="label">Consistencia</div></div>
+                    </div>
+                    <div class="calificacion">
+                        <div class="estrellas">${Array(5).fill(0).map((_,i)=>`<span class="estrella ${i<cal2.estrellas?'activa':''}">★</span>`).join('')}</div>
+                        <div>${cal2.puntuacion}/100</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 2: Eficiencia Relativa (NUEVA) -->
+            <div class="card">
+                <h3>📊 ANÁLISIS DE EFICIENCIA RELATIVA</h3>
+                <p style="font-size:0.75rem; color:#64748b; margin-bottom:1rem;">
+                    Estas métricas normalizan los errores (Forros y Aguas) por la exposición del jugador (Machs jugados, Machs ganados, Patas logradas).
+                    Permiten una comparación justa entre jugadores con diferente cantidad de partidas.
+                </p>
+                
+                <h4 style="margin:1rem 0 0.5rem 0;">📐 Normalización por Machs Jugados</h4>
+                <table class="tabla-comparativa">
+                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <tbody>
+                        <tr><td class="text-center">🧤 Forros / Mach</td><td class="text-center">${e1.forrosPorMach}</td><td class="text-center">${e2.forrosPorMach}</td><td class="${parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">💧 Aguas / Mach</td><td class="text-center">${e1.aguasPorMach}</td><td class="text-center">${e2.aguasPorMach}</td><td class="${parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">⚠️ Errores totales / Mach</td><td class="text-center">${e1.erroresPorMach}</td><td class="text-center">${e2.erroresPorMach}</td><td class="${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? s1.nombre : s2.nombre}</td></tr>
+                    </tbody>
+                </table>
+                
+                <h4 style="margin:1rem 0 0.5rem 0;">🏆 Normalización por Machs Ganados</h4>
+                <table class="tabla-comparativa">
+                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <tbody>
+                        <tr><td class="text-center">🧤 Forros / Mach ganado</td><td class="text-center">${e1.forrosPorMachGanado}</td><td class="text-center">${e2.forrosPorMachGanado}</td><td class="${parseFloat(e1.forrosPorMachGanado) < parseFloat(e2.forrosPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorMachGanado) < parseFloat(e2.forrosPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">💧 Aguas / Mach ganado</td><td class="text-center">${e1.aguasPorMachGanado}</td><td class="text-center">${e2.aguasPorMachGanado}</td><td class="${parseFloat(e1.aguasPorMachGanado) < parseFloat(e2.aguasPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorMachGanado) < parseFloat(e2.aguasPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">⚠️ Errores / Mach ganado</td><td class="text-center">${e1.erroresPorMachGanado}</td><td class="text-center">${e2.erroresPorMachGanado}</td><td class="${parseFloat(e1.erroresPorMachGanado) < parseFloat(e2.erroresPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorMachGanado) < parseFloat(e2.erroresPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
+                    </tbody>
+                </table>
+                
+                <h4 style="margin:1rem 0 0.5rem 0;">🦶 Normalización por Patas Logradas</h4>
+                <table class="tabla-comparativa">
+                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <tbody>
+                        <tr><td class="text-center">🧤 Forros / Pata</td><td class="text-center">${e1.forrosPorPata}</td><td class="text-center">${e2.forrosPorPata}</td><td class="${parseFloat(e1.forrosPorPata) < parseFloat(e2.forrosPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorPata) < parseFloat(e2.forrosPorPata) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">💧 Aguas / Pata</td><td class="text-center">${e1.aguasPorPata}</td><td class="text-center">${e2.aguasPorPata}</td><td class="${parseFloat(e1.aguasPorPata) < parseFloat(e2.aguasPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorPata) < parseFloat(e2.aguasPorPata) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">⚠️ Errores / Pata</td><td class="text-center">${e1.erroresPorPata}</td><td class="text-center">${e2.erroresPorPata}</td><td class="${parseFloat(e1.erroresPorPata) < parseFloat(e2.erroresPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorPata) < parseFloat(e2.erroresPorPata) ? s1.nombre : s2.nombre}</td></tr>
+                    </tbody>
+                </table>
+                
+                <h4 style="margin:1rem 0 0.5rem 0;">📈 Índices Compuestos</h4>
+                <table class="tabla-comparativa">
+                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <tbody>
+                        <tr><td class="text-center">🏆 IER (Índice Eficiencia Relativa)<br><span style="font-size:0.6rem;">(mayor es mejor)</span></td><td class="text-center"><strong>${e1.ier}</strong></td><td class="text-center"><strong>${e2.ier}</strong></td><td class="${parseFloat(e1.ier) > parseFloat(e2.ier) ? 'positivo' : 'negativo'}">${parseFloat(e1.ier) > parseFloat(e2.ier) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">📊 IDC (Índice Disciplina Corregido)<br><span style="font-size:0.6rem;">(mayor es mejor)</span></td><td class="text-center"><strong>${e1.idc}</strong></td><td class="text-center"><strong>${e2.idc}</strong></td><td class="${parseFloat(e1.idc) > parseFloat(e2.idc) ? 'positivo' : 'negativo'}">${parseFloat(e1.idc) > parseFloat(e2.idc) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">💰 Costo por Forro (patas perdidas)</td><td class="text-center">${e1.costoPorForro}</td><td class="text-center">${e2.costoPorForro}</td><td class="${parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro) ? 'negativo' : 'positivo'}">${parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro) ? s1.nombre : s2.nombre} (sufre más)</td></tr>
+                        <tr><td class="text-center">💧 Costo por Agua (patas perdidas)</td><td class="text-center">${e1.costoPorAgua}</td><td class="text-center">${e2.costoPorAgua}</td><td class="${parseFloat(e1.costoPorAgua) > parseFloat(e2.costoPorAgua) ? 'negativo' : 'positivo'}">${parseFloat(e1.costoPorAgua) > parseFloat(e2.costoPorAgua) ? s1.nombre : s2.nombre} (sufre más)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Sección 3: Insights y Recomendaciones -->
+            <div class="insight-card">
+                <h4>💡 ANÁLISIS ESTRATÉGICO</h4>
+                ${insights.map(i => `<p style="margin: 0.3rem 0;">${i}</p>`).join('')}
+            </div>
+            
+            <!-- Sección 4: Comparativa Directa Tradicional -->
+            <div class="card">
+                <h3>📋 Comparativa directa tradicional</h3>
+                <table class="tabla-comparativa">
+                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <tbody>
+                        <tr><td class="text-center">🏆 Machs ganados</td><td class="text-center">${s1.machsGanados}</td><td class="text-center">${s2.machsGanados}</td><td class="${s1.machsGanados > s2.machsGanados ? 'positivo' : 'negativo'}">${s1.machsGanados > s2.machsGanados ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">🦶 Patas totales</td><td class="text-center">${s1.patasAcumuladas}</td><td class="text-center">${s2.patasAcumuladas}</td><td class="${s1.patasAcumuladas > s2.patasAcumuladas ? 'positivo' : 'negativo'}">${s1.patasAcumuladas > s2.patasAcumuladas ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">📈 Efectividad</td><td class="text-center">${m1.efectividad}%</td><td class="text-center">${m2.efectividad}%</td><td class="${parseFloat(m1.efectividad) > parseFloat(m2.efectividad) ? 'positivo' : 'negativo'}">${parseFloat(m1.efectividad) > parseFloat(m2.efectividad) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">🧤 Forros</td><td class="text-center">${s1.forros}</td><td class="text-center">${s2.forros}</td><td class="${s1.forros < s2.forros ? 'positivo' : 'negativo'}">${s1.forros < s2.forros ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">💧 Aguas</td><td class="text-center">${s1.aguas}</td><td class="text-center">${s2.aguas}</td><td class="${s1.aguas < s2.aguas ? 'positivo' : 'negativo'}">${s1.aguas < s2.aguas ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">🔥 Racha máxima</td><td class="text-center">${s1.rachaMaxima}</td><td class="text-center">${s2.rachaMaxima}</td><td class="${s1.rachaMaxima > s2.rachaMaxima ? 'positivo' : 'negativo'}">${s1.rachaMaxima > s2.rachaMaxima ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">📐 Consistencia (σ)</td><td class="text-center">${s1.desviacionEstandar.toFixed(1)}</td><td class="text-center">${s2.desviacionEstandar.toFixed(1)}</td><td class="${s1.desviacionEstandar < s2.desviacionEstandar ? 'positivo' : 'negativo'}">${s1.desviacionEstandar < s2.desviacionEstandar ? s1.nombre : s2.nombre}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function calcularCalificacion(s, metricas) {
+        let puntos = 0;
+        const eficienciaNum = parseFloat(metricas.eficiencia) || 0;
+        if (eficienciaNum > 40) puntos += 30;
+        else if (eficienciaNum > 35) puntos += 20;
+        else if (eficienciaNum > 30) puntos += 15;
+        else puntos += 5;
+        
+        const consistencia = s.desviacionEstandar || 0;
+        if (consistencia < 3) puntos += 30;
+        else if (consistencia < 5) puntos += 20;
+        else if (consistencia < 7) puntos += 15;
+        else puntos += 5;
+        
+        const efectividadNum = parseFloat(metricas.efectividad) || 0;
+        if (efectividadNum > 55) puntos += 20;
+        else if (efectividadNum > 45) puntos += 15;
+        else if (efectividadNum > 35) puntos += 10;
+        else puntos += 5;
+        
+        const disciplina = metricas.disciplina || 0;
+        if (disciplina < 0.5) puntos += 20;
+        else if (disciplina < 1.0) puntos += 15;
+        else if (disciplina < 1.5) puntos += 10;
+        else puntos += 5;
+        
+        if (s.rachaMaxima >= 5) puntos += 10;
+        else if (s.rachaMaxima >= 3) puntos += 5;
+        
+        const puntuacion = Math.min(100, puntos);
+        const estrellas = Math.min(5, Math.max(1, Math.round(puntuacion / 20)));
+        return { puntuacion, estrellas };
+    }
+
+    function cargarSelectores(statsMap) {
+        const individual = document.getElementById('jugadorIndividual');
+        const comp1 = document.getElementById('jugadorComparar1');
+        const comp2 = document.getElementById('jugadorComparar2');
+        
+        const jugadoresArray = Array.from(statsMap.values()).sort((a, b) => {
+            if (a.machsGanados !== b.machsGanados) return b.machsGanados - a.machsGanados;
+            if (a.patasAcumuladas !== b.patasAcumuladas) return b.patasAcumuladas - a.patasAcumuladas;
+            return a.nombre.localeCompare(b.nombre);
+        });
+        
+        const opciones = jugadoresArray.map(s => `<option value="${s.id}">${s.nombre} (${s.machsGanados}🏆, ${s.machsJugados}🎲, ${s.patasAcumuladas}🦶)</option>`).join('');
+        individual.innerHTML = opciones;
+        comp1.innerHTML = opciones;
+        comp2.innerHTML = opciones;
+        
+        if (comp1.options.length) comp1.selectedIndex = 0;
+        if (comp2.options.length > 1) comp2.selectedIndex = Math.min(1, comp2.options.length - 1);
+    }
+
+    function analizar() {
+        const statsMap = calcularEstadisticasDesdeMachs();
+        if (statsMap.size === 0) {
+            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos de jugadores en el período seleccionado.</div>';
+            return;
+        }
+        
+        promediosGlobales = calcularPromedios(statsMap);
+        const modo = document.getElementById('modoAnalisis').value;
+        
+        if (modo === 'individual') {
+            const jugadorId = parseInt(document.getElementById('jugadorIndividual').value);
+            const jugador = statsMap.get(jugadorId);
+            if (jugador && jugador.machsJugados > 0) {
+                document.getElementById('resultados').innerHTML = renderizarIndividual(jugador, promediosGlobales);
+            } else {
+                document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos suficientes para este jugador</div>';
+            }
+        } else {
+            const j1Id = parseInt(document.getElementById('jugadorComparar1').value);
+            const j2Id = parseInt(document.getElementById('jugadorComparar2').value);
+            const j1 = statsMap.get(j1Id);
+            const j2 = statsMap.get(j2Id);
+            if (j1 && j2) {
+                document.getElementById('resultados').innerHTML = renderizarComparativaEficiencia(j1, j2, promediosGlobales);
+            } else {
+                document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos suficientes para la comparación</div>';
+            }
+        }
+    }
+
+    function renderizarIndividual(s, promedios) {
+        const metricas = calcularMetricas(s);
+        const calificacion = calcularCalificacion(s, metricas);
+        const e = calcularEficienciaRelativa(s);
+        
+        return `
+            <div class="dashboard">
+                <div class="card">
+                    <h3>📋 Resumen de ${s.nombre}</h3>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s.machsJugados}</div><div class="label">Machs jugados</div></div>
+                        <div class="metrica"><div class="valor">${s.machsGanados}</div><div class="label">Machs ganados</div></div>
+                        <div class="metrica"><div class="valor">${metricas.efectividad}%</div><div class="label">Efectividad</div></div>
+                        <div class="metrica"><div class="valor">${s.patasAcumuladas}</div><div class="label">Patas totales</div></div>
+                    </div>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${s.forros}</div><div class="label">🧤 Forros</div></div>
+                        <div class="metrica"><div class="valor">${s.aguas}</div><div class="label">💧 Aguas</div></div>
+                        <div class="metrica"><div class="valor">${s.rachaMaxima}</div><div class="label">Racha máxima</div></div>
+                        <div class="metrica"><div class="valor">σ ${s.desviacionEstandar.toFixed(1)}</div><div class="label">Consistencia</div></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Eficiencia Relativa</h3>
+                    <div class="metricas-clave">
+                        <div class="metrica"><div class="valor">${e.forrosPorMach}</div><div class="label">Forros/Mach</div></div>
+                        <div class="metrica"><div class="valor">${e.aguasPorMach}</div><div class="label">Aguas/Mach</div></div>
+                        <div class="metrica"><div class="valor">${e.ier}</div><div class="label">IER</div></div>
+                        <div class="metrica"><div class="valor">${e.idc}</div><div class="label">IDC</div></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>💡 Recomendaciones</h3>
+                    <ul class="recomendaciones-lista">
+                        ${s.forros > (promedios.forros || 0) ? `<li class="prioridad-alta">🧤 Reduce tus forros (${s.forros} vs ${(promedios.forros || 0).toFixed(1)} promedio)</li>` : ''}
+                        ${s.aguas > (promedios.aguas || 0) ? `<li class="prioridad-media">💧 Evita dar aguas (${s.aguas} vs ${(promedios.aguas || 0).toFixed(1)} promedio)</li>` : ''}
+                        ${s.rachaMaxima < 3 ? `<li class="prioridad-media">🔥 Extiende tus rachas (máxima ${s.rachaMaxima} machs)</li>` : ''}
+                        ${parseFloat(metricas.efectividad) < 40 ? `<li class="prioridad-alta">📈 Mejora tu efectividad (${metricas.efectividad}%)</li>` : ''}
+                        ${parseFloat(e.ier) < 0.5 ? `<li class="prioridad-media">🎯 Mejora tu Índice de Eficiencia Relativa (${e.ier})</li>` : ''}
+                    </ul>
+                    <div class="calificacion">
+                        <div class="estrellas">${Array(5).fill(0).map((_,i)=>`<span class="estrella ${i<calificacion.estrellas?'activa':''}">★</span>`).join('')}</div>
+                        <div>${calificacion.puntuacion}/100 puntos</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function exportarPDF() {
+        const element = document.getElementById('resultados');
+        if (!element || !element.innerHTML.trim()) {
+            alert('No hay datos para exportar');
+            return;
+        }
+        
+        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+            alert('❌ La librería PDF no está cargada. Recarga la página.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf || jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        doc.setFontSize(16);
+        doc.text("Análisis de Rendimiento - Dominó Pintintín", 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text(`Período: ${document.getElementById('fechaDesde').value || 'inicio'} al ${document.getElementById('fechaHasta').value || 'hoy'}`, 20, 38);
+        
+        const tables = element.querySelectorAll('table');
+        let yOffset = 50;
+        
+        for (let i = 0; i < tables.length; i++) {
+            const table = tables[i];
+            const headers = [];
+            const headerRows = table.querySelectorAll('thead tr');
+            if (headerRows.length) {
+                headerRows[0].querySelectorAll('th').forEach(th => headers.push(th.innerText.trim()));
+            }
+            
+            const data = [];
+            const bodyRows = table.querySelectorAll('tbody tr');
+            bodyRows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(td => rowData.push(td.innerText.trim()));
+                if (rowData.length) data.push(rowData);
+            });
+            
+            if (headers.length && data.length) {
+                if (yOffset > 250) { doc.addPage(); yOffset = 20; }
+                doc.autoTable({
+                    head: [headers],
+                    body: data,
+                    startY: yOffset,
+                    theme: 'striped',
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+                    margin: { left: 10, right: 10 }
+                });
+                yOffset = doc.lastAutoTable.finalY + 10;
+            }
+        }
+        
+        if (yOffset === 50) doc.text("No hay datos tabulares para exportar", 20, yOffset);
+        doc.save(`analisis_pintintin_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.pdf`);
+    }
+
+    function toggleModo() {
+        const modo = document.getElementById('modoAnalisis').value;
+        document.getElementById('selectorIndividual').style.display = modo === 'individual' ? 'block' : 'none';
+        document.getElementById('selectorComparacion').style.display = modo === 'comparacion' ? 'flex' : 'none';
+        const statsMap = calcularEstadisticasDesdeMachs();
+        if (statsMap.size > 0) {
+            cargarSelectores(statsMap);
+        }
+        analizar();
+    }
+
+    function inicializar() {
+        if (!cargarDatosReales()) {
+            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos. Inicia una partida primero.</div>';
+            return;
+        }
+        const statsMap = calcularEstadisticasDesdeMachs();
+        if (statsMap.size === 0) {
+            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay jugadores registrados en el período seleccionado.</div>';
+            return;
+        }
+        cargarSelectores(statsMap);
+        
+        document.getElementById('modoAnalisis').addEventListener('change', toggleModo);
+        document.getElementById('jugadorIndividual').addEventListener('change', analizar);
+        document.getElementById('jugadorComparar1').addEventListener('change', analizar);
+        document.getElementById('jugadorComparar2').addEventListener('change', analizar);
+        document.getElementById('fechaDesde').addEventListener('change', () => {
+            const statsNuevo = calcularEstadisticasDesdeMachs();
+            cargarSelectores(statsNuevo);
+            analizar();
+        });
+        document.getElementById('fechaHasta').addEventListener('change', () => {
+            const statsNuevo = calcularEstadisticasDesdeMachs();
+            cargarSelectores(statsNuevo);
+            analizar();
+        });
+        
+        analizar();
+    }
+
+    document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
+    document.getElementById('btnCerrar').addEventListener('click', () => window.location.href = 'index.html');
+    
+    inicializar();
+</script>
+</body>
+</html>
