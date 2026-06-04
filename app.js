@@ -1,13 +1,7 @@
-// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.2.1 ====================
-// NUEVAS FUNCIONALIDADES v5.2.1:
-// - Checkbox "Mantener ubicación de los jugadores" (sin sorteo de sillas)
-// - Rediseño visual de la pantalla de inicio
-// - Botón de gráficas interactivas funcionando correctamente
-// - Mejoras en la gestión de eventos
-//
+// ==================== DOMINÓ PINTINTÍN - VERSIÓN 5.3.0 ====================
 // Creado por Ricardo Castillo Valdés (Richard) - La Demajagua, Isla de la Juventud, Cuba
 
-console.log("🎲 Dominó Pintintín - Versión 5.2.1: Mejoras de usabilidad y visuales");
+console.log("🎲 Dominó Pintintín - Versión 5.3.0");
 
 // --- CONFIGURACIÓN INICIAL ---
 let diaActivo = null;
@@ -168,7 +162,7 @@ async function guardarBackupAutomatico() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v521_${getDiaSemanaAbreviatura()}.json`;
+    const nombreArchivo = `Pinti_v530_${getDiaSemanaAbreviatura()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -181,7 +175,7 @@ async function exportarBackupManual() {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], {type: 'application/json'});
     const link = document.createElement('a');
-    const nombreArchivo = `Pinti_v521_${formatearFechaParaNombre()}.json`;
+    const nombreArchivo = `Pinti_v530_${formatearFechaParaNombre()}.json`;
     link.href = URL.createObjectURL(blob);
     link.download = nombreArchivo;
     link.click();
@@ -272,7 +266,6 @@ function calcularPatasConTope(ganadorId, patasBase, multiplicadorEmpate) {
 
 // ==================== PLACEHOLDER DINÁMICO ====================
 function renderInputsJugadores() {
-    // Los inputs ahora están fijos en el HTML, solo actualizamos datalist
     actualizarDatalistJugadores();
     agregarListenersInputs();
 }
@@ -358,10 +351,10 @@ function actualizarAvisoEmpate() {
     if(avisoEmpateDiv) {
         if(estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) {
             let nombres = estadoMachActual.empatePendiente.jugadoresIds.map(id => jugadoresActuales.find(j=>j.jugadorId===id)?.nombre).join(', ');
-            avisoEmpateDiv.innerText = `⚠️ EMPATE entre: ${nombres}.`;
+            avisoEmpateDiv.innerHTML = `⚠️ EMPATE entre: ${nombres}. ¡Comienza la siguiente mano!`;
             avisoEmpateDiv.style.display = 'block';
         } else {
-            avisoEmpateDiv.innerText = '';
+            avisoEmpateDiv.innerHTML = '';
             avisoEmpateDiv.style.display = 'none';
         }
     }
@@ -510,7 +503,6 @@ async function sortearEIniciar() {
         actualizarColorBotonSorteo();
     }
     
-    // Obtener nombres de los inputs (ahora fijos en el HTML)
     const nombres = [
         document.getElementById('jugador1')?.value.trim(),
         document.getElementById('jugador2')?.value.trim(),
@@ -521,7 +513,6 @@ async function sortearEIniciar() {
     const jugadoresValidos = nombres.filter(n => n !== null && n !== "");
     if(jugadoresValidos.length < 2) { alert("Debe haber al menos 2 jugadores"); return; }
     
-    // Verificar nombres duplicados
     const nombresSet = new Set(jugadoresValidos.map(s => s.toLowerCase()));
     if(nombresSet.size !== jugadoresValidos.length) { alert("Los nombres no pueden repetirse"); return; }
     
@@ -529,14 +520,12 @@ async function sortearEIniciar() {
     const fecha = fechaDiaInput ? fechaDiaInput.value : '';
     if (!fecha) { alert("Selecciona fecha"); return; }
     
-    // Obtener o crear jugadores en la base de datos
     const jugadoresConId = nombres.map(n => n ? obtenerOJugador(n) : null);
     
     let posicionesMap = new Map();
     
     if (mantenerUbicacion) {
         console.log("🎲 Modo mantener ubicación: NO se sortean las sillas");
-        // Asignar en el orden de entrada: jugador1 → silla1, jugador2 → silla2, etc.
         for (let i = 0; i < jugadoresConId.length; i++) {
             const jug = jugadoresConId[i];
             if (jug) {
@@ -545,7 +534,6 @@ async function sortearEIniciar() {
         }
     } else {
         console.log("🎲 Modo sorteo: se sortean las sillas aleatoriamente");
-        // Sorteo de sillas
         let jugadoresDados = jugadoresValidos.map(n => ({nombre:n, dado:tirarDado()}));
         let ordenFinal = resolverEmpates(jugadoresDados);
         let sillas = [1, 2, 3, 4];
@@ -561,7 +549,6 @@ async function sortearEIniciar() {
         }
     }
     
-    // Construir jugadoresPos (sillas 1-4)
     let jugadoresPos = [];
     for(let silla = 1; silla <= 4; silla++) {
         if(posicionesMap.has(silla)) {
@@ -572,12 +559,10 @@ async function sortearEIniciar() {
         }
     }
     
-    // Crear día
     const diaId = almacenamiento.dias.length + 1;
     almacenamiento.dias.push({ id: diaId, fecha, activo: 1 });
     diaActivo = { id: diaId, fecha };
     
-    // Crear participaciones
     for(let j of jugadoresPos) {
         if(j.jugadorId) {
             almacenamiento.participaciones.push({
@@ -1017,7 +1002,7 @@ function mostrarHistorialGanadores() {
             <h3>📜 Historial completo (manos ganadas y salidas por empate)</h3>
             <table style="width:100%; font-size:0.7rem;">
                 <thead>
-                    <tr><th>#</th><th>Jugador</th><th>Motivo / Forma</th><th>Patas</th><th>Mach</th><th>Hora</th></tr>
+                    <tr><th>#</th><th>Jugador</th><th>Motivo / Forma</th><th>Patas</th><th>Mach</th><th>Hora</th></td>
                 </thead>
                 <tbody>
     `;
@@ -1076,7 +1061,122 @@ function alternarTablaTranspuesta() {
     }
 }
 
-// --- VISTAS ---
+// ==================== EXPORTACIÓN A PDF ====================
+function exportarPDFGlobales() {
+    if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+        alert('❌ La librería PDF no está cargada. Recarga la página.');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf || jspdf;
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    
+    doc.setFontSize(16);
+    doc.text("Estadisticas Globales - Domino Pintintin", 20, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
+    
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    if (desde || hasta) {
+        doc.text(`Periodo: ${desde || 'inicio'} al ${hasta || 'hoy'}`, 20, 38);
+    }
+    
+    // Función para eliminar emojis y caracteres especiales
+    function limpiarTexto(texto) {
+        if (!texto) return '';
+        // Lista completa de emojis a eliminar
+        const emojis = /[🏆🦶🐔🀰🚪🏃🧤💧🎯📥⚖️🧩📅📊⭐🔄👑🥈🪑❓⚠️✅❌➕➖🔍📎🖨️📈📊🎲⚙️👥📋💾📂🔧🔬🔨🧹🔄🔐🔍🚪🎯🀰🐔💧🧤🏃🚪📥🎯⚖️🧩👥📅📊🏆🦶]/g;
+        let limpio = texto.replace(emojis, '');
+        // Eliminar también espacios múltiples
+        limpio = limpio.replace(/\s+/g, ' ').trim();
+        return limpio;
+    }
+    
+    const container = document.getElementById('resultadosStats');
+    let yOffset = 50;
+    
+    if (container) {
+        const tablas = container.querySelectorAll('table');
+        
+        for (let i = 0; i < tablas.length; i++) {
+            const tabla = tablas[i];
+            
+            // Obtener encabezados (usar la última fila que tiene texto plano)
+            const headers = [];
+            const headerRows = tabla.querySelectorAll('thead tr');
+            
+            if (headerRows.length > 0) {
+                // Usar la última fila de encabezados (sin emojis)
+                const lastHeaderRow = headerRows[headerRows.length - 1];
+                lastHeaderRow.querySelectorAll('th').forEach(th => {
+                    let texto = limpiarTexto(th.innerText);
+                    if (texto) headers.push(texto);
+                });
+            }
+            
+            // Si no se encontraron headers, usar la primera fila limpiada
+            if (headers.length === 0 && headerRows.length > 0) {
+                headerRows[0].querySelectorAll('th').forEach(th => {
+                    let texto = limpiarTexto(th.innerText);
+                    if (texto) headers.push(texto);
+                });
+            }
+            
+            const data = [];
+            const bodyRows = tabla.querySelectorAll('tbody tr');
+            bodyRows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(td => {
+                    rowData.push(limpiarTexto(td.innerText));
+                });
+                if (rowData.length) data.push(rowData);
+            });
+            
+            if (headers.length > 0 && data.length > 0 && data[0].length > 0) {
+                if (yOffset > 250) {
+                    doc.addPage();
+                    yOffset = 20;
+                }
+                
+                // Título de la sección (día o resumen general)
+                const bloque = tabla.closest('.dia-stats-block');
+                if (bloque) {
+                    const tituloFecha = bloque.querySelector('h4');
+                    if (tituloFecha) {
+                        let tituloLimpio = limpiarTexto(tituloFecha.innerText);
+                        if (tituloLimpio) {
+                            doc.setFontSize(11);
+                            doc.text(tituloLimpio, 20, yOffset);
+                            yOffset += 8;
+                            doc.setFontSize(7);
+                        }
+                    }
+                } else if (tabla.closest('.resumen-general')) {
+                    doc.setFontSize(11);
+                    doc.text("RESUMEN GENERAL", 20, yOffset);
+                    yOffset += 8;
+                    doc.setFontSize(7);
+                }
+                
+                doc.autoTable({
+                    head: [headers],
+                    body: data,
+                    startY: yOffset,
+                    theme: 'striped',
+                    styles: { fontSize: 8, cellPadding: 1.5 },
+                    headStyles: { fillColor: [139, 92, 246], textColor: 255 }
+                });
+                yOffset = doc.lastAutoTable.finalY + 10;
+            }
+        }
+    }
+    
+    doc.save(`estadisticas_globales_${new Date().toISOString().slice(0,19)}.pdf`);
+    alert("✅ PDF exportado correctamente");
+}
+
+// ==================== VISTAS ====================
 function cargarVistaJuego() {
     const vistaConfig = document.getElementById('vistaConfig');
     const vistaJuego = document.getElementById('vistaJuego');
@@ -1273,7 +1373,6 @@ async function verificarFinMach(ganadorId) {
         let participantesMach = [];
         for(let j of jugadoresActuales) participantesMach.push({ jugadorId: j.jugadorId, nombre: j.nombre || `Silla ${j.posicion} Vacía`, patasFinales: j.jugadorId ? (estadoMachActual.patasActuales.get(j.jugadorId) || 0) : 0 });
         
-        // Guardar mach con fechaHoraInicio y fechaHora (fin)
         almacenamiento.machs.push({ 
             id: almacenamiento.machs.length+1, 
             diaId: diaActivo.id, 
@@ -1314,7 +1413,6 @@ async function verificarFinMach(ganadorId) {
         const ganadorMachMsg = document.getElementById('ganadorMachMsg');
         if(ganadorMachMsg) ganadorMachMsg.innerText = `🎉 ¡MACH para ${ganadorNombre} con ${patasGanador} patas!${esPollona ? ' 🐔 ¡POLLONA!' : ''}`;
         
-        // Incrementar número de mach y reiniciar hora de inicio para el siguiente mach
         estadoMachActual.numero++;
         estadoMachActual.fechaHoraInicio = new Date().toISOString();
         estadoMachActual.patasActuales.clear();
@@ -1347,7 +1445,9 @@ function procesarEmpateConAguaYSalida(jugadoresEmpatadosIds) {
             const avisoEmpateDiv = document.getElementById('avisoEmpate');
             if (avisoEmpateDiv) {
                 let nombres = jugadoresEmpatadosIds.map(id => jugadoresActuales.find(j=>j.jugadorId===id)?.nombre).join(', ');
-                avisoEmpateDiv.innerText = `⚠️ EMPATE entre: ${nombres}. No hay un claro salidor.`;
+                avisoEmpateDiv.innerHTML = `⚠️ EMPATE entre: ${nombres}. ¡Comienza la siguiente mano!`;
+                avisoEmpateDiv.style.display = 'block';
+                setTimeout(() => { if(avisoEmpateDiv) avisoEmpateDiv.style.display = 'none'; }, 5000);
             }
         }
         estadoMachActual.empatePendiente = { jugadoresIds: jugadoresEmpatadosIds, resuelto: false };
@@ -1472,7 +1572,7 @@ function renderizarTablaNormal(stats, titulo) {
         html += `</tr>`;
     }
     html += `<tr style="background:#f1f5f9; font-weight:bold;">
-        <td><strong>📊 TOTALES</strong></td>`;
+        <td><strong>📊 TOTALES</strong></tr>`;
     for (let metrica of metricas) html += `<td class="text-center"><strong>${totalesPorMetrica[metrica.key]}</strong></td>`;
     html += `</tr>
     </tbody></table></div>`;
@@ -1559,12 +1659,12 @@ function renderizarTablaResumen(statsTotales, modoTranspuesto) {
             html += `<td><strong>${metrica.icono} ${metrica.nombre}</strong></td>`;
             for (let nombre of nombres) html += `<td class="text-center">${statsTotales.get(nombre)[metrica.key] || 0}</td>`;
             html += `<td class="text-center" style="background:#f1f5f9; font-weight:bold;">${totalesPorMetrica[metrica.key]}</td>`;
-            html += `<tr>`;
+            html += `</tr>`;
         }
         html += `</tbody></table>`;
     } else {
         html += `<table class="tabla-estadisticas"><thead>`;
-        html += `<tr><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th><th>🐔 Pollonas</th><th>🀰 Capicuas</th><th>🚪 Cierres</th><th>🏃 Pegados</th><th>🧤 Forros</th><th>💧 Aguas</th><th>🎯 PM Dados</th><th>📥 PM Recibidos</th><th>⚖️ Empates</th><th>🏆⚖️ E. Ganados</th><th>🧩 Patas x Empate</th>`;
+        html += `<tr><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th><th>🐔 Pollonas</th><th>🀰 Capicuas</th><th>🚪 Cierres</th><th>🏃 Pegados</th><th>🧤 Forros</th><th>💧 Aguas</th><th>🎯 PM Dados</th><th>📥 PM Recibidos</th><th>⚖️ Empates</th><th>🏆⚖️ E. Ganados</th><th>🧩 Patas x Empate</th></tr>`;
         html += `</thead><tbody>`;
         let totales = {};
         for (let metrica of metricas) totales[metrica.key] = 0;
@@ -1787,17 +1887,14 @@ function agregarBotonVolverSuperior() {
 }
 
 function agregarBotonGraficasYHistorial() {
-    // Forzar asignación del botón de gráficas de forma más directa
     const forzarBotonGraficas = () => {
         const btn = document.getElementById('btnGraficasConfig');
         if (btn) {
-            // Eliminar cualquier evento existente
             const nuevoBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(nuevoBtn, btn);
-            // Asignar el nuevo evento
             nuevoBtn.onclick = function(e) {
                 e.preventDefault();
-                console.log("🖱️ Botón de gráficas pulsado (desde forzador)");
+                console.log("🖱️ Botón de gráficas pulsado");
                 sessionStorage.setItem('viniendoDeGraficas', 'true');
                 window.location.href = 'estadisticas_graficas.html';
                 return false;
@@ -1808,9 +1905,7 @@ function agregarBotonGraficasYHistorial() {
         return false;
     };
     
-    // Intentar inmediatamente
     if (!forzarBotonGraficas()) {
-        // Si no funciona, intentar cada 100ms hasta que exista
         let intentos = 0;
         const intervalo = setInterval(() => {
             intentos++;
@@ -1821,7 +1916,6 @@ function agregarBotonGraficasYHistorial() {
         }, 100);
     }
     
-    // Resto del código original para el botón de historial...
     const accionesGlobales = document.querySelector('.acciones-globales');
     if (accionesGlobales && !document.getElementById('btnHistorial')) {
         const btnHistorial = document.createElement('button');
@@ -1860,11 +1954,22 @@ window.abrirGraficas = function() {
     window.location.href = 'estadisticas_graficas.html';
 };
 
+// ==================== BOTÓN ANÁLISIS DE RENDIMIENTO ====================
+function abrirAnalisis() {
+    sessionStorage.setItem('viniendoDeAnalisis', 'true');
+    window.location.href = 'analisis_jugador.html';
+}
+
 // ==================== EVENTO PRINCIPAL ====================
 window.onload = () => {
-    console.log("🚀 Iniciando Dominó Pintintín v5.2.1");
+    console.log("🚀 Iniciando Dominó Pintintín v5.3.0");
     cargarTodoDesdeLocalStorage();
     validarConsistenciaMachs();
+    
+    const btnAnalisis = document.getElementById('btnAnalisisRendimiento');
+    if (btnAnalisis) {
+        btnAnalisis.onclick = abrirAnalisis;
+    }
     
     const volviendoDeGraficas = sessionStorage.getItem('volviendoDeGraficas');
     if (volviendoDeGraficas === 'true') {
@@ -1908,7 +2013,6 @@ window.onload = () => {
     
     iniciarDeteccionAccesoAdmin();
     
-    // Asignar eventos globales
     const btnSortearEIniciar = document.getElementById('btnSortearEIniciar');
     const btnGestionJugador = document.getElementById('btnGestionJugador');
     const btnRetirarJugador = document.getElementById('btnRetirarJugador');
@@ -1992,7 +2096,9 @@ window.onload = () => {
     if(btnExportarBackup) btnExportarBackup.onclick = exportarBackupManual;
     if(importBackupInput) importBackupInput.onchange = (e) => { if(e.target.files.length) importarBackup(e.target.files[0]); };
     if(btnExportarCSV) btnExportarCSV.onclick = () => { let csv = "Fecha,Mach,Ganador\n"; for(let m of almacenamiento.machs) { const dia = almacenamiento.dias.find(d=>d.id===m.diaId); let ganador = m.participantes.find(p=>p.jugadorId===m.ganadorId)?.nombre || '?'; csv += `${dia ? dia.fecha : '?'},${m.numeroMach},${ganador}\n`; } let blob = new Blob([csv], {type:'text/csv'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pintintin_stats.csv'; a.click(); };
-    if(btnExportarPDF && window.jspdf) btnExportarPDF.onclick = () => { let { jsPDF } = window.jspdf; let doc = new jsPDF(); doc.text("Estadísticas Dominó Pintintín", 20,20); let data = almacenamiento.machs.map(m=>{ const dia = almacenamiento.dias.find(d=>d.id===m.diaId); return [dia ? dia.fecha : '?', m.numeroMach, m.participantes.find(p=>p.jugadorId===m.ganadorId)?.nombre]; }); doc.autoTable({ head:[['Fecha','Mach #','Ganador']], body:data, startY:30 }); doc.save('pintintin_stats.pdf'); };
+    if(btnExportarPDF && window.jspdf) {
+        btnExportarPDF.onclick = exportarPDFGlobales;
+    }
     if(btnEmpate) {
         btnEmpate.onclick = () => {
             if(!diaActivo) return alert("No hay un día activo");
@@ -2032,42 +2138,41 @@ window.onload = () => {
     if(terminacionPegado) terminacionPegado.onclick = () => aplicarModalTerminacion('pegado');
     if(terminacionCapicua) terminacionCapicua.onclick = () => aplicarModalTerminacion('capicua');
     if(cancelarTerminacion) cancelarTerminacion.onclick = () => { cerrarModalTerminacion(); ganadorPendiente = null; };
-    if(contenidoAyuda) {
-        // El manual se cargará dinámicamente al hacer clic en btnAyuda
-    }
-    if(btnAyuda) btnAyuda.onclick = () => {
-        if(modalAyuda) {
-            if(contenidoAyuda) {
-                contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem;">Cargando manual...</div>';
-                fetch('manual_pintintin.html')
-                    .then(response => response.text())
-                    .then(html => {
-                        contenidoAyuda.innerHTML = html;
-                        const links = contenidoAyuda.querySelectorAll('a[href="#"]');
-                        links.forEach(link => {
-                            const onclickAttr = link.getAttribute('onclick');
-                            if (onclickAttr) {
-                                const idMatch = onclickAttr.match(/scrollToSection\('([^']+)'\)/);
-                                if (idMatch) {
-                                    const id = idMatch[1];
-                                    link.onclick = (e) => {
-                                        e.preventDefault();
-                                        const target = contenidoAyuda.querySelector(`#${id}`);
-                                        if (target) target.scrollIntoView({ behavior: 'smooth' });
-                                    };
+    if(btnAyuda) {
+        btnAyuda.onclick = () => {
+            if(modalAyuda) {
+                if(contenidoAyuda) {
+                    contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem;">Cargando manual...</div>';
+                    fetch('manual_pintintin.html')
+                        .then(response => response.text())
+                        .then(html => {
+                            contenidoAyuda.innerHTML = html;
+                            const links = contenidoAyuda.querySelectorAll('a[href="#"]');
+                            links.forEach(link => {
+                                const onclickAttr = link.getAttribute('onclick');
+                                if (onclickAttr) {
+                                    const idMatch = onclickAttr.match(/scrollToSection\('([^']+)'\)/);
+                                    if (idMatch) {
+                                        const id = idMatch[1];
+                                        link.onclick = (e) => {
+                                            e.preventDefault();
+                                            const target = contenidoAyuda.querySelector(`#${id}`);
+                                            if (target) target.scrollIntoView({ behavior: 'smooth' });
+                                        };
+                                    }
                                 }
-                            }
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Error cargando manual:', err);
+                            contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">❌ Error al cargar el manual. Verifica tu conexión.</div>';
                         });
-                    })
-                    .catch(err => {
-                        console.error('Error cargando manual:', err);
-                        contenidoAyuda.innerHTML = '<div style="text-align:center; padding:2rem; color:red;">❌ Error al cargar el manual. Verifica tu conexión.</div>';
-                    });
+                }
+                modalAyuda.style.display = 'flex';
+                if(contenidoAyuda) contenidoAyuda.scrollTop = 0;
             }
-            modalAyuda.style.display = 'flex';
-            if(contenidoAyuda) contenidoAyuda.scrollTop = 0;
-        }
-    };
+        };
+    }
     if(cerrarAyuda) cerrarAyuda.onclick = () => { if(modalAyuda) modalAyuda.style.display = 'none'; };
     if(modalAyuda) modalAyuda.onclick = (e) => { if (e.target === modalAyuda) modalAyuda.style.display = 'none'; };
     if(btnTransponer) {
