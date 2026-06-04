@@ -75,6 +75,13 @@
         .btn-secondary:hover {
             background: #334155;
         }
+        .btn-volver {
+            background: #475569;
+            margin-top: 1rem;
+        }
+        .btn-volver:hover {
+            background: #334155;
+        }
         .resultado {
             background: #f1f5f9;
             padding: 1rem;
@@ -169,10 +176,11 @@
     <div id="resultado" class="resultado">
         <p style="color: #64748b; text-align:center;">Haz clic en "Analizar machs antiguos" para comenzar.</p>
     </div>
+
+    <button id="btnVolverAdmin" class="btn-volver">← Volver al panel de administración</button>
 </div>
 
 <script>
-    // Claves de localStorage
     const STORAGE_KEYS = {
         jugadores: 'pintintin_jugadores',
         dias: 'pintintin_dias',
@@ -181,19 +189,16 @@
         preferencia: 'pintintin_preferencia'
     };
 
-    // Función para generar minutos aleatorios entre min y max
     function minutosAleatorios(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Función para restar minutos a una fecha ISO
     function restarMinutos(fechaISO, minutos) {
         const fecha = new Date(fechaISO);
         fecha.setMinutes(fecha.getMinutes() - minutos);
         return fecha.toISOString();
     }
 
-    // Cargar datos
     function cargarDatos() {
         try {
             const machs = JSON.parse(localStorage.getItem(STORAGE_KEYS.machs)) || [];
@@ -204,12 +209,10 @@
         }
     }
 
-    // Guardar datos
     function guardarDatos(machs) {
         localStorage.setItem(STORAGE_KEYS.machs, JSON.stringify(machs));
     }
 
-    // Analizar machs antiguos
     function analizarMachs() {
         const machs = cargarDatos();
         const machsSinInicio = machs.filter(m => !m.fechaHoraInicio || m.fechaHoraInicio === null);
@@ -249,11 +252,9 @@
             btnActualizar.disabled = false;
         }
         
-        // Guardar lista para la actualización
         window.machsPendientes = machsSinInicio;
     }
     
-    // Actualizar machs
     async function actualizarMachs() {
         if (!window.machsPendientes || window.machsPendientes.length === 0) {
             alert("No hay machs pendientes. Ejecuta 'Analizar' primero.");
@@ -300,19 +301,14 @@
                 }
             }
             
-            // Actualizar progreso
             const porcentaje = Math.round(((i + 1) / machs.length) * 100);
             progresoBar.style.width = `${porcentaje}%`;
             progresoBar.textContent = `${porcentaje}%`;
-            
-            // Pequeña pausa para que se vea el progreso
             await new Promise(resolve => setTimeout(resolve, 5));
         }
         
-        // Guardar los machs actualizados
         guardarDatos(machs);
         
-        // Mostrar resultados
         resultadoDiv.innerHTML = `
             <div class="exito" style="padding:1rem;">
                 ✅ <strong>Actualización completada</strong><br>
@@ -329,23 +325,20 @@
         btnActualizar.disabled = true;
         window.machsPendientes = null;
         
-        // Ocultar barra de progreso después de 3 segundos
         setTimeout(() => {
             progresoContainer.style.display = 'none';
         }, 3000);
     }
     
-    // Eventos
+    function volverAdmin() {
+        window.location.href = 'admin.html';
+    }
+    
     document.getElementById('btnAnalizar').addEventListener('click', analizarMachs);
     document.getElementById('btnActualizar').addEventListener('click', actualizarMachs);
+    document.getElementById('btnVolverAdmin').addEventListener('click', volverAdmin);
     
-    // Mostrar mensaje inicial
     console.log("🛠️ Herramienta de actualización de tiempos lista.");
-	
-	<div style="text-align: center; margin-top: 1.5rem;">
-		<a href="admin.html" style="background: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none;">← Volver al panel de administración</a>
-	</div>	
-	
 </script>
 </body>
 </html>
