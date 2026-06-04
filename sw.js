@@ -3,10 +3,10 @@
 // Autor: Ricardo Castillo Valdés (Richard)
 // Contacto: 3sayricardo@gmail.com | +53 55031725
 // La Demajagua, Isla de la Juventud, Cuba
-// Versión: 5.2.1 - Junio 2026
+// Versión: 6.0.0 FINAL - Junio 2026
 // ============================================
 
-const CACHE_NAME = 'pintintin-v5.2.1';
+const CACHE_NAME = 'pintintin-v6.0.0';
 const urlsToCache = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const urlsToCache = [
   './estadisticas_graficas.html',
   './ver_machs_por_dia.html',
   './manual_pintintin.html',
+  './analisis_jugador.html',
   './styles.css',
   './app.js',
   './manifest.json',
@@ -27,7 +28,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Instalando v5.2.1...');
+  console.log('[Service Worker] Instalando v6.0.0 FINAL...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -58,7 +59,7 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activando v5.2.1...');
+  console.log('[Service Worker] Activando v6.0.0 FINAL...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
