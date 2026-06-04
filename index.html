@@ -1,182 +1,186 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Dominó Pintintín</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Dominó Pintintín</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <!-- Librerías para exportación a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div class="app-container">
-  <header>
-    <h1>🀰 Dominó Pintintín</h1>
-    <button id="btnAyuda" class="btn-ayuda-flotante" title="Ayuda">❓</button>
-    <div id="fechaMostrada" class="fecha-dia"></div>
-  </header>
+    <header>
+        <h1>🀰 Dominó Pintintín</h1>
+        <button id="btnAyuda" class="btn-ayuda-flotante" title="Ayuda">❓</button>
+        <div id="fechaMostrada" class="fecha-dia"></div>
+    </header>
 
-  <!-- Pantalla de inicio / configuración -->
-  <section id="vistaConfig" class="vista">
-    <h2>⚙️ Nueva Jornada</h2>
+    <!-- Pantalla de inicio / configuración -->
+    <section id="vistaConfig" class="vista">
+        <h2>⚙️ Nueva Jornada</h2>
 
-    <!-- Fecha -->
-    <div class="campo-borde">
-      <div class="campo-label">📅 Fecha</div>
-      <input type="date" id="fechaDia" required>
-    </div>
-
-    <!-- Nombres obligatorios (Jugadores 1 y 2) -->
-    <div class="campo-borde">
-      <div class="campo-label">👥 Nombres <span class="obligatorio">(obligatorios)</span></div>
-      <div class="inputs-dobles">
-        <input type="text" id="jugador1" list="listaJugadores" placeholder="Jugador 1" autocomplete="off">
-        <input type="text" id="jugador2" list="listaJugadores" placeholder="Jugador 2" autocomplete="off">
-      </div>
-    </div>
-
-    <!-- Nombres opcionales (Jugadores 3 y 4) -->
-    <div class="campo-borde">
-      <div class="campo-label">👥 Nombres <span class="opcional">(opcionales)</span></div>
-      <div class="inputs-dobles">
-        <input type="text" id="jugador3" list="listaJugadores" placeholder="Jugador 3" autocomplete="off">
-        <input type="text" id="jugador4" list="listaJugadores" placeholder="Jugador 4" autocomplete="off">
-      </div>
-    </div>
-
-    <!-- Checkbox mantener ubicación -->
-    <div class="checkbox-mantener">
-      <input type="checkbox" id="mantenerUbicacion">
-      <label for="mantenerUbicacion">🎲 Mantener ubicación de los jugadores (sin sorteo de sillas)</label>
-    </div>
-
-    <!-- Botón principal -->
-    <div class="sorteo-buttons">
-      <button id="btnSortearEIniciar" class="sorteo-btn">🎲 Sortear sillas e iniciar</button>
-    </div>
-
-    <div id="resultadoSorteo" class="resultado-sorteo"></div>
-
-    <hr>
-    <div class="botones-secundarios">
-		<button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
-		<button id="btnGraficasConfig" class="secundario">📈 Gráficas interactivas</button>
-		<button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
-        <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
-        <div class="backup-buttons">
-            <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
-            <label for="importBackupInput" class="secundario" style="display: inline-block; text-align: center;">📂 Importar respaldo</label>
-            <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+        <!-- Fecha -->
+        <div class="campo-borde">
+            <div class="campo-label">📅 Fecha</div>
+            <input type="date" id="fechaDia" required>
         </div>
-    </div>
 
-	
-    <div class="creditos">
-      <p>🎲 Creado por <strong>Ricardo Castillo Valdés (Richard)</strong></p>
-      <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
-      <p>📧 <a href="mailto:3sayricardo@gmail.com" style="color:#8b5cf6; text-decoration:none;">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725" style="color:#8b5cf6; text-decoration:none;">+53 55031725</a></p>
-      <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
-    </div>
-  </section>
+        <!-- Nombres obligatorios (Jugadores 1 y 2) -->
+        <div class="campo-borde">
+            <div class="campo-label">👥 Nombres <span class="obligatorio">(obligatorios)</span></div>
+            <div class="inputs-dobles">
+                <input type="text" id="jugador1" list="listaJugadores" placeholder="Jugador 1" autocomplete="off">
+                <input type="text" id="jugador2" list="listaJugadores" placeholder="Jugador 2" autocomplete="off">
+            </div>
+        </div>
 
-  <!-- Pantalla de juego -->
-  <section id="vistaJuego" class="vista" style="display:none;">
-    <div class="marcador-mach">
-      <span>🏆 MACH #<span id="numMachActual">1</span></span>
-      <span id="ganadorMachMsg"></span>
-    </div>
-    <div id="jugadoresGrid" class="jugadores-grid"></div>
+        <!-- Nombres opcionales (Jugadores 3 y 4) -->
+        <div class="campo-borde">
+            <div class="campo-label">👥 Nombres <span class="opcional">(opcionales)</span></div>
+            <div class="inputs-dobles">
+                <input type="text" id="jugador3" list="listaJugadores" placeholder="Jugador 3" autocomplete="off">
+                <input type="text" id="jugador4" list="listaJugadores" placeholder="Jugador 4" autocomplete="off">
+            </div>
+        </div>
 
-    <div class="acciones-globales">
-      <button id="btnEmpate" class="empate">⚖️ Declarar empate</button>
-      <button id="btnGestionJugador" class="gestion-jugador">➕ Añadir jugador</button>
-      <button id="btnRetirarJugador" class="secundario" style="background:#dc2626;">➖ Salida de jugador</button>
-      <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
-      <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
-      <button id="btnCerrarDia" class="cerrar-dia">🚪 Salir del juego</button>
-    </div>
-    <div id="avisoEmpate" class="aviso"></div>
-  </section>
+        <!-- Checkbox mantener ubicación -->
+        <div class="checkbox-mantener">
+            <input type="checkbox" id="mantenerUbicacion">
+            <label for="mantenerUbicacion">🎲 Mantener ubicación de los jugadores (sin sorteo de sillas)</label>
+        </div>
 
-  <!-- Pantalla de estadísticas globales -->
-  <section id="vistaEstadisticas" class="vista" style="display:none;">
-    <h2>📊 Estadísticas Globales</h2>
-    <div class="filtros">
-      <label>Desde: <input type="date" id="fechaDesde"></label>
-      <label>Hasta: <input type="date" id="fechaHasta"></label>
-      <button id="btnFiltrar">Filtrar</button>
-      <button id="btnExportarCSV">📎 Exportar CSV</button>
-      <button id="btnExportarPDF">🖨️ Exportar PDF</button>
-      <button id="btnTransponer" class="btn-intercambiar">🔄 Intercambiar (columnas)</button>
-    </div>
-    <div id="resultadosStats">
-      <div class="stats-container"></div>
-    </div>
-    <button id="volverInicioStats" class="secundario">← Volver al juego</button>
-  </section>
+        <!-- Botón principal -->
+        <div class="sorteo-buttons">
+            <button id="btnSortearEIniciar" class="sorteo-btn">🎲 Sortear sillas e iniciar</button>
+        </div>
+
+        <div id="resultadoSorteo" class="resultado-sorteo"></div>
+
+        <hr>
+       
+        <div class="botones-secundarios">
+            <button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
+            <button id="btnGraficasConfig" class="secundario">📈 Gráficas interactivas</button>
+            <button id="btnAnalisisRendimiento" class="secundario">🎯 Análisis de rendimiento</button>
+            <button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
+            <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
+            <div class="backup-buttons">
+                <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
+                <label for="importBackupInput" class="secundario" style="display: inline-block; text-align: center;">📂 Importar respaldo</label>
+                <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+            </div>
+        </div>
+
+        <div class="creditos">
+            <p>🎲 Creado por <strong>Ricardo Castillo Valdés (Richard)</strong></p>
+            <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
+            <p>📧 <a href="mailto:3sayricardo@gmail.com" style="color:#8b5cf6; text-decoration:none;">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725" style="color:#8b5cf6; text-decoration:none;">+53 55031725</a></p>
+            <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
+        </div>
+    </section>
+
+    <!-- Pantalla de juego -->
+    <section id="vistaJuego" class="vista" style="display:none;">
+        <div class="marcador-mach">
+            <span>🏆 MACH #<span id="numMachActual">1</span></span>
+            <span id="ganadorMachMsg"></span>
+        </div>
+        <div id="jugadoresGrid" class="jugadores-grid"></div>
+
+        <div class="acciones-globales">
+            <button id="btnEmpate" class="empate">⚖️ Declarar empate</button>
+            <button id="btnGestionJugador" class="gestion-jugador">➕ Añadir jugador</button>
+            <button id="btnRetirarJugador" class="secundario" style="background:#dc2626;">➖ Salida de jugador</button>
+            <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
+            <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
+            <button id="btnCerrarDia" class="cerrar-dia">🚪 Salir del juego</button>
+        </div>
+        <div id="avisoEmpate" class="aviso"></div>
+    </section>
+
+    <!-- Pantalla de estadísticas globales -->
+    <section id="vistaEstadisticas" class="vista" style="display:none;">
+        <h2>📊 Estadísticas Globales</h2>
+        <div class="filtros">
+            <label>Desde: <input type="date" id="fechaDesde"></label>
+            <label>Hasta: <input type="date" id="fechaHasta"></label>
+            <button id="btnFiltrar">Filtrar</button>
+            <button id="btnExportarCSV">📎 Exportar CSV</button>
+            <button id="btnExportarPDF">🖨️ Exportar PDF</button>
+            <button id="btnTransponer" class="btn-intercambiar">🔄 Intercambiar (columnas)</button>
+        </div>
+        <div id="resultadosStats">
+            <div class="stats-container"></div>
+        </div>
+        <button id="volverInicioStats" class="secundario">← Volver al juego</button>
+    </section>
 </div>
 
 <!-- Modales -->
 <div id="modalEmpate" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>🤝 Jugadores empatados</h3>
-    <div id="checkEmpate"></div>
-    <button id="confirmarEmpate">Aceptar</button>
-    <button id="cancelarEmpate">Cancelar</button>
-  </div>
+    <div class="modal-content">
+        <h3>🤝 Jugadores empatados</h3>
+        <div id="checkEmpate"></div>
+        <button id="confirmarEmpate">Aceptar</button>
+        <button id="cancelarEmpate">Cancelar</button>
+    </div>
 </div>
 
 <div id="modalTerminacion" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>🎯 ¿Cómo terminó la mano?</h3>
-    <div id="terminacionInfo" style="margin-bottom: 1rem; font-weight: bold;"></div>
-    <button id="terminacionCierre" class="secundario" style="background:#475569;">🚪 Cierre</button>
-    <button id="terminacionPegado" class="secundario" style="background:#475569;">🏃 Pegado</button>
-    <button id="terminacionCapicua" class="secundario" style="background:#8b5cf6;">🀰 Capicua (Vale 2)</button>
-    <button id="cancelarTerminacion" style="background:#475569; margin-top:0.5rem;">Cancelar</button>
-  </div>
+    <div class="modal-content">
+        <h3>🎯 ¿Cómo terminó la mano?</h3>
+        <div id="terminacionInfo" style="margin-bottom: 1rem; font-weight: bold;"></div>
+        <button id="terminacionCierre" class="secundario" style="background:#475569;">🚪 Cierre</button>
+        <button id="terminacionPegado" class="secundario" style="background:#475569;">🏃 Pegado</button>
+        <button id="terminacionCapicua" class="secundario" style="background:#8b5cf6;">🀰 Capicua (Vale 2)</button>
+        <button id="cancelarTerminacion" style="background:#475569; margin-top:0.5rem;">Cancelar</button>
+    </div>
 </div>
 
 <div id="modalAgua" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>💧 ¿Quién da AGUA?</h3>
-    <div id="checkAgua"></div>
-    <div style="display:flex; gap:0.5rem; margin-top:1rem; justify-content:center;">
-      <button id="confirmarAgua" class="secundario" style="background:#10b981;">✅ Aceptar</button>
-      <button id="cancelarAgua" class="secundario" style="background:#6b7280;">❌ Cancelar</button>
+    <div class="modal-content">
+        <h3>💧 ¿Quién da AGUA?</h3>
+        <div id="checkAgua"></div>
+        <div style="display:flex; gap:0.5rem; margin-top:1rem; justify-content:center;">
+            <button id="confirmarAgua" class="secundario" style="background:#10b981;">✅ Aceptar</button>
+            <button id="cancelarAgua" class="secundario" style="background:#6b7280;">❌ Cancelar</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <div id="modalAyuda" class="modal" style="display:none;">
-  <div class="modal-content modal-ayuda">
-    <div class="modal-ayuda-header">
-      <h3>📖 Manual de Usuario</h3>
-      <button id="cerrarAyuda" class="cerrar-modal">&times;</button>
+    <div class="modal-content modal-ayuda">
+        <div class="modal-ayuda-header">
+            <h3>📖 Manual de Usuario</h3>
+            <button id="cerrarAyuda" class="cerrar-modal">&times;</button>
+        </div>
+        <div id="contenidoAyuda" class="contenido-ayuda">
+            <div style="text-align:center; padding:2rem;">Cargando manual...</div>
+        </div>
     </div>
-    <div id="contenidoAyuda" class="contenido-ayuda">
-      <div style="text-align:center; padding:2rem;">Cargando manual...</div>
-    </div>
-  </div>
 </div>
 
 <script src="app.js"></script>
 
 <!-- Registrar Service Worker para funcionamiento offline (PWA) -->
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js')
-        .then(function(reg) {
-          console.log('✅ Service Worker registrado correctamente:', reg);
-        })
-        .catch(function(err) {
-          console.error('❌ Error al registrar el Service Worker:', err);
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw.js')
+                .then(function(reg) {
+                    console.log('✅ Service Worker registrado correctamente:', reg);
+                })
+                .catch(function(err) {
+                    console.error('❌ Error al registrar el Service Worker:', err);
+                });
         });
-    });
-  } else {
-    console.warn('⚠️ Service Worker no soportado en este navegador.');
-  }
+    } else {
+        console.warn('⚠️ Service Worker no soportado en este navegador.');
+    }
 </script>
 
 </body>
