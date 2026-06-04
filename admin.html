@@ -58,6 +58,8 @@
         footer a { color: #8b5cf6; text-decoration: none; }
         @media (max-width: 768px) { .admin-container { padding: 1rem; } .tabla-datos th, .tabla-datos td { font-size: 0.7rem; padding: 0.3rem; } h1 { padding-right: 0; } .btn-volver { position: static; margin-bottom: 1rem; display: inline-block; } }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div class="admin-container" id="adminApp">
@@ -65,7 +67,10 @@
         <h2>🔐 Acceso al Panel de Administración</h2>
         <p>Ingresa la contraseña para gestionar la base de datos</p>
         <input type="password" id="adminPassword" placeholder="Contraseña">
-        <button onclick="verificarLogin()">Acceder</button>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="verificarLogin()">Acceder</button>
+            <button onclick="cancelarLogin()" style="background:#475569;">Cancelar</button>
+        </div>
     </div>
 
     <div id="adminPanel" style="display:none;">
@@ -73,16 +78,16 @@
         <h1>🛠️ Panel de Administración - Dominó Pintintín v6.0</h1>
         <p class="stats-mini">⚠️ Ten cuidado al modificar los datos. Los cambios son permanentes.</p>
 
-		<div class="aux-card">
-			<h3>🔧 Herramientas Auxiliares</h3>
-			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-				<a href="actualizar_tiempos.html" class="aux-link" target="_blank">⏰ Actualizar Tiempos de Machs</a>
-				<button class="aux-link" onclick="verificarIntegridadAvanzada()">🔬 Verificación Avanzada</button>
-				<button class="aux-link" onclick="repararAutomaticamente()">🔨 Reparación Automática</button>
-				<button class="aux-link" onclick="verificarIntegridad()" style="background: rgba(255,193,7,0.3);">🔍 Verificar integridad</button>
-			</div>
-		</div>
-		
+        <div class="aux-card">
+            <h3>🔧 Herramientas Auxiliares</h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="actualizar_tiempos.html" class="aux-link" target="_blank">⏰ Actualizar Tiempos de Machs</a>
+                <button class="aux-link" onclick="verificarIntegridadAvanzada()">🔬 Verificación Avanzada</button>
+                <button class="aux-link" onclick="repararAutomaticamente()">🔨 Reparación Automática</button>
+                <button class="aux-link" onclick="verificarIntegridad()" style="background: rgba(255,193,7,0.3);">🔍 Verificar integridad</button>
+            </div>
+        </div>
+
         <div class="backup-buttons">
             <button onclick="exportarDatos()">💾 Exportar todos los datos (JSON)</button>
             <button onclick="importarDatos()">📂 Importar datos (JSON)</button>
@@ -130,7 +135,8 @@
                     <span>📅 Desde:</span> <input type="date" id="reporteFechaDesde">
                     <span>Hasta:</span> <input type="date" id="reporteFechaHasta">
                     <button onclick="filtrarReportePorFechas()" class="btn-editar">Filtrar</button>
-                    <button onclick="exportarReporteGeneral()" class="btn-exportar-reporte">📎 Exportar a CSV</button>
+                    <button id="btnExportarReporteCSV" class="btn-exportar-reporte">📎 Exportar a CSV</button>
+                    <button id="btnExportarReportePDF" class="btn-exportar-reporte">📄 Exportar a PDF</button>
                 </div>
             </div>
             <div class="tabla-responsive" id="reporteGeneralTable"></div>
@@ -143,7 +149,8 @@
                 <span>📅 Desde:</span> <input type="date" id="tiempoFechaDesde">
                 <span>Hasta:</span> <input type="date" id="tiempoFechaHasta">
                 <button onclick="cargarEstadisticasTiempo()" class="btn-editar">Filtrar</button>
-                <button onclick="exportarEstadisticasTiempo()" class="btn-exportar-reporte">📎 Exportar CSV</button>
+                <button id="btnExportarTiempoCSV" class="btn-exportar-reporte">📎 Exportar CSV</button>
+                <button id="btnExportarTiempoPDF" class="btn-exportar-reporte">📄 Exportar PDF</button>
             </div>
             <div id="tiempoResultados"><div class="stats-mini">Selecciona un rango de fechas y haz clic en "Filtrar".</div></div>
         </div>
@@ -156,10 +163,12 @@
 </div>
 
 <script>
-    console.log("Admin panel cargado - versión limpia sin modales automáticos");
+    console.log("Admin panel cargado - versión completa v6.0");
 
     let datosActuales = { jugadores: [], dias: [], participaciones: [], machs: [] };
     let reporteFechasFiltro = { desde: null, hasta: null };
+    let tiempoDatosCache = [];
+
     const STORAGE_KEYS = {
         jugadores: 'pintintin_jugadores',
         dias: 'pintintin_dias',
@@ -196,6 +205,30 @@
         }
     }
 
+    // ==================== FUNCIONES DE LOGIN ====================
+    function cancelarLogin() {
+        window.location.href = 'index.html';
+    }
+
+    function verificarLogin() {
+        const pass = document.getElementById('adminPassword').value;
+        if(pass === 'admin') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            cargarTodo();
+            renderizarTodo();
+            const hoy = new Date();
+            const hace30 = new Date(); hace30.setDate(hoy.getDate()-30);
+            document.getElementById('reporteFechaDesde').value = hace30.toISOString().slice(0,10);
+            document.getElementById('reporteFechaHasta').value = hoy.toISOString().slice(0,10);
+            document.getElementById('tiempoFechaDesde').value = hace30.toISOString().slice(0,10);
+            document.getElementById('tiempoFechaHasta').value = hoy.toISOString().slice(0,10);
+            cargarEstadisticasTiempo();
+            console.log("Admin panel iniciado correctamente");
+        } else alert('Contraseña incorrecta');
+    }
+
+    // ==================== VERIFICACIÓN BÁSICA ====================
     function verificarIntegridad() {
         let errores = [];
         for (let mach of datosActuales.machs) {
@@ -249,13 +282,11 @@
     function repararAutomaticamente() {
         let db = datosActuales;
         let reparaciones = [];
-        // Eliminar fantasmas
         const fantasmas = db.participaciones.filter(p => _esFantasma(p));
         for (let f of fantasmas) {
             const idx = db.participaciones.findIndex(p => p.id === f.id);
             if (idx !== -1) { db.participaciones.splice(idx, 1); reparaciones.push(`Eliminada fantasma ID ${f.id}`); }
         }
-        // Unificar días duplicados
         const seen = new Map();
         const eliminarDias = [];
         for (let d of db.dias) {
@@ -268,7 +299,6 @@
             const idx = db.dias.findIndex(d => d.id === eliminar);
             if (idx !== -1) { db.dias.splice(idx, 1); reparaciones.push(`Unificado día ${eliminar} → ${mantener}`); }
         }
-        // Recalcular machsGanados
         for (let p of db.participaciones) {
             const real = db.machs.filter(m => m.diaId === p.diaId && m.ganadorId === p.jugadorId).length;
             if (p.machsGanados !== real) {
@@ -276,7 +306,6 @@
                 p.machsGanados = real;
             }
         }
-        // Recrear participaciones faltantes
         for (let mach of db.machs) {
             for (let part of mach.participantes) {
                 if (!part.jugadorId) continue;
@@ -300,25 +329,30 @@
         document.getElementById('resultadoVerificacion').style.display = 'none';
     }
 
+    // ==================== RENDERIZADO GENERAL ====================
     function renderizarTodo() { renderizarMachs(); renderizarJugadores(); renderizarDias(); renderizarParticipaciones(); renderizarReporteGeneral(); }
+
+    // ---------- JUGADORES ----------
     function renderizarJugadores() {
         const cont = document.getElementById('jugadoresTable');
         if (!cont) return;
         if (!datosActuales.jugadores.length) { cont.innerHTML = '<p>📭 No hay jugadores.</p>'; return; }
         let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead><tbody>';
-        for (let j of datosActuales.jugadores) html += `<tr><td>${j.id}</td><td><strong>${escapeHtml(j.nombre)}</strong></td><td><button class="btn-editar" onclick="editarJugador(${j.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarJugador(${j.id})">🗑️ Eliminar</button></td></tr>`;
+        for (let j of datosActuales.jugadores) html += `<tr><td class="text-center">${j.id}</td><td><strong>${escapeHtml(j.nombre)}</strong></td><td><button class="btn-editar" onclick="editarJugador(${j.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarJugador(${j.id})">🗑️ Eliminar</button></td></tr>`;
         html += `</tbody><tfoot><tr><td colspan="3"><strong>Total: ${datosActuales.jugadores.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
     function agregarJugador() { let n=prompt("Nombre:"); if(!n) return; if(datosActuales.jugadores.some(j=>j.nombre.toLowerCase()===n.trim().toLowerCase())){alert("Ya existe"); return;} let id=Math.max(0,...datosActuales.jugadores.map(j=>j.id))+1; datosActuales.jugadores.push({id, nombre:n.trim()}); guardarTodo(); renderizarJugadores(); mostrarMensaje("Agregado","exito"); }
     function editarJugador(id) { let j=datosActuales.jugadores.find(j=>j.id===id); if(!j) return; let n=prompt("Nuevo nombre:",j.nombre); if(!n) return; if(datosActuales.jugadores.some(j2=>j2.id!==id && j2.nombre.toLowerCase()===n.toLowerCase())){alert("Ya existe"); return;} j.nombre=n.trim(); guardarTodo(); renderizarTodo(); mostrarMensaje("Actualizado","exito"); }
     function eliminarJugador(id) { let j=datosActuales.jugadores.find(j=>j.id===id); if(!j||!confirm(`¿Eliminar a ${j.nombre}?`)) return; datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.jugadorId!==id); datosActuales.machs=datosActuales.machs.filter(m=>m.ganadorId!==id); datosActuales.jugadores=datosActuales.jugadores.filter(j=>j.id!==id); guardarTodo(); renderizarTodo(); mostrarMensaje("Eliminado","exito"); }
+
+    // ---------- DÍAS ----------
     function renderizarDias() {
         const cont = document.getElementById('diasTable');
         if (!cont) return;
         if (!datosActuales.dias.length) { cont.innerHTML = '<p>📭 No hay días.</p>'; return; }
         let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>Activo</th><th>Machs</th><th>Acciones</th></tr></thead><tbody>';
-        for (let d of datosActuales.dias) html += `<tr><td>${d.id}</td><td>${d.fecha}</td><td><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td><td>${datosActuales.machs.filter(m=>m.diaId===d.id).length}</td><td><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td></tr>`;
+        for (let d of datosActuales.dias) html += `<tr><td class="text-center">${d.id}</td><td>${d.fecha}</td><td class="text-center"><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td><td class="text-center">${datosActuales.machs.filter(m=>m.diaId===d.id).length}</td><td><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td></tr>`;
         html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.dias.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
@@ -326,6 +360,8 @@
     function cambiarActivoDia(id, activo) { let d=datosActuales.dias.find(d=>d.id===id); if(d){ d.activo=activo?1:0; guardarTodo(); renderizarDias(); } }
     function eliminarDia(id) { if(!confirm("¿Eliminar día con todos sus machs y participaciones?")) return; datosActuales.machs=datosActuales.machs.filter(m=>m.diaId!==id); datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.diaId!==id); datosActuales.dias=datosActuales.dias.filter(d=>d.id!==id); guardarTodo(); renderizarTodo(); mostrarMensaje("Día eliminado","exito"); }
     function forzarCierreDia() { let f=prompt("Fecha a cerrar (YYYY-MM-DD):"); if(!f) return; let cerrados=0; for(let d of datosActuales.dias) if(d.fecha===f && d.activo===1){ d.activo=0; cerrados++; } if(cerrados){ guardarTodo(); renderizarDias(); alert(`Cerrados ${cerrados} día(s)`); } else alert("No hay días activos con esa fecha"); }
+
+    // ---------- PARTICIPACIONES ----------
     function renderizarParticipaciones() {
         const cont = document.getElementById('participacionesTable');
         if (!cont) return;
@@ -334,7 +370,7 @@
         for (let p of datosActuales.participaciones) {
             let jug = datosActuales.jugadores.find(j=>j.id===p.jugadorId);
             let dia = datosActuales.dias.find(d=>d.id===p.diaId);
-            html += `<tr><td>${p.id}</td><td>${jug?escapeHtml(jug.nombre):'?'}</td><td>${dia?dia.fecha:'?'}</td><td>${p.machsGanados}</td><td>${p.patasNetas}</td><td><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td></tr>`;
+            html += `<tr><td class="text-center">${p.id}</td><td>${jug?escapeHtml(jug.nombre):'?'}</td><td>${dia?dia.fecha:'?'}</td><td class="text-center">${p.machsGanados}</td><td class="text-center">${p.patasNetas}</td><td><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td></tr>`;
         }
         html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
@@ -342,106 +378,267 @@
     function agregarParticipacion() { alert("Para simplificar, crea la participación desde la interfaz principal del juego. Aquí solo se pueden editar las existentes."); }
     function editarParticipacion(id) { let p=datosActuales.participaciones.find(p=>p.id===id); if(!p) return; let nm=prompt("Nuevo machsGanados:", p.machsGanados); if(nm!==null) p.machsGanados=parseInt(nm)||0; let np=prompt("Nuevo patasNetas:", p.patasNetas); if(np!==null) p.patasNetas=parseInt(np)||0; guardarTodo(); renderizarParticipaciones(); mostrarMensaje("Actualizado","exito"); }
     function eliminarParticipacion(id) { if(confirm("¿Eliminar esta participación?")){ datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.id!==id); guardarTodo(); renderizarParticipaciones(); mostrarMensaje("Eliminada","exito"); } }
+
+    // ---------- MACHS ----------
     function renderizarMachs() {
         const cont = document.getElementById('machsTable');
         if (!cont) return;
         if (!datosActuales.machs.length) { cont.innerHTML = '<p>📭 No hay machs.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>#Mach</th><th>Ganador</th><th>Acciones</th><tr></thead><tbody>';
+        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>#Mach</th><th>Ganador</th><th>Acciones</th></tr></thead><tbody>';
         for (let m of datosActuales.machs) {
             let dia = datosActuales.dias.find(d=>d.id===m.diaId);
             let gan = datosActuales.jugadores.find(j=>j.id===m.ganadorId);
-            html += `<tr><td>${m.id}</td><td>${dia?dia.fecha:'?'}</td><td>${m.numeroMach}</td><td>${gan?escapeHtml(gan.nombre):'?'}</td><td><button class="btn-ver-detalle" onclick="verDetalleMach(${m.id})">🔍 Ver</button> <button class="btn-eliminar" onclick="eliminarMach(${m.id})">🗑️ Eliminar</button></td></tr>`;
+            html += `<tr><td class="text-center">${m.id}</td><td>${dia?dia.fecha:'?'}</td><td class="text-center">${m.numeroMach}</td><td class="text-center">${gan?escapeHtml(gan.nombre):'?'}</td><td><button class="btn-ver-detalle" onclick="verDetalleMach(${m.id})">🔍 Ver</button> <button class="btn-eliminar" onclick="eliminarMach(${m.id})">🗑️ Eliminar</button></td></tr>`;
         }
         html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.machs.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
-	function verDetalleMach(id) {
-    const mach = datosActuales.machs.find(m => m.id === id);
-    if (!mach) return;
-    
-    const dia = datosActuales.dias.find(d => d.id === mach.diaId);
-    const ganador = datosActuales.jugadores.find(j => j.id === mach.ganadorId);
-    
-    // Función para formatear fecha/hora completa
-    const formatearFechaHora = (isoFecha) => {
-        if (!isoFecha) return '⏳ No registrada';
-        const fecha = new Date(isoFecha);
-        const dia = fecha.getDate().toString().padStart(2, '0');
-        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-        const año = fecha.getFullYear();
-        let horas = fecha.getHours();
-        const minutos = fecha.getMinutes().toString().padStart(2, '0');
-        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
-        horas = horas % 12 || 12;
-        return `${dia}/${mes}/${año} ${horas}:${minutos} ${ampm}`;
-    };
-    
-    // Función para formatear solo hora
-    const formatearHora = (isoFecha) => {
-        if (!isoFecha) return '⏳ No registrada';
-        const fecha = new Date(isoFecha);
-        let horas = fecha.getHours();
-        const minutos = fecha.getMinutes().toString().padStart(2, '0');
-        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
-        horas = horas % 12 || 12;
-        return `${horas}:${minutos} ${ampm}`;
-    };
-    
-    // Calcular duración si hay inicio y fin
-    let duracionTexto = '';
-    if (mach.fechaHoraInicio && mach.fechaHora) {
-        const inicio = new Date(mach.fechaHoraInicio);
-        const fin = new Date(mach.fechaHora);
-        const diffMs = fin - inicio;
-        if (diffMs > 0) {
-            const diffMin = Math.floor(diffMs / 60000);
-            const diffSeg = Math.floor((diffMs % 60000) / 1000);
-            if (diffMin > 0) {
-                duracionTexto = `⏱️ Duración: ${diffMin} min ${diffSeg > 0 ? diffSeg + ' seg' : ''}`;
-            } else {
-                duracionTexto = `⏱️ Duración: ${diffSeg} segundos`;
+
+    function verDetalleMach(id) {
+        const mach = datosActuales.machs.find(m => m.id === id);
+        if (!mach) return;
+        const dia = datosActuales.dias.find(d => d.id === mach.diaId);
+        const ganador = datosActuales.jugadores.find(j => j.id === mach.ganadorId);
+        
+        const formatearHora = (isoFecha) => {
+            if (!isoFecha) return '⏳ No registrada';
+            const fecha = new Date(isoFecha);
+            let horas = fecha.getHours();
+            const minutos = fecha.getMinutes().toString().padStart(2, '0');
+            const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+            horas = horas % 12 || 12;
+            return `${horas}:${minutos} ${ampm}`;
+        };
+        
+        let duracionTexto = '';
+        if (mach.fechaHoraInicio && mach.fechaHora) {
+            const inicio = new Date(mach.fechaHoraInicio);
+            const fin = new Date(mach.fechaHora);
+            const diffMs = fin - inicio;
+            if (diffMs > 0) {
+                const diffMin = Math.floor(diffMs / 60000);
+                const diffSeg = Math.floor((diffMs % 60000) / 1000);
+                if (diffMin > 0) duracionTexto = `⏱️ Duración: ${diffMin} min ${diffSeg > 0 ? diffSeg + ' seg' : ''}`;
+                else duracionTexto = `⏱️ Duración: ${diffSeg} segundos`;
             }
         }
-    }
-    
-    let msg = `🔍 DETALLE DEL MACH #${mach.numeroMach}\n`;
-    msg += `📅 Fecha: ${dia ? dia.fecha : 'Desconocida'}\n`;
-    msg += `🕐 Inicio: ${formatearHora(mach.fechaHoraInicio)}\n`;
-    msg += `🕐 Fin: ${formatearHora(mach.fechaHora)}\n`;
-    if (duracionTexto) msg += `${duracionTexto}\n`;
-    msg += `🏆 Ganador: ${ganador ? ganador.nombre : 'Desconocido'}\n`;
-    msg += `\n👥 PARTICIPANTES:\n`;
-    
-    for (let p of (mach.participantes || [])) {
-        const nombre = p.nombre || (p.jugadorId ? obtenerNombreJugador(p.jugadorId) : 'Vacante');
-        msg += `  🪑 ${nombre}: ${p.patasFinales || 0} patas finales\n`;
-    }
-    
-    if (mach.manos && mach.manos.length > 0) {
-        msg += `\n📜 MANOS (${mach.manos.length}):\n`;
-        for (let mano of mach.manos) {
-            const nombreJugador = mano.jugadorId ? obtenerNombreJugador(mano.jugadorId) : '?';
-            let tipoMostrado = mano.tipo;
-            switch(mano.tipo) {
-                case 'paseMano': tipoMostrado = '🎯 Pase de mano'; break;
-                case 'paseManoDado': tipoMostrado = '🎯 PM Dado'; break;
-                case 'paseManoRecibido': tipoMostrado = '📥 PM Recibido'; break;
-                case 'forro': tipoMostrado = '🧤 Forro'; break;
-                case 'agua': tipoMostrado = '💧 Agua'; break;
-                case 'capicua': tipoMostrado = '🀰 Capicua'; break;
-                case 'cierre': tipoMostrado = '🚪 Cierre'; break;
-                case 'pegado': tipoMostrado = '🏃 Pegado'; break;
-                default: tipoMostrado = mano.tipo;
-            }
-            const patas = (mano.patasAfectadas !== undefined && mano.patasAfectadas !== 0) ? ` (${mano.patasAfectadas > 0 ? '+' : ''}${mano.patasAfectadas} pata)` : '';
-            msg += `  • ${tipoMostrado}: ${nombreJugador}${patas}\n`;
+        
+        let msg = `🔍 DETALLE DEL MACH #${mach.numeroMach}\n`;
+        msg += `📅 Fecha: ${dia ? dia.fecha : 'Desconocida'}\n`;
+        msg += `🕐 Inicio: ${formatearHora(mach.fechaHoraInicio)}\n`;
+        msg += `🕐 Fin: ${formatearHora(mach.fechaHora)}\n`;
+        if (duracionTexto) msg += `${duracionTexto}\n`;
+        msg += `🏆 Ganador: ${ganador ? ganador.nombre : 'Desconocido'}\n`;
+        msg += `\n👥 PARTICIPANTES:\n`;
+        for (let p of (mach.participantes || [])) {
+            const nombre = p.nombre || (p.jugadorId ? obtenerNombreJugador(p.jugadorId) : 'Vacante');
+            msg += `  🪑 ${nombre}: ${p.patasFinales || 0} patas finales\n`;
         }
+        if (mach.manos && mach.manos.length > 0) {
+            msg += `\n📜 MANOS (${mach.manos.length}):\n`;
+            for (let mano of mach.manos) {
+                const nombreJugador = mano.jugadorId ? obtenerNombreJugador(mano.jugadorId) : '?';
+                let tipoMostrado = mano.tipo;
+                switch(mano.tipo) {
+                    case 'paseMano': tipoMostrado = '🎯 Pase de mano'; break;
+                    case 'paseManoDado': tipoMostrado = '🎯 PM Dado'; break;
+                    case 'paseManoRecibido': tipoMostrado = '📥 PM Recibido'; break;
+                    case 'forro': tipoMostrado = '🧤 Forro'; break;
+                    case 'agua': tipoMostrado = '💧 Agua'; break;
+                    case 'capicua': tipoMostrado = '🀰 Capicua'; break;
+                    case 'cierre': tipoMostrado = '🚪 Cierre'; break;
+                    case 'pegado': tipoMostrado = '🏃 Pegado'; break;
+                    default: tipoMostrado = mano.tipo;
+                }
+                const patas = (mano.patasAfectadas !== undefined && mano.patasAfectadas !== 0) ? ` (${mano.patasAfectadas > 0 ? '+' : ''}${mano.patasAfectadas} pata)` : '';
+                msg += `  • ${tipoMostrado}: ${nombreJugador}${patas}\n`;
+            }
+        }
+        alert(msg);
     }
-    
-    alert(msg);
-	}
-    function filtrarReportePorFechas() { reporteFechasFiltro.desde=document.getElementById('reporteFechaDesde').value; reporteFechasFiltro.hasta=document.getElementById('reporteFechaHasta').value; renderizarReporteGeneral(); }
-    function exportarReporteGeneral() { alert("Exportación CSV disponible en versión completa"); }
+
+    function eliminarMach(id) { if(confirm("¿Eliminar este mach?")){ datosActuales.machs=datosActuales.machs.filter(m=>m.id!==id); guardarTodo(); renderizarMachs(); mostrarMensaje("Mach eliminado","exito"); } }
+    function obtenerNombreJugador(id) { const j=datosActuales.jugadores.find(j=>j.id===id); return j?j.nombre:`Jugador ${id}`; }
+
+    // ---------- REPORTE GENERAL ----------
+    function filtrarReportePorFechas() {
+        reporteFechasFiltro.desde = document.getElementById('reporteFechaDesde').value;
+        reporteFechasFiltro.hasta = document.getElementById('reporteFechaHasta').value;
+        renderizarReporteGeneral();
+    }
+
+    function renderizarReporteGeneral() {
+        const container = document.getElementById('reporteGeneralTable');
+        if (!container) return;
+        
+        let partFiltradas = [...datosActuales.participaciones];
+        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
+            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
+            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
+        }
+        
+        const stats = new Map();
+        for (let p of partFiltradas) {
+            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
+            if (!jug) continue;
+            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
+            const s = stats.get(jug.id);
+            s.machs += p.machsGanados;
+            s.patas += p.patasNetas;
+            s.pollonas += p.pollonas;
+            s.capicuas += p.capicuas;
+            s.cierres += p.cierres;
+            s.pegado += p.pegado;
+            s.forros += p.forros;
+            s.aguas += p.aguas;
+            s.pmDados += p.paseManoDados;
+            s.pmRecibidos += p.paseManoRecibidos;
+            s.empates += p.empatesParticipados;
+            s.empatesGan += p.empatesGanados;
+            s.patasPorEmpate += p.patasPorEmpate;
+        }
+        
+        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
+        let html = '<div class="tabla-responsive"><table class="tabla-datos" id="reporteTable"><thead>';
+        html += '<tr><th>#</th><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th><th>🐔 Pollonas</th>';
+        html += '<th>🀰 Capicuas</th><th>🚪 Cierres</th><th>🏃 Pegados</th><th>🧤 Forros</th><th>💧 Aguas</th>';
+        html += '<th>🎯 PM Dados</th><th>📥 PM Recibidos</th><th>⚖️ Empates</th><th>🏆⚖️ E. Ganados</th><th>🧩 Patas x Empate</th></tr></thead><tbody>';
+        ordenado.forEach((s,i)=> {
+            html += `<tr>
+                <td class="text-center">${i+1}</td>
+                <td><strong>${escapeHtml(s.nombre)}</strong></td>
+                <td class="text-center">${s.machs}</td>
+                <td class="text-center">${s.patas}</td>
+                <td class="text-center">${s.pollonas}</td>
+                <td class="text-center">${s.capicuas}</td>
+                <td class="text-center">${s.cierres}</td>
+                <td class="text-center">${s.pegado}</td>
+                <td class="text-center">${s.forros}</td>
+                <td class="text-center">${s.aguas}</td>
+                <td class="text-center">${s.pmDados}</td>
+                <td class="text-center">${s.pmRecibidos}</td>
+                <td class="text-center">${s.empates}</td>
+                <td class="text-center">${s.empatesGan}</td>
+                <td class="text-center">${s.patasPorEmpate}</td>
+              </tr>`;
+        });
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    }
+
+    function exportarReporteCSV() {
+        let partFiltradas = [...datosActuales.participaciones];
+        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
+            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
+            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
+        }
+        const stats = new Map();
+        for (let p of partFiltradas) {
+            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
+            if (!jug) continue;
+            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
+            const s = stats.get(jug.id);
+            s.machs += p.machsGanados;
+            s.patas += p.patasNetas;
+            s.pollonas += p.pollonas;
+            s.capicuas += p.capicuas;
+            s.cierres += p.cierres;
+            s.pegado += p.pegado;
+            s.forros += p.forros;
+            s.aguas += p.aguas;
+            s.pmDados += p.paseManoDados;
+            s.pmRecibidos += p.paseManoRecibidos;
+            s.empates += p.empatesParticipados;
+            s.empatesGan += p.empatesGanados;
+            s.patasPorEmpate += p.patasPorEmpate;
+        }
+        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
+        let csv = "Jugador,Machs,Patas,Pollonas,Capicuas,Cierres,Pegados,Forros,Aguas,PM Dados,PM Recibidos,Empates,E.Ganados,PatasPorEmpate\n";
+        for (let s of ordenado) csv += `"${s.nombre}",${s.machs},${s.patas},${s.pollonas},${s.capicuas},${s.cierres},${s.pegado},${s.forros},${s.aguas},${s.pmDados},${s.pmRecibidos},${s.empates},${s.empatesGan},${s.patasPorEmpate}\n`;
+        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv'});
+        const a = document.createElement('a');
+        a.download = `pintintin_reporte_${new Date().toISOString().slice(0,19)}.csv`;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        mostrarMensaje("Reporte exportado a CSV", "exito");
+    }
+
+    function exportarReportePDF() {
+        // Verificar librería
+        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+            alert('❌ La librería PDF no está cargada. Recarga la página.');
+            return;
+        }
+        
+        // Obtener los datos del reporte actual (igual que en renderizarReporteGeneral)
+        let partFiltradas = [...datosActuales.participaciones];
+        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
+            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
+            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
+        }
+        
+        const stats = new Map();
+        for (let p of partFiltradas) {
+            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
+            if (!jug) continue;
+            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
+            const s = stats.get(jug.id);
+            s.machs += p.machsGanados;
+            s.patas += p.patasNetas;
+            s.pollonas += p.pollonas;
+            s.capicuas += p.capicuas;
+            s.cierres += p.cierres;
+            s.pegado += p.pegado;
+            s.forros += p.forros;
+            s.aguas += p.aguas;
+            s.pmDados += p.paseManoDados;
+            s.pmRecibidos += p.paseManoRecibidos;
+            s.empates += p.empatesParticipados;
+            s.empatesGan += p.empatesGanados;
+            s.patasPorEmpate += p.patasPorEmpate;
+        }
+        
+        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
+        
+        if (ordenado.length === 0) {
+            alert('No hay datos para exportar');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf || jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        
+        // Título
+        doc.setFontSize(16);
+        doc.text("Reporte General - Dominó Pintintín", 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text(`Período: ${reporteFechasFiltro.desde || 'inicio'} al ${reporteFechasFiltro.hasta || 'hoy'}`, 20, 38);
+        
+        // Preparar datos para la tabla
+        const headers = ['#', 'Jugador', 'Machs', 'Patas', 'Pollonas', 'Capicuas', 'Cierres', 'Pegados', 'Forros', 'Aguas', 'PM Dados', 'PM Recibidos', 'Empates', 'E.Ganados', 'Patas x Empate'];
+        const data = ordenado.map((s, i) => [
+            i+1, s.nombre, s.machs, s.patas, s.pollonas, s.capicuas, s.cierres, 
+            s.pegado, s.forros, s.aguas, s.pmDados, s.pmRecibidos, s.empates, s.empatesGan, s.patasPorEmpate
+        ]);
+        
+        // Generar tabla
+        doc.autoTable({
+            head: [headers],
+            body: data,
+            startY: 45,
+            theme: 'striped',
+            styles: { fontSize: 7, cellPadding: 1.5 },
+            headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+            margin: { left: 10, right: 10 }
+        });
+        
+        // Guardar PDF
+        doc.save(`pintintin_reporte_${new Date().toISOString().slice(0,19)}.pdf`);
+        mostrarMensaje("Reporte exportado a PDF", "exito");
+    }
+
+    // ---------- ESTADÍSTICAS DE TIEMPO ----------
     function cargarEstadisticasTiempo() {
         const desde = document.getElementById('tiempoFechaDesde').value;
         const hasta = document.getElementById('tiempoFechaHasta').value;
@@ -458,37 +655,87 @@
             if(!porFecha.has(dia.fecha)) porFecha.set(dia.fecha, []);
             porFecha.get(dia.fecha).push(m);
         }
-        let html = '<table class="tabla-datos"><thead><tr><th>Fecha</th><th>Machs</th><th>Primer mach</th><th>Último mach</th><th>Duración (min)</th></tr></thead><tbody>';
+        
+        tiempoDatosCache = [];
+        if(porFecha.size===0){ container.innerHTML='<div class="stats-mini">📭 No hay datos de tiempo.</div>'; return; }
+        let html = '<div class="tabla-responsive"><table class="tabla-datos"><thead>';
+        html += '<tr><th>Fecha</th><th>Total machs</th><th>Hora primer mach</th><th>Hora último mach</th><th>Duración (min)</th></tr></thead><tbody>';
         for(let [fecha,lista] of porFecha) {
             lista.sort((a,b)=>new Date(a.fechaHora)-new Date(b.fechaHora));
             const primero = lista[0];
             const ultimo = lista[lista.length-1];
             const duracion = Math.round((new Date(ultimo.fechaHora) - new Date(primero.fechaHora))/60000);
             const formatear = (d)=>new Date(d).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
-            html += `<tr><td>${fecha}</td><td>${lista.length}</td><td>${formatear(primero.fechaHora)}</td><td>${formatear(ultimo.fechaHora)}</td><td>${duracion}</td></tr>`;
+            html += `<tr><td>${fecha}</td><td class="text-center">${lista.length}</td><td class="text-center">${formatear(primero.fechaHora)}</td><td class="text-center">${formatear(ultimo.fechaHora)}</td><td class="text-center">${duracion}</td></tr>`;
+            tiempoDatosCache.push({ fecha, totalMachs: lista.length, horaPrimero: formatear(primero.fechaHora), horaUltimo: formatear(ultimo.fechaHora), duracion });
         }
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
-    function exportarEstadisticasTiempo() { alert("Exportación CSV disponible en versión completa"); }
-    function mostrarMensaje(texto,tipo) {
-        const div = document.getElementById('mensajeImportacion');
-        div.style.display='block';
-        div.className=`mensaje-importacion mensaje-${tipo}`;
-        div.innerHTML=texto;
-        setTimeout(()=>div.style.display='none',3000);
+
+    function exportarTiempoCSV() {
+        if (tiempoDatosCache.length === 0) {
+            alert('No hay datos de tiempo para exportar');
+            return;
+        }
+        let csv = "Fecha,Total machs,Hora primer mach,Hora último mach,Duración total (min)\n";
+        for (let d of tiempoDatosCache) {
+            csv += `"${d.fecha}",${d.totalMachs},"${d.horaPrimero}","${d.horaUltimo}",${d.duracion}\n`;
+        }
+        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv'});
+        const a = document.createElement('a');
+        a.download = `pintintin_tiempo_${new Date().toISOString().slice(0,19)}.csv`;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        mostrarMensaje("Tiempo exportado a CSV", "exito");
     }
+
+    function exportarTiempoPDF() {
+        if (tiempoDatosCache.length === 0) {
+            alert('No hay datos de tiempo para exportar');
+            return;
+        }
+        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+            alert('❌ La librería PDF no está cargada.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf || jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        
+        doc.setFontSize(16);
+        doc.text("Estadísticas de Tiempo - Dominó Pintintín", 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
+        
+        const headers = ['Fecha', 'Total machs', 'Hora primer mach', 'Hora último mach', 'Duración (min)'];
+        const data = tiempoDatosCache.map(d => [d.fecha, d.totalMachs, d.horaPrimero, d.horaUltimo, d.duracion]);
+        
+        doc.autoTable({
+            head: [headers],
+            body: data,
+            startY: 40,
+            theme: 'striped',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [139, 92, 246], textColor: 255 }
+        });
+        
+        doc.save(`pintintin_tiempo_${new Date().toISOString().slice(0,19)}.pdf`);
+        mostrarMensaje("Tiempo exportado a PDF", "exito");
+    }
+
+    // ---------- IMPORTAR / EXPORTAR ----------
     function exportarDatos() {
-        const data = {jugadores:datosActuales.jugadores, dias:datosActuales.dias, participaciones:datosActuales.participaciones, machs:datosActuales.machs, fechaExportacion:new Date().toISOString(), version:"6.0"};
+        const data = { jugadores: datosActuales.jugadores, dias: datosActuales.dias, participaciones: datosActuales.participaciones, machs: datosActuales.machs, fechaExportacion: new Date().toISOString(), version: "6.0" };
         const json = JSON.stringify(data,null,2);
-        const blob = new Blob([json],{type:'application/json'});
+        const blob = new Blob([json], {type:'application/json'});
         const a = document.createElement('a');
         a.download = `pintintin_backup_${new Date().toISOString().slice(0,19)}.json`;
         a.href = URL.createObjectURL(blob);
         a.click();
-        URL.revokeObjectURL(a.href);
         mostrarMensaje("Exportado","exito");
     }
+
     function importarDatos() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -511,6 +758,7 @@
         };
         input.click();
     }
+
     function limpiarBaseDatos() {
         if(confirm("¿ELIMINAR TODOS LOS DATOS?")) {
             datosActuales = { jugadores: [], dias: [], participaciones: [], machs: [] };
@@ -519,6 +767,8 @@
             mostrarMensaje("Datos limpiados", "exito");
         }
     }
+
+    // ---------- FILTROS ----------
     function filtrarMachs() {
         const term = document.getElementById('searchMachs')?.value.toLowerCase() || '';
         const rows = document.querySelectorAll('#machsTable .tabla-datos tbody tr');
@@ -529,6 +779,7 @@
         const rows = document.querySelectorAll('#jugadoresTable .tabla-datos tbody tr');
         rows.forEach(row => row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none');
     }
+
     function mostrarTab(tab) {
         document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -537,24 +788,33 @@
         if(tab==='reporte') renderizarReporteGeneral();
         if(tab==='tiempo') cargarEstadisticasTiempo();
     }
-    function verificarLogin() {
-        const pass = document.getElementById('adminPassword').value;
-        if(pass === 'admin') {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            cargarTodo();
-            renderizarTodo();
-            const hoy = new Date();
-            const hace30 = new Date(); hace30.setDate(hoy.getDate()-30);
-            document.getElementById('reporteFechaDesde').value = hace30.toISOString().slice(0,10);
-            document.getElementById('reporteFechaHasta').value = hoy.toISOString().slice(0,10);
-            document.getElementById('tiempoFechaDesde').value = hace30.toISOString().slice(0,10);
-            document.getElementById('tiempoFechaHasta').value = hoy.toISOString().slice(0,10);
-            cargarEstadisticasTiempo();
-            console.log("Admin panel iniciado correctamente");
-        } else alert('Contraseña incorrecta');
+
+    function mostrarMensaje(texto,tipo) {
+        const div = document.getElementById('mensajeImportacion');
+        div.style.display='block';
+        div.className=`mensaje-importacion mensaje-${tipo}`;
+        div.innerHTML=texto;
+        setTimeout(()=>div.style.display='none',3000);
     }
+
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+    // Inicializar y asignar eventos después de cargar
+    function inicializarEventos() {
+        const btnReporteCSV = document.getElementById('btnExportarReporteCSV');
+        const btnReportePDF = document.getElementById('btnExportarReportePDF');
+        const btnTiempoCSV = document.getElementById('btnExportarTiempoCSV');
+        const btnTiempoPDF = document.getElementById('btnExportarTiempoPDF');
+        
+        if (btnReporteCSV) btnReporteCSV.onclick = exportarReporteCSV;
+        if (btnReportePDF) btnReportePDF.onclick = exportarReportePDF;
+        if (btnTiempoCSV) btnTiempoCSV.onclick = exportarTiempoCSV;
+        if (btnTiempoPDF) btnTiempoPDF.onclick = exportarTiempoPDF;
+    }
+    
+    // Inicializar
+    cargarTodo();
+    inicializarEventos();
 </script>
 </body>
 </html>
