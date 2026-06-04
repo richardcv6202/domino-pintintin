@@ -1956,7 +1956,14 @@ window.abrirGraficas = function() {
 
 // ==================== BOTÓN ANÁLISIS DE RENDIMIENTO ====================
 function abrirAnalisis() {
-    sessionStorage.setItem('viniendoDeAnalisis', 'true');
+    // Intentar varias rutas posibles por si el archivo está en diferentes ubicaciones
+    const rutasPosibles = [
+        './analisis_jugador.html',
+        'analisis_jugador.html',
+        '/analisis_jugador.html'
+    ];
+    
+    // Usar la primera ruta (relativa a la raíz)
     window.location.href = 'analisis_jugador.html';
 }
 
