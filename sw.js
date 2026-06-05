@@ -1,76 +1,49 @@
-// ============================================
-// Service Worker para Dominó Pintintín
-// Autor: Ricardo Castillo Valdés (Richard)
-// Contacto: 3sayricardo@gmail.com | +53 55031725
-// La Demajagua, Isla de la Juventud, Cuba
-// Versión: 6.0.0 FINAL - Junio 2026
-// ============================================
-
-const CACHE_NAME = 'pintintin-v6.0.0';
+const CACHE_NAME = 'pintintin-v6.0.1';
 const urlsToCache = [
-  './',
-  './index.html',
-  './admin.html',
-  './actualizar_tiempos.html',
-  './estadisticas_graficas.html',
-  './ver_machs_por_dia.html',
-  './manual_pintintin.html',
-  './analisis_jugador.html',
-  './styles.css',
-  './app.js',
-  './manifest.json',
-  './sw.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js',
-  'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'
+    './',
+    './index.html',
+    './app.js',
+    './styles.css',
+    './admin.html',
+    './estadisticas_graficas.html',
+    './ver_machs_por_dia.html',
+    './manual_pintintin.html',
+    './manifest.json',
+    './icons/icon-72x72.png',
+    './icons/icon-96x96.png',
+    './icons/icon-128x128.png',
+    './icons/icon-144x144.png',
+    './icons/icon-152x152.png',
+    './icons/icon-192x192.png',
+    './icons/icon-384x384.png',
+    './icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Instalando v6.0.0 FINAL...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[Service Worker] Cacheando archivos...');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => console.error('[Service Worker] Error al cachear:', err))
-  );
-  self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(urlsToCache))
+            .then(() => self.skipWaiting())
+    );
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) return response;
-        return fetch(event.request)
-          .then(fetchResponse => {
-            if (event.request.url.startsWith(self.location.origin)) {
-              const copy = fetchResponse.clone();
-              caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-            }
-            return fetchResponse;
-          });
-      })
-      .catch(() => new Response('⚠️ Sin conexión. La app funciona offline después de la primera carga.'))
-  );
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => response || fetch(event.request))
+    );
 });
 
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activando v6.0.0 FINAL...');
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log('[Service Worker] Eliminando cache antigua:', key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
 });
