@@ -2,819 +2,836 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración - Dominó Pintintín</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
-        body { background: #0f172a; margin: 0; padding: 1rem; }
-        .admin-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 1.5rem; position: relative; }
-        h1 { color: #1e293b; border-bottom: 3px solid #dc2626; padding-bottom: 0.5rem; margin-top: 0; padding-right: 120px; }
-        .btn-volver { position: absolute; top: 1.5rem; right: 1.5rem; background: #475569; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; text-decoration: none; }
-        .btn-volver:hover { background: #334155; }
-        .login-area { text-align: center; padding: 2rem; }
-        .login-area input, .login-area button { display: inline-block; width: auto; margin: 0.5rem; padding: 0.75rem 1.5rem; }
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .tab-btn { background: #334155; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; }
-        .tab-btn.active { background: #8b5cf6; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tabla-responsive { overflow-x: auto; margin: 1rem 0; }
-        .tabla-datos { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 800px; }
-        .tabla-datos th, .tabla-datos td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; vertical-align: top; }
-        .tabla-datos th { background: #e2e8f0; position: sticky; top: 0; }
-        .text-center { text-align: center; }
-        .stats-badge { display: inline-block; background: #e2e8f0; padding: 0.1rem 0.3rem; border-radius: 0.3rem; font-size: 0.7rem; margin: 0.1rem; white-space: nowrap; }
-        .btn-editar, .btn-eliminar, .btn-guardar, .btn-cancelar, .btn-exportar-reporte, .btn-eliminar-mach-completo, .btn-agregar, .btn-ver-detalle, .btn-verificar-integridad {
-            padding: 0.3rem 0.6rem; border-radius: 0.3rem; border: none; cursor: pointer; font-size: 0.75rem; margin: 0.1rem;
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .btn-editar { background: #eab308; color: black; }
-        .btn-eliminar { background: #dc2626; color: white; }
-        .btn-guardar { background: #10b981; color: white; }
-        .btn-cancelar { background: #6b7280; color: white; }
-        .btn-exportar-reporte { background: #8b5cf6; color: white; }
-        .btn-agregar { background: #059669; color: white; font-weight: bold; }
-        .btn-ver-detalle { background: #3b82f6; color: white; }
-        .btn-verificar-integridad { background: #f59e0b; color: white; }
-        .btn-forzar-cierre { background: #dc2626; color: white; }
-        .backup-buttons { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .backup-buttons button { background: #475569; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; }
-        .search-box { margin-bottom: 1rem; }
-        .search-box input { width: 100%; padding: 0.5rem; }
-        .mensaje-importacion { padding: 0.5rem; margin: 0.5rem 0; border-radius: 0.5rem; }
-        .mensaje-exito { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
-        .mensaje-error { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .mensaje-info { background: #e0e7ff; color: #4f46e5; border: 1px solid #c7d2fe; }
-        .reporte-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; gap: 0.5rem; }
-        .filtros-fechas { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-        .filtros-fechas input, .filtros-fechas button { margin: 0; padding: 0.3rem 0.6rem; width: auto; }
-        .stats-mini { font-size: 0.7rem; color: #4b5563; margin-top: 0.3rem; }
-        .checkbox-activo { width: 20px; height: 20px; cursor: pointer; }
-        .aux-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; color: white; }
-        .aux-card h3 { margin: 0 0 0.5rem 0; color: white; }
-        .aux-link { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; color: white; text-decoration: none; transition: all 0.3s ease; cursor: pointer; border: none; }
-        .aux-link:hover { background: rgba(255,255,255,0.3); }
-        .resultado-verificacion { margin: 1rem 0; padding: 1rem; border-radius: 0.5rem; background: #f8fafc; border-left: 4px solid #8b5cf6; font-size: 0.85rem; max-height: 300px; overflow-y: auto; }
-        footer { text-align: center; padding: 1rem; margin-top: 1.5rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.8rem; }
-        footer a { color: #8b5cf6; text-decoration: none; }
-        @media (max-width: 768px) { .admin-container { padding: 1rem; } .tabla-datos th, .tabla-datos td { font-size: 0.7rem; padding: 0.3rem; } h1 { padding-right: 0; } .btn-volver { position: static; margin-bottom: 1rem; display: inline-block; } }
+        .seccion-admin {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .seccion-admin h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .tabla-admin {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+        }
+        .tabla-admin th, .tabla-admin td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .tabla-admin th {
+            background-color: #3498db;
+            color: white;
+        }
+        .tabla-admin tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .btn-admin {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-editar { background-color: #f39c12; color: white; }
+        .btn-eliminar { background-color: #e74c3c; color: white; }
+        .btn-ver { background-color: #3498db; color: white; }
+        .btn-guardar { background-color: #2ecc71; color: white; }
+        .formulario-admin {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .formulario-admin input, .formulario-admin select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .grupo-form {
+            margin-bottom: 10px;
+        }
+        .grupo-form label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        .pestanas {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .pestana {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .pestana.activa {
+            background: #3498db;
+            color: white;
+        }
+        .contenido-pestana {
+            display: none;
+        }
+        .contenido-pestana.activo {
+            display: block;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-contenido {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 10px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .modal-cerrar {
+            float: right;
+            cursor: pointer;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+        }
+        .modal-cerrar:hover {
+            color: black;
+        }
+        .detalle-mach {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .detalle-partida {
+            margin-left: 20px;
+            padding: 5px;
+            background: #f9f9f9;
+            margin-top: 5px;
+        }
+        .boton-cerrar-modal {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .mensaje-error {
+            background: #ff6b6b;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .mensaje-exito {
+            background: #51cf66;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .btn-volver {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .export-import {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-<div class="admin-container" id="adminApp">
-    <div id="loginScreen" class="login-area">
-        <h2>🔐 Acceso al Panel de Administración</h2>
-        <p>Ingresa la contraseña para gestionar la base de datos</p>
-        <input type="password" id="adminPassword" placeholder="Contraseña">
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-            <button onclick="verificarLogin()">Acceder</button>
-            <button onclick="cancelarLogin()" style="background:#475569;">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="adminPanel" style="display:none;">
+    <div class="admin-container">
         <button class="btn-volver" onclick="window.location.href='index.html'">← Volver al juego</button>
-        <h1>🛠️ Panel de Administración - Dominó Pintintín v6.0</h1>
-        <p class="stats-mini">⚠️ Ten cuidado al modificar los datos. Los cambios son permanentes.</p>
-
-        <div class="aux-card">
-            <h3>🔧 Herramientas Auxiliares</h3>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="actualizar_tiempos.html" class="aux-link" target="_blank">⏰ Actualizar Tiempos de Machs</a>
-                <button class="aux-link" onclick="verificarIntegridadAvanzada()">🔬 Verificación Avanzada</button>
-                <button class="aux-link" onclick="repararAutomaticamente()">🔨 Reparación Automática</button>
-                <button class="aux-link" onclick="verificarIntegridad()" style="background: rgba(255,193,7,0.3);">🔍 Verificar integridad</button>
-            </div>
+        <h1>⚙️ Panel de Administración - Dominó Pintintín</h1>
+        
+        <div class="pestanas">
+            <div class="pestana activa" data-pestana="jugadores">👥 Jugadores</div>
+            <div class="pestana" data-pestana="dias">📅 Días</div>
+            <div class="pestana" data-pestana="participaciones">📝 Participaciones</div>
+            <div class="pestana" data-pestana="machs">🏆 Machs</div>
+            <div class="pestana" data-pestana="tiempo">⏱️ Tiempo</div>
         </div>
-
-        <div class="backup-buttons">
-            <button onclick="exportarDatos()">💾 Exportar todos los datos (JSON)</button>
-            <button onclick="importarDatos()">📂 Importar datos (JSON)</button>
-            <button onclick="limpiarBaseDatos()" style="background:#dc2626;">⚠️ Limpiar toda la base de datos</button>
-        </div>
-
-        <div id="mensajeImportacion" style="display:none;"></div>
-        <div id="resultadoVerificacion" class="resultado-verificacion" style="display:none;"></div>
-
-        <div class="tabs">
-            <button class="tab-btn" onclick="mostrarTab('machs')">📊 Machs</button>
-            <button class="tab-btn" onclick="mostrarTab('jugadores')">👥 Jugadores</button>
-            <button class="tab-btn" onclick="mostrarTab('dias')">📅 Días</button>
-            <button class="tab-btn" onclick="mostrarTab('participaciones')">📈 Participaciones</button>
-            <button class="tab-btn" onclick="mostrarTab('reporte')">📊 Reporte General</button>
-            <button class="tab-btn" onclick="mostrarTab('tiempo')">⏱️ Tiempo</button>
-        </div>
-
-        <div id="tabMachs" class="tab-content">
-            <div class="search-box"><input type="text" id="searchMachs" placeholder="🔍 Buscar por jugador o fecha..." onkeyup="filtrarMachs()"></div>
-            <div class="tabla-responsive" id="machsTable"></div>
-        </div>
-
-        <div id="tabJugadores" class="tab-content">
-            <button class="btn-agregar" onclick="agregarJugador()">➕ Agregar jugador</button>
-            <div class="search-box"><input type="text" id="searchJugadores" placeholder="🔍 Buscar jugador..." onkeyup="filtrarJugadores()"></div>
-            <div class="tabla-responsive" id="jugadoresTable"></div>
-        </div>
-
-        <div id="tabDias" class="tab-content">
-            <button class="btn-agregar" onclick="agregarDia()">➕ Agregar día</button>
-            <button class="btn-forzar-cierre" onclick="forzarCierreDia()">🚪 Forzar cierre de día</button>
-            <div class="tabla-responsive" id="diasTable"></div>
-        </div>
-
-        <div id="tabParticipaciones" class="tab-content">
-            <button class="btn-agregar" onclick="agregarParticipacion()">➕ Agregar participación</button>
-            <div class="tabla-responsive" id="participacionesTable"></div>
-        </div>
-
-        <div id="tabReporte" class="tab-content">
-            <div class="reporte-header">
-                <h3>📊 REPORTE ESTADÍSTICO GENERAL - TOTALES POR JUGADOR</h3>
-                <div class="filtros-fechas">
-                    <span>📅 Desde:</span> <input type="date" id="reporteFechaDesde">
-                    <span>Hasta:</span> <input type="date" id="reporteFechaHasta">
-                    <button onclick="filtrarReportePorFechas()" class="btn-editar">Filtrar</button>
-                    <button id="btnExportarReporteCSV" class="btn-exportar-reporte">📎 Exportar a CSV</button>
-                    <button id="btnExportarReportePDF" class="btn-exportar-reporte">📄 Exportar a PDF</button>
+        
+        <!-- Jugadores -->
+        <div id="pestana-jugadores" class="contenido-pestana activo">
+            <div class="seccion-admin">
+                <h2>👥 Gestión de Jugadores</h2>
+                <div class="formulario-admin">
+                    <input type="text" id="nombreJugador" placeholder="Nombre del jugador">
+                    <button class="btn-admin btn-guardar" onclick="agregarJugador()">Agregar Jugador</button>
                 </div>
+                <table class="tabla-admin" id="tablaJugadores">
+                    <thead>
+                        <tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <div class="tabla-responsive" id="reporteGeneralTable"></div>
-            <p class="stats-mini">📌 Totales acumulados incluyendo ⚖️ Empates, 🏆⚖️ E. Ganados y 🧩 Patas por Empate.</p>
         </div>
-
-        <div id="tabTiempo" class="tab-content">
-            <h3>⏱️ Estadísticas de tiempo</h3>
-            <div class="filtros-fechas" style="margin-bottom:1rem;">
-                <span>📅 Desde:</span> <input type="date" id="tiempoFechaDesde">
-                <span>Hasta:</span> <input type="date" id="tiempoFechaHasta">
-                <button onclick="cargarEstadisticasTiempo()" class="btn-editar">Filtrar</button>
-                <button id="btnExportarTiempoCSV" class="btn-exportar-reporte">📎 Exportar CSV</button>
-                <button id="btnExportarTiempoPDF" class="btn-exportar-reporte">📄 Exportar PDF</button>
+        
+        <!-- Días -->
+        <div id="pestana-dias" class="contenido-pestana">
+            <div class="seccion-admin">
+                <h2>📅 Gestión de Días</h2>
+                <div class="formulario-admin">
+                    <input type="date" id="fechaDia">
+                    <button class="btn-admin btn-guardar" onclick="agregarDia()">Agregar Día</button>
+                </div>
+                <table class="tabla-admin" id="tablaDias">
+                    <thead>
+                        <tr><th>ID</th><th>Fecha</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <div id="tiempoResultados"><div class="stats-mini">Selecciona un rango de fechas y haz clic en "Filtrar".</div></div>
         </div>
-
-        <footer>
-            Pintintin - Panel de Administración v6.0 | © 2026 Ricardo Castillo Valdés<br>
-            📧 <a href="mailto:3sayricardo@gmail.com">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725">+53 55031725</a>
-        </footer>
+        
+        <!-- Participaciones -->
+        <div id="pestana-participaciones" class="contenido-pestana">
+            <div class="seccion-admin">
+                <h2>📝 Gestión de Participaciones</h2>
+                <div class="formulario-admin">
+                    <select id="participacionDia"></select>
+                    <select id="participacionJugador"></select>
+                    <button class="btn-admin btn-guardar" onclick="agregarParticipacion()">Agregar Participación</button>
+                </div>
+                <table class="tabla-admin" id="tablaParticipaciones">
+                    <thead>
+                        <tr><th>ID</th><th>Día</th><th>Jugador</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Machs -->
+        <div id="pestana-machs" class="contenido-pestana">
+            <div class="seccion-admin">
+                <h2>🏆 Gestión de Machs</h2>
+                <div class="formulario-admin">
+                    <select id="machDia"></select>
+                    <input type="datetime-local" id="machFecha">
+                    <button class="btn-admin btn-guardar" onclick="agregarMach()">Agregar Mach</button>
+                </div>
+                <table class="tabla-admin" id="tablaMachs">
+                    <thead>
+                        <tr><th>ID</th><th>Día ID</th><th>Fecha/Hora</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Tiempo -->
+        <div id="pestana-tiempo" class="contenido-pestana">
+            <div class="seccion-admin">
+                <h2>⏱️ Métricas de Tiempo</h2>
+                <div class="export-import">
+                    <button class="btn-admin btn-guardar" onclick="exportarDatos()">📤 Exportar JSON</button>
+                    <input type="file" id="importarArchivo" accept=".json" style="display:none">
+                    <button class="btn-admin btn-editar" onclick="document.getElementById('importarArchivo').click()">📥 Importar JSON</button>
+                    <button class="btn-admin btn-ver" onclick="verificarIntegridad()">🔍 Verificar Integridad</button>
+                </div>
+                <h3>Estadísticas de Tiempo</h3>
+                <table class="tabla-admin">
+                    <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+                    <tbody id="tablaTiempo"></tbody>
+                </table>
+                <h3>Últimas Partidas</h3>
+                <table class="tabla-admin">
+                    <thead><tr><th>Fecha</th><th>Duración</th><th>Ganador</th></tr></thead>
+                    <tbody id="tablaUltimasPartidas"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+    
+    <!-- Modal para detalles de Mach -->
+    <div id="modalMach" class="modal">
+        <div class="modal-contenido">
+            <span class="modal-cerrar" onclick="cerrarModal()">&times;</span>
+            <h2>📋 Detalles del Mach</h2>
+            <div id="detallesMach"></div>
+            <button class="boton-cerrar-modal" onclick="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
 
-<script>
-    console.log("Admin panel cargado - versión completa v6.0");
-
-    let datosActuales = { jugadores: [], dias: [], participaciones: [], machs: [] };
-    let reporteFechasFiltro = { desde: null, hasta: null };
-    let tiempoDatosCache = [];
-
-    const STORAGE_KEYS = {
-        jugadores: 'pintintin_jugadores',
-        dias: 'pintintin_dias',
-        participaciones: 'pintintin_participaciones',
-        machs: 'pintintin_machs'
-    };
-
-    function guardarTodo() {
-        localStorage.setItem(STORAGE_KEYS.jugadores, JSON.stringify(datosActuales.jugadores));
-        localStorage.setItem(STORAGE_KEYS.dias, JSON.stringify(datosActuales.dias));
-        localStorage.setItem(STORAGE_KEYS.participaciones, JSON.stringify(datosActuales.participaciones));
-        localStorage.setItem(STORAGE_KEYS.machs, JSON.stringify(datosActuales.machs));
-    }
-
-    function cargarTodo() {
-        datosActuales.jugadores = JSON.parse(localStorage.getItem(STORAGE_KEYS.jugadores)) || [];
-        datosActuales.dias = JSON.parse(localStorage.getItem(STORAGE_KEYS.dias)) || [];
-        datosActuales.participaciones = JSON.parse(localStorage.getItem(STORAGE_KEYS.participaciones)) || [];
-        datosActuales.machs = JSON.parse(localStorage.getItem(STORAGE_KEYS.machs)) || [];
-        for (let p of datosActuales.participaciones) {
-            if (p.empatesParticipados === undefined) p.empatesParticipados = 0;
-            if (p.empatesGanados === undefined) p.empatesGanados = 0;
-            if (p.patasPorEmpate === undefined) p.patasPorEmpate = 0;
-            if (p.pollonas === undefined) p.pollonas = 0;
-            if (p.capicuas === undefined) p.capicuas = 0;
-            if (p.cierres === undefined) p.cierres = 0;
-            if (p.pegado === undefined) p.pegado = 0;
-            if (p.paseManoDados === undefined) p.paseManoDados = 0;
-            if (p.paseManoRecibidos === undefined) p.paseManoRecibidos = 0;
+    <script>
+        // ==================== VARIABLES GLOBALES ====================
+        let datosJugadores = [];
+        let datosDias = [];
+        let datosParticipaciones = [];
+        let datosMachs = [];
+        let nextIdJugador = 1;
+        let nextIdDia = 1;
+        let nextIdParticipacion = 1;
+        let nextIdMach = 1;
+        
+        // Función para formatear fechas a dd/mm/yyyy
+        function formatearFechaDDMMYYYY(fecha) {
+            if (!fecha) return '';
+            const d = new Date(fecha);
+            if (isNaN(d.getTime())) return fecha;
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            return `${dia}/${mes}/${anio}`;
         }
-        for (let m of datosActuales.machs) {
-            if (!m.participantes) m.participantes = [];
-            if (!m.manos) m.manos = [];
+        
+        function formatearFechaHoraDDMMYYYY(fechaHora) {
+            if (!fechaHora) return '';
+            const d = new Date(fechaHora);
+            if (isNaN(d.getTime())) return fechaHora;
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            const horas = String(d.getHours()).padStart(2, '0');
+            const minutos = String(d.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes}/${anio} ${horas}:${minutos}`;
         }
-    }
-
-    // ==================== FUNCIONES DE LOGIN ====================
-    function cancelarLogin() {
-        window.location.href = 'index.html';
-    }
-
-    function verificarLogin() {
-        const pass = document.getElementById('adminPassword').value;
-        if(pass === 'admin') {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            cargarTodo();
-            renderizarTodo();
-            const hoy = new Date();
-            const hace30 = new Date(); hace30.setDate(hoy.getDate()-30);
-            document.getElementById('reporteFechaDesde').value = hace30.toISOString().slice(0,10);
-            document.getElementById('reporteFechaHasta').value = hoy.toISOString().slice(0,10);
-            document.getElementById('tiempoFechaDesde').value = hace30.toISOString().slice(0,10);
-            document.getElementById('tiempoFechaHasta').value = hoy.toISOString().slice(0,10);
-            cargarEstadisticasTiempo();
-            console.log("Admin panel iniciado correctamente");
-        } else alert('Contraseña incorrecta');
-    }
-
-    // ==================== VERIFICACIÓN BÁSICA ====================
-    function verificarIntegridad() {
-        let errores = [];
-        for (let mach of datosActuales.machs) {
-            if (!datosActuales.dias.find(d => d.id === mach.diaId)) errores.push(`Mach #${mach.numeroMach} sin día`);
+        
+        // Validar fecha única para días
+        function validarFechaUnica(fecha, idExcluir = null) {
+            const existe = datosDias.some(d => d.fecha === fecha && d.id !== idExcluir);
+            if (existe) {
+                alert(`La fecha ${formatearFechaDDMMYYYY(fecha)} ya existe. No se puede duplicar.`);
+                return false;
+            }
+            return true;
         }
-        for (let part of datosActuales.participaciones) {
-            if (!datosActuales.jugadores.find(j => j.id === part.jugadorId)) errores.push(`Participación ${part.id} con jugador inválido`);
-            if (!datosActuales.dias.find(d => d.id === part.diaId)) errores.push(`Participación ${part.id} con día inválido`);
+        
+        // Generar nuevo ID único para días
+        function generarNuevoIdDia() {
+            const idsExistentes = datosDias.map(d => d.id);
+            let nuevoId = 1;
+            while (idsExistentes.includes(nuevoId)) {
+                nuevoId++;
+            }
+            return nuevoId;
         }
-        alert(errores.length === 0 ? "✅ Integridad correcta" : `⚠️ ${errores.length} problemas encontrados.`);
-    }
-
-    function _esFantasma(p) {
-        return [p.machsGanados, p.patasNetas, p.aguas, p.forros, p.pollonas, p.capicuas, p.cierres, p.pegado, p.paseManoDados, p.paseManoRecibidos].every(v => v === 0);
-    }
-
-    function verificarIntegridadAvanzada() {
-        const db = datosActuales;
-        const duplicados = [], fantasmas = [], diasDup = [], inconsistencias = [];
-        const seen = new Map();
-        for (let p of db.participaciones) {
-            const key = `${p.diaId}-${p.jugadorId}`;
-            if (seen.has(key)) duplicados.push(`Día ${p.diaId}, jugador ${p.jugadorId} (IDs ${seen.get(key)} y ${p.id})`);
-            else seen.set(key, p.id);
-        }
-        for (let p of db.participaciones) if (_esFantasma(p)) fantasmas.push(`ID ${p.id} (día ${p.diaId}, jugador ${p.jugadorId})`);
-        const seenDias = new Map();
-        for (let d of db.dias) {
-            if (seenDias.has(d.fecha)) diasDup.push(`Fecha ${d.fecha} (IDs ${seenDias.get(d.fecha)} y ${d.id})`);
-            else seenDias.set(d.fecha, d.id);
-        }
-        const reales = new Map();
-        for (let mach of db.machs) for (let p of mach.participantes) if (p.jugadorId) reales.set(`${mach.diaId}-${p.jugadorId}`, (reales.get(`${mach.diaId}-${p.jugadorId}`)||0)+1);
-        for (let p of db.participaciones) {
-            const real = reales.get(`${p.diaId}-${p.jugadorId}`) || 0;
-            if (p.machsGanados > real) inconsistencias.push(`Jugador ${p.jugadorId} día ${p.diaId}: ${p.machsGanados} vs ${real} reales`);
-        }
-        let html = `<h4>🔍 Resultado de la verificación avanzada</h4>`;
-        if (duplicados.length) html += `<strong>⚠️ Participaciones duplicadas (${duplicados.length}):</strong><ul><li>${duplicados.join('</li><li>')}</li></ul>`;
-        if (fantasmas.length) html += `<strong>👻 Participaciones fantasma (${fantasmas.length}):</strong><ul><li>${fantasmas.join('</li><li>')}</li></ul>`;
-        if (diasDup.length) html += `<strong>📅 Días duplicados (${diasDup.length}):</strong><ul><li>${diasDup.join('</li><li>')}</li></ul>`;
-        if (inconsistencias.length) html += `<strong>🔄 Inconsistencias (${inconsistencias.length}):</strong><ul><li>${inconsistencias.join('</li><li>')}</li></ul>`;
-        if (!duplicados.length && !fantasmas.length && !diasDup.length && !inconsistencias.length) html += `<strong>✅ No se encontraron problemas.</strong>`;
-        html += `<button class="btn-guardar" onclick="repararAutomaticamente()" style="margin-top:0.5rem;">🔨 Reparación Automática</button>`;
-        const div = document.getElementById('resultadoVerificacion');
-        div.innerHTML = html;
-        div.style.display = 'block';
-        div.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function repararAutomaticamente() {
-        let db = datosActuales;
-        let reparaciones = [];
-        const fantasmas = db.participaciones.filter(p => _esFantasma(p));
-        for (let f of fantasmas) {
-            const idx = db.participaciones.findIndex(p => p.id === f.id);
-            if (idx !== -1) { db.participaciones.splice(idx, 1); reparaciones.push(`Eliminada fantasma ID ${f.id}`); }
-        }
-        const seen = new Map();
-        const eliminarDias = [];
-        for (let d of db.dias) {
-            if (seen.has(d.fecha)) eliminarDias.push({ mantener: seen.get(d.fecha), eliminar: d.id });
-            else seen.set(d.fecha, d.id);
-        }
-        for (let { mantener, eliminar } of eliminarDias) {
-            for (let p of db.participaciones) if (p.diaId === eliminar) p.diaId = mantener;
-            for (let m of db.machs) if (m.diaId === eliminar) m.diaId = mantener;
-            const idx = db.dias.findIndex(d => d.id === eliminar);
-            if (idx !== -1) { db.dias.splice(idx, 1); reparaciones.push(`Unificado día ${eliminar} → ${mantener}`); }
-        }
-        for (let p of db.participaciones) {
-            const real = db.machs.filter(m => m.diaId === p.diaId && m.ganadorId === p.jugadorId).length;
-            if (p.machsGanados !== real) {
-                reparaciones.push(`machsGanados de jugador ${p.jugadorId} día ${p.diaId}: ${p.machsGanados} → ${real}`);
-                p.machsGanados = real;
+        
+        // Cargar datos desde localStorage
+        function cargarDatos() {
+            const jugadoresGuardados = localStorage.getItem('pintintin_jugadores');
+            const diasGuardados = localStorage.getItem('pintintin_dias');
+            const participacionesGuardadas = localStorage.getItem('pintintin_participaciones');
+            const machsGuardados = localStorage.getItem('pintintin_machs');
+            
+            if (jugadoresGuardados) {
+                datosJugadores = JSON.parse(jugadoresGuardados);
+                nextIdJugador = Math.max(...datosJugadores.map(j => j.id), 0) + 1;
+            } else {
+                datosJugadores = [];
+                nextIdJugador = 1;
+            }
+            
+            if (diasGuardados) {
+                datosDias = JSON.parse(diasGuardados);
+                nextIdDia = Math.max(...datosDias.map(d => d.id), 0) + 1;
+            } else {
+                datosDias = [];
+                nextIdDia = 1;
+            }
+            
+            if (participacionesGuardadas) {
+                datosParticipaciones = JSON.parse(participacionesGuardadas);
+                nextIdParticipacion = Math.max(...datosParticipaciones.map(p => p.id), 0) + 1;
+            } else {
+                datosParticipaciones = [];
+                nextIdParticipacion = 1;
+            }
+            
+            if (machsGuardados) {
+                datosMachs = JSON.parse(machsGuardados);
+                nextIdMach = Math.max(...datosMachs.map(m => m.id), 0) + 1;
+            } else {
+                datosMachs = [];
+                nextIdMach = 1;
             }
         }
-        for (let mach of db.machs) {
-            for (let part of mach.participantes) {
-                if (!part.jugadorId) continue;
-                if (!db.participaciones.some(p => p.diaId === mach.diaId && p.jugadorId === part.jugadorId)) {
-                    const maxId = Math.max(...db.participaciones.map(p => p.id), 0);
-                    db.participaciones.push({
-                        id: maxId + 1, diaId: mach.diaId, jugadorId: part.jugadorId,
-                        machsGanados: db.machs.filter(m => m.diaId === mach.diaId && m.ganadorId === part.jugadorId).length,
-                        patasNetas: part.patasFinales || 0, aguas: 0, forros: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0,
-                        paseManoDados: 0, paseManoRecibidos: 0, empatesParticipados: 0, empatesGanados: 0, patasPorEmpate: 0
+        
+        // Guardar datos en localStorage
+        function guardarDatos() {
+            localStorage.setItem('pintintin_jugadores', JSON.stringify(datosJugadores));
+            localStorage.setItem('pintintin_dias', JSON.stringify(datosDias));
+            localStorage.setItem('pintintin_participaciones', JSON.stringify(datosParticipaciones));
+            localStorage.setItem('pintintin_machs', JSON.stringify(datosMachs));
+        }
+        
+        // ==================== CRUD JUGADORES ====================
+        function agregarJugador() {
+            const nombre = document.getElementById('nombreJugador').value.trim();
+            if (!nombre) {
+                alert('Ingrese un nombre');
+                return;
+            }
+            
+            datosJugadores.push({
+                id: nextIdJugador++,
+                nombre: nombre
+            });
+            guardarDatos();
+            document.getElementById('nombreJugador').value = '';
+            actualizarTablaJugadores();
+            actualizarSelects();
+        }
+        
+        function eliminarJugador(id) {
+            if (confirm('Eliminar este jugador? Se eliminaran tambien sus participaciones.')) {
+                datosJugadores = datosJugadores.filter(j => j.id !== id);
+                datosParticipaciones = datosParticipaciones.filter(p => p.jugador_id !== id);
+                guardarDatos();
+                actualizarTablaJugadores();
+                actualizarTablaParticipaciones();
+                actualizarSelects();
+            }
+        }
+        
+        function editarJugador(id) {
+            const jugador = datosJugadores.find(j => j.id === id);
+            const nuevoNombre = prompt('Editar nombre:', jugador.nombre);
+            if (nuevoNombre && nuevoNombre.trim()) {
+                jugador.nombre = nuevoNombre.trim();
+                guardarDatos();
+                actualizarTablaJugadores();
+                actualizarSelects();
+            }
+        }
+        
+        function actualizarTablaJugadores() {
+            const tbody = document.querySelector('#tablaJugadores tbody');
+            tbody.innerHTML = '';
+            datosJugadores.forEach(jugador => {
+                const fila = tbody.insertRow();
+                fila.innerHTML = `
+                    <td>${jugador.id}</td>
+                    <td>${jugador.nombre}</td>
+                    <td>
+                        <button class="btn-admin btn-editar" onclick="editarJugador(${jugador.id})">Editar</button>
+                        <button class="btn-admin btn-eliminar" onclick="eliminarJugador(${jugador.id})">Eliminar</button>
+                    </td>
+                `;
+            });
+        }
+        
+        // ==================== CRUD DÍAS ====================
+        function agregarDia() {
+            const fecha = document.getElementById('fechaDia').value;
+            if (!fecha) {
+                alert('Seleccione una fecha');
+                return;
+            }
+            
+            if (!validarFechaUnica(fecha)) {
+                return;
+            }
+            
+            datosDias.push({
+                id: generarNuevoIdDia(),
+                fecha: fecha
+            });
+            guardarDatos();
+            document.getElementById('fechaDia').value = '';
+            actualizarTablaDias();
+            actualizarSelects();
+        }
+        
+        function eliminarDia(id) {
+            if (confirm('Eliminar este dia? Se eliminaran tambien sus participaciones y machs.')) {
+                datosDias = datosDias.filter(d => d.id !== id);
+                datosParticipaciones = datosParticipaciones.filter(p => p.dia_id !== id);
+                datosMachs = datosMachs.filter(m => m.dia_id !== id);
+                guardarDatos();
+                actualizarTablaDias();
+                actualizarTablaParticipaciones();
+                actualizarTablaMachs();
+                actualizarSelects();
+            }
+        }
+        
+        function editarDia(id) {
+            const dia = datosDias.find(d => d.id === id);
+            const fechaActual = dia.fecha;
+            const nuevaFecha = prompt('Editar fecha (YYYY-MM-DD):', fechaActual);
+            if (nuevaFecha && nuevaFecha.trim()) {
+                if (!validarFechaUnica(nuevaFecha, id)) {
+                    return;
+                }
+                dia.fecha = nuevaFecha.trim();
+                guardarDatos();
+                actualizarTablaDias();
+                actualizarSelects();
+            }
+        }
+        
+        function actualizarTablaDias() {
+            const tbody = document.querySelector('#tablaDias tbody');
+            tbody.innerHTML = '';
+            datosDias.forEach(dia => {
+                const fila = tbody.insertRow();
+                fila.innerHTML = `
+                    <td>${dia.id}</td>
+                    <td>${formatearFechaDDMMYYYY(dia.fecha)}</td>
+                    <td>
+                        <button class="btn-admin btn-editar" onclick="editarDia(${dia.id})">Editar</button>
+                        <button class="btn-admin btn-eliminar" onclick="eliminarDia(${dia.id})">Eliminar</button>
+                    </td>
+                `;
+            });
+        }
+        
+        // ==================== CRUD PARTICIPACIONES ====================
+        function agregarParticipacion() {
+            const diaId = parseInt(document.getElementById('participacionDia').value);
+            const jugadorId = parseInt(document.getElementById('participacionJugador').value);
+            
+            if (!diaId || !jugadorId) {
+                alert('Seleccione día y jugador');
+                return;
+            }
+            
+            const existe = datosParticipaciones.some(p => p.dia_id === diaId && p.jugador_id === jugadorId);
+            if (existe) {
+                alert('Este jugador ya participa en este día');
+                return;
+            }
+            
+            datosParticipaciones.push({
+                id: nextIdParticipacion++,
+                dia_id: diaId,
+                jugador_id: jugadorId
+            });
+            guardarDatos();
+            actualizarTablaParticipaciones();
+        }
+        
+        function eliminarParticipacion(id) {
+            if (confirm('Eliminar esta participación?')) {
+                datosParticipaciones = datosParticipaciones.filter(p => p.id !== id);
+                guardarDatos();
+                actualizarTablaParticipaciones();
+            }
+        }
+        
+        function actualizarTablaParticipaciones() {
+            const tbody = document.querySelector('#tablaParticipaciones tbody');
+            tbody.innerHTML = '';
+            datosParticipaciones.forEach(part => {
+                const dia = datosDias.find(d => d.id === part.dia_id);
+                const jugador = datosJugadores.find(j => j.id === part.jugador_id);
+                const fechaDia = dia ? formatearFechaDDMMYYYY(dia.fecha) : 'N/A';
+                const nombreJugador = jugador ? jugador.nombre : 'N/A';
+                const fila = tbody.insertRow();
+                fila.innerHTML = `
+                    <td>${part.id}</td>
+                    <td>${fechaDia} (ID: ${part.dia_id})</td>
+                    <td>${nombreJugador} (ID: ${part.jugador_id})</td>
+                    <td>
+                        <button class="btn-admin btn-eliminar" onclick="eliminarParticipacion(${part.id})">Eliminar</button>
+                    </td>
+                `;
+            });
+        }
+        
+        // ==================== CRUD MACHS ====================
+        function agregarMach() {
+            const diaId = parseInt(document.getElementById('machDia').value);
+            const fecha = document.getElementById('machFecha').value;
+            
+            if (!diaId) {
+                alert('Seleccione un día');
+                return;
+            }
+            
+            datosMachs.push({
+                id: nextIdMach++,
+                dia_id: diaId,
+                fecha_hora: fecha || new Date().toISOString()
+            });
+            guardarDatos();
+            document.getElementById('machFecha').value = '';
+            actualizarTablaMachs();
+        }
+        
+        function eliminarMach(id) {
+            if (confirm('Eliminar este mach?')) {
+                datosMachs = datosMachs.filter(m => m.id !== id);
+                guardarDatos();
+                actualizarTablaMachs();
+            }
+        }
+        
+        function verDetallesMach(id) {
+            const mach = datosMachs.find(m => m.id === id);
+            if (!mach) return;
+            
+            const dia = datosDias.find(d => d.id === mach.dia_id);
+            const participantes = datosParticipaciones
+                .filter(p => p.dia_id === mach.dia_id)
+                .map(p => datosJugadores.find(j => j.id === p.jugador_id))
+                .filter(j => j);
+            
+            // Obtener machs completados del localStorage
+            const machsCompletados = JSON.parse(localStorage.getItem('pintintin_machs_completados') || '[]');
+            const machCompleto = machsCompletados.find(m => 
+                m.fechaLegible === formatearFechaDDMMYYYY(mach.fecha_hora) || 
+                m.fecha === mach.fecha_hora
+            );
+            
+            let detallesHtml = `
+                <div class="detalle-mach">
+                    <p><strong>ID del Mach:</strong> ${mach.id}</p>
+                    <p><strong>Fecha/Hora:</strong> ${formatearFechaHoraDDMMYYYY(mach.fecha_hora)}</p>
+                    <p><strong>Día ID:</strong> ${mach.dia_id}</p>
+                    <p><strong>Fecha del Día:</strong> ${dia ? formatearFechaDDMMYYYY(dia.fecha) : 'N/A'}</p>
+                    <p><strong>Participantes:</strong> ${participantes.map(p => p.nombre).join(', ') || 'Ninguno'}</p>
+            `;
+            
+            if (machCompleto) {
+                detallesHtml += `<h3>Estadísticas del Mach</h3>`;
+                detallesHtml += `<p><strong>Total de Patas:</strong> ${machCompleto.partidas?.length || 0}</p>`;
+                detallesHtml += `<h4>Patas jugadas:</h4>`;
+                if (machCompleto.partidas && machCompleto.partidas.length > 0) {
+                    machCompleto.partidas.forEach((partida, idx) => {
+                        detallesHtml += `<div class="detalle-partida">
+                            <p><strong>Pata ${idx + 1}:</strong> Ganador: ${partida.ganador}</p>
+                            <p>Puntajes: ${partida.puntajes.map(p => `${p.jugador}: ${p.puntos}pts`).join(', ')}</p>
+                        </div>`;
                     });
-                    reparaciones.push(`Creada participación para jugador ${part.jugadorId} en día ${mach.diaId}`);
                 }
+                detallesHtml += `<h4>Totales:</h4>`;
+                detallesHtml += `<p>Patas ganadas: ${machCompleto.ganadoresPorPartida?.map((g, i) => `${participantes[i]?.nombre || 'Jugador '+(i+1)}: ${g}`).join(', ') || 'N/A'}</p>`;
+                detallesHtml += `<p>Capicúas: ${machCompleto.rondasCapicua?.map((c, i) => `${participantes[i]?.nombre || 'Jugador '+(i+1)}: ${c}`).join(', ') || 'N/A'}</p>`;
+            } else {
+                detallesHtml += `<p><em>No hay estadísticas detalladas para este mach. Finalice el mach para guardar estadísticas.</em></p>`;
             }
+            
+            detallesHtml += `</div>`;
+            document.getElementById('detallesMach').innerHTML = detallesHtml;
+            document.getElementById('modalMach').style.display = 'block';
         }
-        db.participaciones.sort((a,b)=>a.id-b.id);
-        for (let i=0; i<db.participaciones.length; i++) db.participaciones[i].id = i+1;
-        guardarTodo();
-        mostrarMensaje(`Reparación completada: ${reparaciones.length} cambios`, "exito");
-        renderizarTodo();
-        document.getElementById('resultadoVerificacion').style.display = 'none';
-    }
-
-    // ==================== RENDERIZADO GENERAL ====================
-    function renderizarTodo() { renderizarMachs(); renderizarJugadores(); renderizarDias(); renderizarParticipaciones(); renderizarReporteGeneral(); }
-
-    // ---------- JUGADORES ----------
-    function renderizarJugadores() {
-        const cont = document.getElementById('jugadoresTable');
-        if (!cont) return;
-        if (!datosActuales.jugadores.length) { cont.innerHTML = '<p>📭 No hay jugadores.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Nombre</th><th>Acciones</th></tr></thead><tbody>';
-        for (let j of datosActuales.jugadores) html += `<tr><td class="text-center">${j.id}</td><td><strong>${escapeHtml(j.nombre)}</strong></td><td><button class="btn-editar" onclick="editarJugador(${j.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarJugador(${j.id})">🗑️ Eliminar</button></td></tr>`;
-        html += `</tbody><tfoot><tr><td colspan="3"><strong>Total: ${datosActuales.jugadores.length}</strong></td></tr></tfoot></table>`;
-        cont.innerHTML = html;
-    }
-    function agregarJugador() { let n=prompt("Nombre:"); if(!n) return; if(datosActuales.jugadores.some(j=>j.nombre.toLowerCase()===n.trim().toLowerCase())){alert("Ya existe"); return;} let id=Math.max(0,...datosActuales.jugadores.map(j=>j.id))+1; datosActuales.jugadores.push({id, nombre:n.trim()}); guardarTodo(); renderizarJugadores(); mostrarMensaje("Agregado","exito"); }
-    function editarJugador(id) { let j=datosActuales.jugadores.find(j=>j.id===id); if(!j) return; let n=prompt("Nuevo nombre:",j.nombre); if(!n) return; if(datosActuales.jugadores.some(j2=>j2.id!==id && j2.nombre.toLowerCase()===n.toLowerCase())){alert("Ya existe"); return;} j.nombre=n.trim(); guardarTodo(); renderizarTodo(); mostrarMensaje("Actualizado","exito"); }
-    function eliminarJugador(id) { let j=datosActuales.jugadores.find(j=>j.id===id); if(!j||!confirm(`¿Eliminar a ${j.nombre}?`)) return; datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.jugadorId!==id); datosActuales.machs=datosActuales.machs.filter(m=>m.ganadorId!==id); datosActuales.jugadores=datosActuales.jugadores.filter(j=>j.id!==id); guardarTodo(); renderizarTodo(); mostrarMensaje("Eliminado","exito"); }
-
-    // ---------- DÍAS ----------
-    function renderizarDias() {
-        const cont = document.getElementById('diasTable');
-        if (!cont) return;
-        if (!datosActuales.dias.length) { cont.innerHTML = '<p>📭 No hay días.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>Activo</th><th>Machs</th><th>Acciones</th></tr></thead><tbody>';
-        for (let d of datosActuales.dias) html += `<tr><td class="text-center">${d.id}</td><td>${d.fecha}</td><td class="text-center"><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td><td class="text-center">${datosActuales.machs.filter(m=>m.diaId===d.id).length}</td><td><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td></tr>`;
-        html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.dias.length}</strong></td></tr></tfoot></table>`;
-        cont.innerHTML = html;
-    }
-    function agregarDia() { let f=prompt("Fecha YYYY-MM-DD:",new Date().toISOString().slice(0,10)); if(!f||!/^\d{4}-\d{2}-\d{2}$/.test(f)) return alert("Formato inválido"); if(datosActuales.dias.some(d=>d.fecha===f)) return alert("Ya existe"); let id=Math.max(0,...datosActuales.dias.map(d=>d.id))+1; datosActuales.dias.push({id, fecha:f, activo:1}); guardarTodo(); renderizarDias(); mostrarMensaje("Día agregado","exito"); }
-    function cambiarActivoDia(id, activo) { let d=datosActuales.dias.find(d=>d.id===id); if(d){ d.activo=activo?1:0; guardarTodo(); renderizarDias(); } }
-    function eliminarDia(id) { if(!confirm("¿Eliminar día con todos sus machs y participaciones?")) return; datosActuales.machs=datosActuales.machs.filter(m=>m.diaId!==id); datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.diaId!==id); datosActuales.dias=datosActuales.dias.filter(d=>d.id!==id); guardarTodo(); renderizarTodo(); mostrarMensaje("Día eliminado","exito"); }
-    function forzarCierreDia() { let f=prompt("Fecha a cerrar (YYYY-MM-DD):"); if(!f) return; let cerrados=0; for(let d of datosActuales.dias) if(d.fecha===f && d.activo===1){ d.activo=0; cerrados++; } if(cerrados){ guardarTodo(); renderizarDias(); alert(`Cerrados ${cerrados} día(s)`); } else alert("No hay días activos con esa fecha"); }
-
-    // ---------- PARTICIPACIONES ----------
-    function renderizarParticipaciones() {
-        const cont = document.getElementById('participacionesTable');
-        if (!cont) return;
-        if (!datosActuales.participaciones.length) { cont.innerHTML = '<p>📭 No hay participaciones.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Jugador</th><th>Día</th><th>Machs</th><th>Patas</th><th>Acciones</th></tr></thead><tbody>';
-        for (let p of datosActuales.participaciones) {
-            let jug = datosActuales.jugadores.find(j=>j.id===p.jugadorId);
-            let dia = datosActuales.dias.find(d=>d.id===p.diaId);
-            html += `<tr><td class="text-center">${p.id}</td><td>${jug?escapeHtml(jug.nombre):'?'}</td><td>${dia?dia.fecha:'?'}</td><td class="text-center">${p.machsGanados}</td><td class="text-center">${p.patasNetas}</td><td><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td></tr>`;
-        }
-        html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></table>`;
-        cont.innerHTML = html;
-    }
-    function agregarParticipacion() { alert("Para simplificar, crea la participación desde la interfaz principal del juego. Aquí solo se pueden editar las existentes."); }
-    function editarParticipacion(id) { let p=datosActuales.participaciones.find(p=>p.id===id); if(!p) return; let nm=prompt("Nuevo machsGanados:", p.machsGanados); if(nm!==null) p.machsGanados=parseInt(nm)||0; let np=prompt("Nuevo patasNetas:", p.patasNetas); if(np!==null) p.patasNetas=parseInt(np)||0; guardarTodo(); renderizarParticipaciones(); mostrarMensaje("Actualizado","exito"); }
-    function eliminarParticipacion(id) { if(confirm("¿Eliminar esta participación?")){ datosActuales.participaciones=datosActuales.participaciones.filter(p=>p.id!==id); guardarTodo(); renderizarParticipaciones(); mostrarMensaje("Eliminada","exito"); } }
-
-    // ---------- MACHS ----------
-    function renderizarMachs() {
-        const cont = document.getElementById('machsTable');
-        if (!cont) return;
-        if (!datosActuales.machs.length) { cont.innerHTML = '<p>📭 No hay machs.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>#Mach</th><th>Ganador</th><th>Acciones</th></tr></thead><tbody>';
-        for (let m of datosActuales.machs) {
-            let dia = datosActuales.dias.find(d=>d.id===m.diaId);
-            let gan = datosActuales.jugadores.find(j=>j.id===m.ganadorId);
-            html += `<tr><td class="text-center">${m.id}</td><td>${dia?dia.fecha:'?'}</td><td class="text-center">${m.numeroMach}</td><td class="text-center">${gan?escapeHtml(gan.nombre):'?'}</td><td><button class="btn-ver-detalle" onclick="verDetalleMach(${m.id})">🔍 Ver</button> <button class="btn-eliminar" onclick="eliminarMach(${m.id})">🗑️ Eliminar</button></td></tr>`;
-        }
-        html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.machs.length}</strong></td></tr></tfoot></table>`;
-        cont.innerHTML = html;
-    }
-
-    function verDetalleMach(id) {
-        const mach = datosActuales.machs.find(m => m.id === id);
-        if (!mach) return;
-        const dia = datosActuales.dias.find(d => d.id === mach.diaId);
-        const ganador = datosActuales.jugadores.find(j => j.id === mach.ganadorId);
         
-        const formatearHora = (isoFecha) => {
-            if (!isoFecha) return '⏳ No registrada';
-            const fecha = new Date(isoFecha);
-            let horas = fecha.getHours();
-            const minutos = fecha.getMinutes().toString().padStart(2, '0');
-            const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
-            horas = horas % 12 || 12;
-            return `${horas}:${minutos} ${ampm}`;
-        };
+        function cerrarModal() {
+            document.getElementById('modalMach').style.display = 'none';
+        }
         
-        let duracionTexto = '';
-        if (mach.fechaHoraInicio && mach.fechaHora) {
-            const inicio = new Date(mach.fechaHoraInicio);
-            const fin = new Date(mach.fechaHora);
-            const diffMs = fin - inicio;
-            if (diffMs > 0) {
-                const diffMin = Math.floor(diffMs / 60000);
-                const diffSeg = Math.floor((diffMs % 60000) / 1000);
-                if (diffMin > 0) duracionTexto = `⏱️ Duración: ${diffMin} min ${diffSeg > 0 ? diffSeg + ' seg' : ''}`;
-                else duracionTexto = `⏱️ Duración: ${diffSeg} segundos`;
+        function actualizarTablaMachs() {
+            const tbody = document.querySelector('#tablaMachs tbody');
+            tbody.innerHTML = '';
+            datosMachs.forEach(mach => {
+                const fila = tbody.insertRow();
+                fila.innerHTML = `
+                    <td>${mach.id}</td>
+                    <td>${mach.dia_id}</td>
+                    <td>${formatearFechaHoraDDMMYYYY(mach.fecha_hora)}</td>
+                    <td>
+                        <button class="btn-admin btn-ver" onclick="verDetallesMach(${mach.id})">Ver Detalles</button>
+                        <button class="btn-admin btn-eliminar" onclick="eliminarMach(${mach.id})">Eliminar</button>
+                    </td>
+                `;
+            });
+        }
+        
+        // ==================== TIEMPO ====================
+        function actualizarTablaTiempo() {
+            const metricasTiempo = JSON.parse(localStorage.getItem('dominoPintintin_estado') || '{}').metricasTiempo || { partidas: [], tiempoTotalJugado: 0, tiempoPromedioPartida: 0 };
+            
+            const tiempoTotalHoras = metricasTiempo.tiempoTotalJugado / 3600000;
+            const tiempoPromedioMinutos = metricasTiempo.tiempoPromedioPartida / 60000;
+            
+            const tbody = document.getElementById('tablaTiempo');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr><td>Tiempo total jugado</td><td>${tiempoTotalHoras.toFixed(2)} horas</td></tr>
+                    <tr><td>Tiempo promedio por partida</td><td>${tiempoPromedioMinutos.toFixed(2)} minutos</td></tr>
+                    <tr><td>Total de partidas registradas</td><td>${metricasTiempo.partidas.length}</td></tr>
+                `;
+            }
+            
+            const tablaUltimas = document.getElementById('tablaUltimasPartidas');
+            if (tablaUltimas) {
+                tablaUltimas.innerHTML = '';
+                metricasTiempo.partidas.slice(-10).reverse().forEach(p => {
+                    const duracionMin = (p.duracionMs / 60000).toFixed(2);
+                    const fila = tablaUltimas.insertRow();
+                    fila.innerHTML = `
+                        <td>${formatearFechaDDMMYYYY(p.timestamp)}</td>
+                        <td>${duracionMin} minutos</td>
+                        <td>${p.ganador || 'Empate'}</td>
+                    `;
+                });
             }
         }
         
-        let msg = `🔍 DETALLE DEL MACH #${mach.numeroMach}\n`;
-        msg += `📅 Fecha: ${dia ? dia.fecha : 'Desconocida'}\n`;
-        msg += `🕐 Inicio: ${formatearHora(mach.fechaHoraInicio)}\n`;
-        msg += `🕐 Fin: ${formatearHora(mach.fechaHora)}\n`;
-        if (duracionTexto) msg += `${duracionTexto}\n`;
-        msg += `🏆 Ganador: ${ganador ? ganador.nombre : 'Desconocido'}\n`;
-        msg += `\n👥 PARTICIPANTES:\n`;
-        for (let p of (mach.participantes || [])) {
-            const nombre = p.nombre || (p.jugadorId ? obtenerNombreJugador(p.jugadorId) : 'Vacante');
-            msg += `  🪑 ${nombre}: ${p.patasFinales || 0} patas finales\n`;
-        }
-        if (mach.manos && mach.manos.length > 0) {
-            msg += `\n📜 MANOS (${mach.manos.length}):\n`;
-            for (let mano of mach.manos) {
-                const nombreJugador = mano.jugadorId ? obtenerNombreJugador(mano.jugadorId) : '?';
-                let tipoMostrado = mano.tipo;
-                switch(mano.tipo) {
-                    case 'paseMano': tipoMostrado = '🎯 Pase de mano'; break;
-                    case 'paseManoDado': tipoMostrado = '🎯 PM Dado'; break;
-                    case 'paseManoRecibido': tipoMostrado = '📥 PM Recibido'; break;
-                    case 'forro': tipoMostrado = '🧤 Forro'; break;
-                    case 'agua': tipoMostrado = '💧 Agua'; break;
-                    case 'capicua': tipoMostrado = '🀰 Capicua'; break;
-                    case 'cierre': tipoMostrado = '🚪 Cierre'; break;
-                    case 'pegado': tipoMostrado = '🏃 Pegado'; break;
-                    default: tipoMostrado = mano.tipo;
-                }
-                const patas = (mano.patasAfectadas !== undefined && mano.patasAfectadas !== 0) ? ` (${mano.patasAfectadas > 0 ? '+' : ''}${mano.patasAfectadas} pata)` : '';
-                msg += `  • ${tipoMostrado}: ${nombreJugador}${patas}\n`;
-            }
-        }
-        alert(msg);
-    }
-
-    function eliminarMach(id) { if(confirm("¿Eliminar este mach?")){ datosActuales.machs=datosActuales.machs.filter(m=>m.id!==id); guardarTodo(); renderizarMachs(); mostrarMensaje("Mach eliminado","exito"); } }
-    function obtenerNombreJugador(id) { const j=datosActuales.jugadores.find(j=>j.id===id); return j?j.nombre:`Jugador ${id}`; }
-
-    // ---------- REPORTE GENERAL ----------
-    function filtrarReportePorFechas() {
-        reporteFechasFiltro.desde = document.getElementById('reporteFechaDesde').value;
-        reporteFechasFiltro.hasta = document.getElementById('reporteFechaHasta').value;
-        renderizarReporteGeneral();
-    }
-
-    function renderizarReporteGeneral() {
-        const container = document.getElementById('reporteGeneralTable');
-        if (!container) return;
-        
-        let partFiltradas = [...datosActuales.participaciones];
-        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
-            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
-            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
+        // ==================== EXPORTAR/IMPORTAR ====================
+        function exportarDatos() {
+            const datosCompletos = {
+                jugadores: datosJugadores,
+                dias: datosDias,
+                participaciones: datosParticipaciones,
+                machs: datosMachs,
+                version: '6.0.1',
+                exportado: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(datosCompletos, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pintintin_backup_${formatearFechaDDMMYYYY(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
         
-        const stats = new Map();
-        for (let p of partFiltradas) {
-            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
-            if (!jug) continue;
-            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
-            const s = stats.get(jug.id);
-            s.machs += p.machsGanados;
-            s.patas += p.patasNetas;
-            s.pollonas += p.pollonas;
-            s.capicuas += p.capicuas;
-            s.cierres += p.cierres;
-            s.pegado += p.pegado;
-            s.forros += p.forros;
-            s.aguas += p.aguas;
-            s.pmDados += p.paseManoDados;
-            s.pmRecibidos += p.paseManoRecibidos;
-            s.empates += p.empatesParticipados;
-            s.empatesGan += p.empatesGanados;
-            s.patasPorEmpate += p.patasPorEmpate;
-        }
-        
-        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
-        let html = '<div class="tabla-responsive"><table class="tabla-datos" id="reporteTable"><thead>';
-        html += '<tr><th>#</th><th>Jugador</th><th>🏆 Machs</th><th>🦶 Patas</th><th>🐔 Pollonas</th>';
-        html += '<th>🀰 Capicuas</th><th>🚪 Cierres</th><th>🏃 Pegados</th><th>🧤 Forros</th><th>💧 Aguas</th>';
-        html += '<th>🎯 PM Dados</th><th>📥 PM Recibidos</th><th>⚖️ Empates</th><th>🏆⚖️ E. Ganados</th><th>🧩 Patas x Empate</th></tr></thead><tbody>';
-        ordenado.forEach((s,i)=> {
-            html += `<tr>
-                <td class="text-center">${i+1}</td>
-                <td><strong>${escapeHtml(s.nombre)}</strong></td>
-                <td class="text-center">${s.machs}</td>
-                <td class="text-center">${s.patas}</td>
-                <td class="text-center">${s.pollonas}</td>
-                <td class="text-center">${s.capicuas}</td>
-                <td class="text-center">${s.cierres}</td>
-                <td class="text-center">${s.pegado}</td>
-                <td class="text-center">${s.forros}</td>
-                <td class="text-center">${s.aguas}</td>
-                <td class="text-center">${s.pmDados}</td>
-                <td class="text-center">${s.pmRecibidos}</td>
-                <td class="text-center">${s.empates}</td>
-                <td class="text-center">${s.empatesGan}</td>
-                <td class="text-center">${s.patasPorEmpate}</td>
-              </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
-    }
-
-    function exportarReporteCSV() {
-        let partFiltradas = [...datosActuales.participaciones];
-        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
-            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
-            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
-        }
-        const stats = new Map();
-        for (let p of partFiltradas) {
-            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
-            if (!jug) continue;
-            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
-            const s = stats.get(jug.id);
-            s.machs += p.machsGanados;
-            s.patas += p.patasNetas;
-            s.pollonas += p.pollonas;
-            s.capicuas += p.capicuas;
-            s.cierres += p.cierres;
-            s.pegado += p.pegado;
-            s.forros += p.forros;
-            s.aguas += p.aguas;
-            s.pmDados += p.paseManoDados;
-            s.pmRecibidos += p.paseManoRecibidos;
-            s.empates += p.empatesParticipados;
-            s.empatesGan += p.empatesGanados;
-            s.patasPorEmpate += p.patasPorEmpate;
-        }
-        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
-        let csv = "Jugador,Machs,Patas,Pollonas,Capicuas,Cierres,Pegados,Forros,Aguas,PM Dados,PM Recibidos,Empates,E.Ganados,PatasPorEmpate\n";
-        for (let s of ordenado) csv += `"${s.nombre}",${s.machs},${s.patas},${s.pollonas},${s.capicuas},${s.cierres},${s.pegado},${s.forros},${s.aguas},${s.pmDados},${s.pmRecibidos},${s.empates},${s.empatesGan},${s.patasPorEmpate}\n`;
-        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv'});
-        const a = document.createElement('a');
-        a.download = `pintintin_reporte_${new Date().toISOString().slice(0,19)}.csv`;
-        a.href = URL.createObjectURL(blob);
-        a.click();
-        mostrarMensaje("Reporte exportado a CSV", "exito");
-    }
-
-    function exportarReportePDF() {
-        // Verificar librería
-        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-            alert('❌ La librería PDF no está cargada. Recarga la página.');
-            return;
-        }
-        
-        // Obtener los datos del reporte actual (igual que en renderizarReporteGeneral)
-        let partFiltradas = [...datosActuales.participaciones];
-        if (reporteFechasFiltro.desde || reporteFechasFiltro.hasta) {
-            const idsDias = datosActuales.dias.filter(d => (!reporteFechasFiltro.desde || d.fecha >= reporteFechasFiltro.desde) && (!reporteFechasFiltro.hasta || d.fecha <= reporteFechasFiltro.hasta)).map(d=>d.id);
-            partFiltradas = partFiltradas.filter(p => idsDias.includes(p.diaId));
-        }
-        
-        const stats = new Map();
-        for (let p of partFiltradas) {
-            const jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
-            if (!jug) continue;
-            if (!stats.has(jug.id)) stats.set(jug.id, { nombre: jug.nombre, machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 });
-            const s = stats.get(jug.id);
-            s.machs += p.machsGanados;
-            s.patas += p.patasNetas;
-            s.pollonas += p.pollonas;
-            s.capicuas += p.capicuas;
-            s.cierres += p.cierres;
-            s.pegado += p.pegado;
-            s.forros += p.forros;
-            s.aguas += p.aguas;
-            s.pmDados += p.paseManoDados;
-            s.pmRecibidos += p.paseManoRecibidos;
-            s.empates += p.empatesParticipados;
-            s.empatesGan += p.empatesGanados;
-            s.patasPorEmpate += p.patasPorEmpate;
-        }
-        
-        const ordenado = Array.from(stats.values()).sort((a,b)=>b.machs-a.machs || b.patas-a.patas);
-        
-        if (ordenado.length === 0) {
-            alert('No hay datos para exportar');
-            return;
-        }
-        
-        const { jsPDF } = window.jspdf || jspdf;
-        const doc = new jsPDF('landscape', 'mm', 'a4');
-        
-        // Título
-        doc.setFontSize(16);
-        doc.text("Reporte General - Dominó Pintintín", 20, 20);
-        doc.setFontSize(10);
-        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Período: ${reporteFechasFiltro.desde || 'inicio'} al ${reporteFechasFiltro.hasta || 'hoy'}`, 20, 38);
-        
-        // Preparar datos para la tabla
-        const headers = ['#', 'Jugador', 'Machs', 'Patas', 'Pollonas', 'Capicuas', 'Cierres', 'Pegados', 'Forros', 'Aguas', 'PM Dados', 'PM Recibidos', 'Empates', 'E.Ganados', 'Patas x Empate'];
-        const data = ordenado.map((s, i) => [
-            i+1, s.nombre, s.machs, s.patas, s.pollonas, s.capicuas, s.cierres, 
-            s.pegado, s.forros, s.aguas, s.pmDados, s.pmRecibidos, s.empates, s.empatesGan, s.patasPorEmpate
-        ]);
-        
-        // Generar tabla
-        doc.autoTable({
-            head: [headers],
-            body: data,
-            startY: 45,
-            theme: 'striped',
-            styles: { fontSize: 7, cellPadding: 1.5 },
-            headStyles: { fillColor: [139, 92, 246], textColor: 255 },
-            margin: { left: 10, right: 10 }
-        });
-        
-        // Guardar PDF
-        doc.save(`pintintin_reporte_${new Date().toISOString().slice(0,19)}.pdf`);
-        mostrarMensaje("Reporte exportado a PDF", "exito");
-    }
-
-    // ---------- ESTADÍSTICAS DE TIEMPO ----------
-    function cargarEstadisticasTiempo() {
-        const desde = document.getElementById('tiempoFechaDesde').value;
-        const hasta = document.getElementById('tiempoFechaHasta').value;
-        const container = document.getElementById('tiempoResultados');
-        let diasFiltrados = datosActuales.dias;
-        if(desde) diasFiltrados = diasFiltrados.filter(d=>d.fecha>=desde);
-        if(hasta) diasFiltrados = diasFiltrados.filter(d=>d.fecha<=hasta);
-        const ids = new Set(diasFiltrados.map(d=>d.id));
-        let machsDia = datosActuales.machs.filter(m=>ids.has(m.diaId));
-        const porFecha = new Map();
-        for(let m of machsDia) {
-            const dia = datosActuales.dias.find(d=>d.id===m.diaId);
-            if(!dia) continue;
-            if(!porFecha.has(dia.fecha)) porFecha.set(dia.fecha, []);
-            porFecha.get(dia.fecha).push(m);
-        }
-        
-        tiempoDatosCache = [];
-        if(porFecha.size===0){ container.innerHTML='<div class="stats-mini">📭 No hay datos de tiempo.</div>'; return; }
-        let html = '<div class="tabla-responsive"><table class="tabla-datos"><thead>';
-        html += '<tr><th>Fecha</th><th>Total machs</th><th>Hora primer mach</th><th>Hora último mach</th><th>Duración (min)</th></tr></thead><tbody>';
-        for(let [fecha,lista] of porFecha) {
-            lista.sort((a,b)=>new Date(a.fechaHora)-new Date(b.fechaHora));
-            const primero = lista[0];
-            const ultimo = lista[lista.length-1];
-            const duracion = Math.round((new Date(ultimo.fechaHora) - new Date(primero.fechaHora))/60000);
-            const formatear = (d)=>new Date(d).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
-            html += `<tr><td>${fecha}</td><td class="text-center">${lista.length}</td><td class="text-center">${formatear(primero.fechaHora)}</td><td class="text-center">${formatear(ultimo.fechaHora)}</td><td class="text-center">${duracion}</td></tr>`;
-            tiempoDatosCache.push({ fecha, totalMachs: lista.length, horaPrimero: formatear(primero.fechaHora), horaUltimo: formatear(ultimo.fechaHora), duracion });
-        }
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
-    }
-
-    function exportarTiempoCSV() {
-        if (tiempoDatosCache.length === 0) {
-            alert('No hay datos de tiempo para exportar');
-            return;
-        }
-        let csv = "Fecha,Total machs,Hora primer mach,Hora último mach,Duración total (min)\n";
-        for (let d of tiempoDatosCache) {
-            csv += `"${d.fecha}",${d.totalMachs},"${d.horaPrimero}","${d.horaUltimo}",${d.duracion}\n`;
-        }
-        const blob = new Blob(["\uFEFF"+csv], {type:'text/csv'});
-        const a = document.createElement('a');
-        a.download = `pintintin_tiempo_${new Date().toISOString().slice(0,19)}.csv`;
-        a.href = URL.createObjectURL(blob);
-        a.click();
-        mostrarMensaje("Tiempo exportado a CSV", "exito");
-    }
-
-    function exportarTiempoPDF() {
-        if (tiempoDatosCache.length === 0) {
-            alert('No hay datos de tiempo para exportar');
-            return;
-        }
-        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-            alert('❌ La librería PDF no está cargada.');
-            return;
-        }
-        
-        const { jsPDF } = window.jspdf || jspdf;
-        const doc = new jsPDF('landscape', 'mm', 'a4');
-        
-        doc.setFontSize(16);
-        doc.text("Estadísticas de Tiempo - Dominó Pintintín", 20, 20);
-        doc.setFontSize(10);
-        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
-        
-        const headers = ['Fecha', 'Total machs', 'Hora primer mach', 'Hora último mach', 'Duración (min)'];
-        const data = tiempoDatosCache.map(d => [d.fecha, d.totalMachs, d.horaPrimero, d.horaUltimo, d.duracion]);
-        
-        doc.autoTable({
-            head: [headers],
-            body: data,
-            startY: 40,
-            theme: 'striped',
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [139, 92, 246], textColor: 255 }
-        });
-        
-        doc.save(`pintintin_tiempo_${new Date().toISOString().slice(0,19)}.pdf`);
-        mostrarMensaje("Tiempo exportado a PDF", "exito");
-    }
-
-    // ---------- IMPORTAR / EXPORTAR ----------
-    function exportarDatos() {
-        const data = { jugadores: datosActuales.jugadores, dias: datosActuales.dias, participaciones: datosActuales.participaciones, machs: datosActuales.machs, fechaExportacion: new Date().toISOString(), version: "6.0" };
-        const json = JSON.stringify(data,null,2);
-        const blob = new Blob([json], {type:'application/json'});
-        const a = document.createElement('a');
-        a.download = `pintintin_backup_${new Date().toISOString().slice(0,19)}.json`;
-        a.href = URL.createObjectURL(blob);
-        a.click();
-        mostrarMensaje("Exportado","exito");
-    }
-
-    function importarDatos() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
+        document.getElementById('importarArchivo')?.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = function(evt) {
                 try {
-                    const data = JSON.parse(ev.target.result);
-                    if (!data.jugadores || !data.dias || !data.participaciones || !data.machs) throw new Error("Formato inválido");
-                    datosActuales = data;
-                    guardarTodo();
-                    renderizarTodo();
-                    mostrarMensaje("Importación exitosa", "exito");
-                } catch(err) { mostrarMensaje("Error: "+err.message, "error"); }
+                    const datos = JSON.parse(evt.target.result);
+                    if (datos.jugadores) datosJugadores = datos.jugadores;
+                    if (datos.dias) datosDias = datos.dias;
+                    if (datos.participaciones) datosParticipaciones = datos.participaciones;
+                    if (datos.machs) datosMachs = datos.machs;
+                    
+                    nextIdJugador = Math.max(...datosJugadores.map(j => j.id), 0) + 1;
+                    nextIdDia = Math.max(...datosDias.map(d => d.id), 0) + 1;
+                    nextIdParticipacion = Math.max(...datosParticipaciones.map(p => p.id), 0) + 1;
+                    nextIdMach = Math.max(...datosMachs.map(m => m.id), 0) + 1;
+                    
+                    guardarDatos();
+                    actualizarTodasLasTablas();
+                    alert('Datos importados correctamente');
+                } catch (error) {
+                    alert('Error al importar: archivo inválido');
+                }
             };
             reader.readAsText(file);
-        };
-        input.click();
-    }
-
-    function limpiarBaseDatos() {
-        if(confirm("¿ELIMINAR TODOS LOS DATOS?")) {
-            datosActuales = { jugadores: [], dias: [], participaciones: [], machs: [] };
-            guardarTodo();
-            renderizarTodo();
-            mostrarMensaje("Datos limpiados", "exito");
-        }
-    }
-
-    // ---------- FILTROS ----------
-    function filtrarMachs() {
-        const term = document.getElementById('searchMachs')?.value.toLowerCase() || '';
-        const rows = document.querySelectorAll('#machsTable .tabla-datos tbody tr');
-        rows.forEach(row => row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none');
-    }
-    function filtrarJugadores() {
-        const term = document.getElementById('searchJugadores')?.value.toLowerCase() || '';
-        const rows = document.querySelectorAll('#jugadoresTable .tabla-datos tbody tr');
-        rows.forEach(row => row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none');
-    }
-
-    function mostrarTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        document.getElementById(`tab${tab.charAt(0).toUpperCase()+tab.slice(1)}`).classList.add('active');
-        if(event && event.target) event.target.classList.add('active');
-        if(tab==='reporte') renderizarReporteGeneral();
-        if(tab==='tiempo') cargarEstadisticasTiempo();
-    }
-
-    function mostrarMensaje(texto,tipo) {
-        const div = document.getElementById('mensajeImportacion');
-        div.style.display='block';
-        div.className=`mensaje-importacion mensaje-${tipo}`;
-        div.innerHTML=texto;
-        setTimeout(()=>div.style.display='none',3000);
-    }
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-
-    // Inicializar y asignar eventos después de cargar
-    function inicializarEventos() {
-        const btnReporteCSV = document.getElementById('btnExportarReporteCSV');
-        const btnReportePDF = document.getElementById('btnExportarReportePDF');
-        const btnTiempoCSV = document.getElementById('btnExportarTiempoCSV');
-        const btnTiempoPDF = document.getElementById('btnExportarTiempoPDF');
+            e.target.value = '';
+        });
         
-        if (btnReporteCSV) btnReporteCSV.onclick = exportarReporteCSV;
-        if (btnReportePDF) btnReportePDF.onclick = exportarReportePDF;
-        if (btnTiempoCSV) btnTiempoCSV.onclick = exportarTiempoCSV;
-        if (btnTiempoPDF) btnTiempoPDF.onclick = exportarTiempoPDF;
-    }
-    
-    // Inicializar
-    cargarTodo();
-    inicializarEventos();
-</script>
+        function verificarIntegridad() {
+            let errores = [];
+            
+            datosParticipaciones.forEach(p => {
+                if (!datosDias.find(d => d.id === p.dia_id)) {
+                    errores.push(`Participación ${p.id}: día ${p.dia_id} no existe`);
+                }
+                if (!datosJugadores.find(j => j.id === p.jugador_id)) {
+                    errores.push(`Participación ${p.id}: jugador ${p.jugador_id} no existe`);
+                }
+            });
+            
+            datosMachs.forEach(m => {
+                if (!datosDias.find(d => d.id === m.dia_id)) {
+                    errores.push(`Mach ${m.id}: día ${m.dia_id} no existe`);
+                }
+            });
+            
+            if (errores.length === 0) {
+                alert('Integridad verificada: No se encontraron errores');
+            } else {
+                alert(`Se encontraron ${errores.length} errores:\n${errores.join('\n')}`);
+            }
+        }
+        
+        function actualizarSelects() {
+            const selectDiaParticipacion = document.getElementById('participacionDia');
+            const selectJugadorParticipacion = document.getElementById('participacionJugador');
+            const selectDiaMach = document.getElementById('machDia');
+            
+            if (selectDiaParticipacion) {
+                selectDiaParticipacion.innerHTML = '<option value="">Seleccionar día</option>';
+                datosDias.forEach(dia => {
+                    selectDiaParticipacion.innerHTML += `<option value="${dia.id}">${formatearFechaDDMMYYYY(dia.fecha)} (ID: ${dia.id})</option>`;
+                });
+            }
+            
+            if (selectDiaMach) {
+                selectDiaMach.innerHTML = '<option value="">Seleccionar día</option>';
+                datosDias.forEach(dia => {
+                    selectDiaMach.innerHTML += `<option value="${dia.id}">${formatearFechaDDMMYYYY(dia.fecha)} (ID: ${dia.id})</option>`;
+                });
+            }
+            
+            if (selectJugadorParticipacion) {
+                selectJugadorParticipacion.innerHTML = '<option value="">Seleccionar jugador</option>';
+                datosJugadores.forEach(jugador => {
+                    selectJugadorParticipacion.innerHTML += `<option value="${jugador.id}">${jugador.nombre}</option>`;
+                });
+            }
+        }
+        
+        function actualizarTodasLasTablas() {
+            actualizarTablaJugadores();
+            actualizarTablaDias();
+            actualizarTablaParticipaciones();
+            actualizarTablaMachs();
+            actualizarTablaTiempo();
+            actualizarSelects();
+        }
+        
+        // Pestañas
+        document.querySelectorAll('.pestana').forEach(pestana => {
+            pestana.addEventListener('click', () => {
+                document.querySelectorAll('.pestana').forEach(p => p.classList.remove('activa'));
+                document.querySelectorAll('.contenido-pestana').forEach(c => c.classList.remove('activo'));
+                pestana.classList.add('activa');
+                document.getElementById(`pestana-${pestana.dataset.pestana}`).classList.add('activo');
+                if (pestana.dataset.pestana === 'tiempo') {
+                    actualizarTablaTiempo();
+                }
+            });
+        });
+        
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalMach');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+        
+        // Inicializar
+        cargarDatos();
+        actualizarTodasLasTablas();
+    </script>
 </body>
 </html>
