@@ -2,1226 +2,534 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Gráficas - Dominó Pintintín</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas Gráficas - Dominó Pintintín</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #0f172a;
-            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-            padding: 1rem;
-        }
-        .app-container {
-            max-width: 1400px;
+        .estadisticas-container {
+            max-width: 1200px;
             margin: 0 auto;
-            background: #f8fafc;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            overflow: hidden;
-            padding: 1.5rem;
+            padding: 20px;
         }
-        header {
-            margin-bottom: 1rem;
-        }
-        header h1 {
-            margin: 0 0 0.2rem;
-            color: #0f172a;
-            text-align: center;
-            font-size: 1.6rem;
-        }
-        .fecha-dia {
-            background: #e2e8f0;
-            padding: 0.3rem;
-            border-radius: 1rem;
-            text-align: center;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-        }
-        .graficas-container {
+        .grafico {
             background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin: 0.5rem 0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .filtros-grid {
-            display: grid;
-            grid-template-columns: auto 1fr auto 1fr;
-            gap: 0.5rem 0.8rem;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .filtro-etiqueta {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #1e293b;
-            white-space: nowrap;
-        }
-        .filtro-control {
-            min-width: 140px;
-        }
-        .filtro-control select, .filtro-control input {
-            width: 100%;
-            padding: 0.5rem 0.8rem;
-            border: none;
-            border-bottom: 1px solid #cbd5e1;
-            background: white;
-            font-size: 0.8rem;
-            outline: none;
-        }
-        .radio-group {
+        .selector-tipo {
             display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            background: #f1f5f9;
-            padding: 0.3rem 0.8rem;
-            border-radius: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin: 0;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-        .radio-group input {
-            width: 14px;
-            height: 14px;
-            margin: 0;
-        }
-        .selector-jugadores {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            background: #f8fafc;
-            padding: 0.8rem;
-            border-radius: 0.75rem;
-            margin: 0.5rem 0 1rem 0;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-        .selector-jugadores label {
-            flex: 1 0 auto;
-            min-width: 100px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #e2e8f0;
-            padding: 0.3rem 0.6rem;
-            border-radius: 1.5rem;
-            font-size: 0.7rem;
-            cursor: pointer;
-            gap: 0.5rem;
-        }
-        .selector-jugadores label span {
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .selector-jugadores input {
-            margin: 0;
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-        .info-rango {
-            text-align: center;
-            font-size: 0.7rem;
-            color: #475569;
-            margin: 0.5rem 0;
-        }
-        .canvas-wrapper {
-            background: #fefce8;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            width: 100%;
-            min-height: 500px;
-            position: relative;
-        }
-        canvas {
-            display: block;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 450px;
-        }
-        .botones-grafica {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-            margin-top: 1rem;
-        }
-        .secundario {
-            background: #475569;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .secundario:hover {
-            background: #334155;
-        }
-        .modal-indicadores {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
+            gap: 20px;
             justify-content: center;
-            z-index: 2000;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
         }
-        .modal-indicadores .modal-content {
-            background: white;
-            padding: 1rem;
-            border-radius: 1rem;
-            max-width: 400px;
-            width: 90%;
-            max-height: 95vh;
-            overflow-y: auto;
-        }
-        .modal-indicadores h3 {
-            margin: 0 0 0.5rem 0;
-        }
-        .modal-indicadores .indicadores-lista {
-            display: flex;
-            flex-direction: column;
-            gap: 0.1rem;
-            margin-bottom: 1rem;
-        }
-        .modal-indicadores .indicador-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.2rem 0.3rem;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.8rem;
-        }
-        .modal-indicadores .indicador-item label {
-            flex: 1;
+        .selector-tipo label {
             cursor: pointer;
-            margin: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 10px 20px;
+            background: #ecf0f1;
+            border-radius: 5px;
         }
-        .modal-indicadores .indicador-item span {
-            text-align: left;
-        }
-        .modal-indicadores .indicador-item input {
-            margin: 0;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        .modal-indicadores .indicador-item:hover {
-            background: #f1f5f9;
-        }
-        .boton-seleccion {
-            background: #8b5cf6;
+        .selector-tipo input:checked + span {
+            background: #3498db;
             color: white;
+        }
+        .selector-tipo input {
+            display: none;
+        }
+        .selector-tipo span {
+            padding: 10px 20px;
+            display: inline-block;
+            border-radius: 5px;
+        }
+        .selector-tipo input:checked + span {
+            background: #3498db;
+            color: white;
+        }
+        .fecha-actual {
+            text-align: center;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        .exportar-pdf {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
             border: none;
-            padding: 0.3rem 0.6rem;
-            border-radius: 0.5rem;
-            font-size: 0.7rem;
+            border-radius: 5px;
             cursor: pointer;
-            margin-left: 0.5rem;
+            margin-bottom: 20px;
         }
-        .contador-indicadores {
-            background: #e2e8f0;
-            padding: 0.2rem 0.5rem;
-            border-radius: 1rem;
-            font-size: 0.7rem;
-            margin-left: 0.5rem;
+        .volver {
+            background: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
-        @media (max-width: 640px) {
-            .filtros-grid {
-                grid-template-columns: auto 1fr;
-                gap: 0.5rem;
-            }
-            .selector-jugadores label {
-                min-width: 100%;
-            }
-            .radio-group {
-                flex-wrap: wrap;
-            }
-            .canvas-wrapper {
-                min-height: 350px;
-                padding: 0.5rem;
-            }
-            canvas {
-                min-height: 300px;
-            }
-            .app-container {
-                padding: 1rem;
-            }
+        .tabla-estadisticas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .tabla-estadisticas th, .tabla-estadisticas td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .tabla-estadisticas th {
+            background: #3498db;
+            color: white;
+        }
+        .resumen-dia {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-<div class="app-container">
-    <header>
-        <h1>📈 Gráficas interactivas</h1>
-        <div class="fecha-dia">Compara indicadores entre jugadores</div>
-    </header>
-
-    <div class="graficas-container">
-        <div class="filtros-grid">
-            <span class="filtro-etiqueta">📅 Fecha desde</span>
-            <input type="date" id="fechaDesde" class="filtro-control">
-            <span class="filtro-etiqueta">📅 Fecha hasta</span>
-            <input type="date" id="fechaHasta" class="filtro-control">
-            
-            <span class="filtro-etiqueta">📐 Tipo gráfico</span>
-            <select id="tipoGrafico" class="filtro-control">
-                <option value="bar" selected>📊 Barras</option>
-                <option value="line">📈 Líneas</option>
-                <option value="radar">🕸️ Radar</option>
-                <option value="pie">🥧 Pastel</option>
-                <option value="polarArea">🌀 Polar</option>
-            </select>
-            
-            <span class="filtro-etiqueta">🎯 Modo gráfico</span>
-            <div class="radio-group" id="modoGrupo">
-                <label>
-                    <input type="radio" name="modo" value="juego" checked> 🎲 Indicadores de juego
-                </label>
-                <label>
-                    <input type="radio" name="modo" value="tiempo"> ⏱️ Métricas de tiempo
-                </label>
-            </div>
+    <div class="estadisticas-container" id="reporteEstadisticas">
+        <button class="volver" onclick="window.location.href='index.html'">← Volver al juego</button>
+        <button class="exportar-pdf" onclick="exportarPDF()">📄 Exportar a PDF</button>
+        <h1>📊 Estadísticas Gráficas - Dominó Pintintín</h1>
+        
+        <div class="fecha-actual" id="fechaActual">
+            Estadísticas del día: Cargando...
         </div>
-
-        <div id="indicadorPanel" style="margin: 0.5rem 0;"></div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0;">
-            <label style="font-size:0.75rem; font-weight:bold;">👥 Jugadores</label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; font-size:0.7rem;">
-                <input type="checkbox" id="seleccionarTodos"> Seleccionar todos
+        
+        <div class="selector-tipo">
+            <label>
+                <input type="radio" name="tipoEstadistica" value="juego" checked>
+                <span>🎯 Indicadores de juego</span>
+            </label>
+            <label>
+                <input type="radio" name="tipoEstadistica" value="tiempo">
+                <span>⏱️ Métricas de tiempo</span>
             </label>
         </div>
-        <div id="jugadoresChecklist" class="selector-jugadores"></div>
-
-        <div id="infoRango" class="info-rango"></div>
-
-        <div class="canvas-wrapper">
-            <canvas id="miGrafica"></canvas>
+        
+        <div id="contenidoJuego">
+            <div class="grafico">
+                <h2>📈 Patas ganadas por jugador - Día actual</h2>
+                <canvas id="graficoPatasGanadas"></canvas>
+            </div>
+            
+            <div class="grafico">
+                <h2>🔥 Capicúas realizadas por jugador - Día actual</h2>
+                <canvas id="graficoCapicuas"></canvas>
+            </div>
+            
+            <div class="grafico">
+                <h2>📊 Puntos en contra acumulados - Día actual</h2>
+                <canvas id="graficoPuntosContra"></canvas>
+            </div>
+            
+            <div class="resumen-dia" id="resumenJugadoresDia"></div>
         </div>
-
-        <div class="botones-grafica">
-            <button id="btnDescargarImagen" class="secundario">📸 Imagen PNG</button>
-            <button id="btnExportarCSV" class="secundario">📎 CSV de datos</button>
-            <button id="btnExportarPDF" class="secundario">📄 Exportar PDF</button>
-            <button id="btnVolver" class="secundario">← Volver al juego</button>
+        
+        <div id="contenidoTiempo" style="display:none;">
+            <div class="grafico">
+                <h2>⏱️ Tiempo promedio por partida (minutos)</h2>
+                <canvas id="graficoTiempoPromedio"></canvas>
+            </div>
+            
+            <div class="grafico">
+                <h2>📊 Tiempo total jugado por jugador (horas)</h2>
+                <canvas id="graficoTiempoTotal"></canvas>
+            </div>
+            
+            <div class="tabla-estadisticas-container">
+                <h2>📋 Detalle de métricas de tiempo</h2>
+                <table class="tabla-estadisticas" id="tablaMetricasTiempo">
+                    <thead>
+                        <tr><th>Jugador</th><th>Tiempo total</th><th>Tiempo promedio</th><th>Partidas jugadas</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    let jugadores = [];
-    let dias = [];
-    let participaciones = [];
-    let machs = [];
-    let chartInstance = null;
-    let tiempoDatosCache = [];
-
-    function cargarDatosLocales() {
-        jugadores = JSON.parse(localStorage.getItem('pintintin_jugadores')) || [];
-        dias = JSON.parse(localStorage.getItem('pintintin_dias')) || [];
-        participaciones = JSON.parse(localStorage.getItem('pintintin_participaciones')) || [];
-        machs = JSON.parse(localStorage.getItem('pintintin_machs')) || [];
-        for (let p of participaciones) {
-            if (p.empatesParticipados === undefined) p.empatesParticipados = 0;
-            if (p.empatesGanados === undefined) p.empatesGanados = 0;
-            if (p.patasPorEmpate === undefined) p.patasPorEmpate = 0;
-        }
-    }
-
-    function formatearMinutosAHoras(minutos) {
-        if (minutos === null || minutos === undefined || isNaN(minutos)) return '0 min';
-        if (minutos < 60) return `${minutos} min`;
-        const horas = Math.floor(minutos / 60);
-        const mins = minutos % 60;
-        if (mins === 0) return `${horas} h`;
-        return `${horas} h ${mins} min`;
-    }
-
-    function contarMachsReales(db, desde, hasta) {
-        let diasFiltrados = db.dias;
-        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
-        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
-        const idsDias = new Set(diasFiltrados.map(d => d.id));
-        let machsFiltrados = db.machs.filter(m => idsDias.has(m.diaId));
-        
-        const machsPorJugador = new Map();
-        for (let mach of machsFiltrados) {
-            for (let p of mach.participantes) {
-                if (p.jugadorId) {
-                    const key = `${mach.diaId}-${p.jugadorId}`;
-                    machsPorJugador.set(key, (machsPorJugador.get(key) || 0) + 1);
-                }
-            }
-        }
-        return machsPorJugador;
-    }
-
-    const TODOS_INDICADORES = [
-        { key: 'machsJugados', label: '🎲 Machs jugados' },
-        { key: 'machsGanados', label: '🏆 Machs ganados' },
-        { key: 'machsPerdidos', label: '❌ Machs perdidos' },
-        { key: 'patasNetas', label: '🦶 Patas netas' },
-        { key: 'pollonas', label: '🐔 Pollonas' },
-        { key: 'capicuas', label: '🀰 Capicuas' },
-        { key: 'cierres', label: '🚪 Cierres' },
-        { key: 'pegado', label: '🏃 Pegados' },
-        { key: 'forros', label: '🧤 Forros' },
-        { key: 'aguas', label: '💧 Aguas' },
-        { key: 'paseManoDados', label: '🎯 PM Dados' },
-        { key: 'paseManoRecibidos', label: '📥 PM Recibidos' },
-        { key: 'empatesParticipados', label: '⚖️ Empates' },
-        { key: 'empatesGanados', label: '🏆⚖️ E. Ganados' },
-        { key: 'patasPorEmpate', label: '🧩 Patas por Empate' }
-    ];
-
-    const METRICAS_TIEMPO = [
-        { key: 'tiempoTotal', label: '⏱️ Tiempo total jugado' },
-        { key: 'promedioPorMach', label: '📊 Promedio de tiempo por mach' },
-        { key: 'tiempoPorMachGanado', label: '🏆 Tiempo por mach ganado' }
-    ];
-
-    let indicadoresMulti = ['machsJugados', 'machsGanados', 'patasNetas'];
-    let metricaTiempoActual = 'tiempoTotal';
-
-    function calcularDuracionMach(mach) {
-        if (!mach.fechaHoraInicio || !mach.fechaHora) return null;
-        const inicio = new Date(mach.fechaHoraInicio);
-        const fin = new Date(mach.fechaHora);
-        const diffMs = fin - inicio;
-        if (diffMs <= 0) return null;
-        return Math.round(diffMs / 60000);
-    }
-
-    function obtenerDatosTiempoPorJugador(idsJugadores, desde, hasta) {
-        let diasFiltrados = dias;
-        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
-        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
-        const idsDias = new Set(diasFiltrados.map(d => d.id));
-        let machsFiltrados = machs.filter(m => idsDias.has(m.diaId));
-        
-        const statsJugador = new Map();
-        for (let id of idsJugadores) {
-            const jug = jugadores.find(j => j.id === id);
-            if (jug) {
-                statsJugador.set(id, {
-                    nombre: jug.nombre,
-                    tiempoTotal: 0,
-                    cantidadMachs: 0,
-                    tiempoMachsGanados: 0,
-                    cantidadMachsGanados: 0
-                });
-            }
+    <script>
+        // Función para formatear fechas a dd/mm/yyyy
+        function formatearFechaDDMMYYYY(fecha) {
+            if (!fecha) return '';
+            const d = new Date(fecha);
+            if (isNaN(d.getTime())) return fecha;
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            return `${dia}/${mes}/${anio}`;
         }
         
-        for (let mach of machsFiltrados) {
-            const duracion = calcularDuracionMach(mach);
-            if (duracion === null) continue;
+        // Obtener fecha actual en formato YYYY-MM-DD
+        function getFechaActual() {
+            const hoy = new Date();
+            return hoy.toISOString().split('T')[0];
+        }
+        
+        // Obtener machs completados
+        function getMachsCompletados() {
+            return JSON.parse(localStorage.getItem('pintintin_machs_completados') || '[]');
+        }
+        
+        // Obtener machs del día actual
+        function getMachsDelDia() {
+            const fechaActual = getFechaActual();
+            const todosMachs = getMachsCompletados();
+            return todosMachs.filter(mach => {
+                const fechaMach = mach.fechaLegible || formatearFechaDDMMYYYY(mach.fecha);
+                const fechaMachInvertida = fechaMach.split('/').reverse().join('-');
+                return fechaMachInvertida === fechaActual || fechaMach === fechaActual;
+            });
+        }
+        
+        // Obtener estadísticas por jugador del día actual
+        function getEstadisticasDia() {
+            const machsDelDia = getMachsDelDia();
+            const estadisticas = {};
             
-            if (mach.participantes) {
-                for (let p of mach.participantes) {
-                    if (!p.jugadorId) continue;
-                    if (statsJugador.has(p.jugadorId)) {
-                        const stats = statsJugador.get(p.jugadorId);
-                        stats.tiempoTotal += duracion;
-                        stats.cantidadMachs++;
-                        
-                        if (p.jugadorId === mach.ganadorId) {
-                            stats.tiempoMachsGanados += duracion;
-                            stats.cantidadMachsGanados++;
+            machsDelDia.forEach(mach => {
+                if (mach.ganadoresPorPartida) {
+                    mach.ganadoresPorPartida.forEach((ganadas, idx) => {
+                        const nombreJugador = `Jugador ${idx + 1}`;
+                        if (!estadisticas[nombreJugador]) {
+                            estadisticas[nombreJugador] = {
+                                patasGanadas: 0,
+                                capicuas: 0,
+                                puntosEnContra: 0,
+                                partidasJugadas: 0
+                            };
                         }
-                    }
+                        estadisticas[nombreJugador].patasGanadas += ganadas || 0;
+                        estadisticas[nombreJugador].partidasJugadas += (mach.partidas?.length || 0);
+                    });
                 }
-            }
-        }
-        
-        const resultados = [];
-        for (let [id, stats] of statsJugador) {
-            const promedioPorMach = stats.cantidadMachs > 0 ? Math.round(stats.tiempoTotal / stats.cantidadMachs) : 0;
-            const tiempoPorMachGanado = stats.cantidadMachsGanados > 0 ? Math.round(stats.tiempoMachsGanados / stats.cantidadMachsGanados) : 0;
+                
+                if (mach.rondasCapicua) {
+                    mach.rondasCapicua.forEach((capicuas, idx) => {
+                        const nombreJugador = `Jugador ${idx + 1}`;
+                        if (!estadisticas[nombreJugador]) {
+                            estadisticas[nombreJugador] = {
+                                patasGanadas: 0,
+                                capicuas: 0,
+                                puntosEnContra: 0,
+                                partidasJugadas: 0
+                            };
+                        }
+                        estadisticas[nombreJugador].capicuas += capicuas || 0;
+                    });
+                }
+                
+                if (mach.totalPuntosEnContra) {
+                    mach.totalPuntosEnContra.forEach((puntos, idx) => {
+                        const nombreJugador = `Jugador ${idx + 1}`;
+                        if (!estadisticas[nombreJugador]) {
+                            estadisticas[nombreJugador] = {
+                                patasGanadas: 0,
+                                capicuas: 0,
+                                puntosEnContra: 0,
+                                partidasJugadas: 0
+                            };
+                        }
+                        estadisticas[nombreJugador].puntosEnContra += puntos || 0;
+                    });
+                }
+            });
             
-            resultados.push({
-                nombre: stats.nombre,
-                tiempoTotal: stats.tiempoTotal,
-                promedioPorMach: promedioPorMach,
-                tiempoPorMachGanado: tiempoPorMachGanado
+            return estadisticas;
+        }
+        
+        // Obtener métricas de tiempo por jugador
+        function getMetricasTiempoPorJugador() {
+            const estado = JSON.parse(localStorage.getItem('dominoPintintin_estado') || '{}');
+            const metricasTiempo = estado.metricasTiempo || { partidas: [] };
+            const jugadores = estado.jugadores || [
+                { nombre: 'Jugador 1' }, { nombre: 'Jugador 2' },
+                { nombre: 'Jugador 3' }, { nombre: 'Jugador 4' }
+            ];
+            
+            const tiempoPorJugador = {};
+            jugadores.forEach(j => {
+                tiempoPorJugador[j.nombre] = {
+                    tiempoTotalMs: 0,
+                    partidasJugadas: 0,
+                    tiempoPromedioMs: 0
+                };
             });
-        }
-        
-        tiempoDatosCache = resultados;
-        return resultados;
-    }
-
-    function actualizarPanelIndicador() {
-        const modo = document.querySelector('input[name="modo"]:checked').value;
-        const panel = document.getElementById('indicadorPanel');
-        
-        if (modo === 'juego') {
-            const tipo = document.getElementById('tipoGrafico').value;
-            if (tipo === 'bar') {
-                panel.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                        <span class="filtro-etiqueta">📊 Indicadores</span>
-                        <button id="btnSeleccionarIndicadores" class="boton-seleccion">Seleccionar indicadores</button>
-                        <span id="contadorIndicadores" class="contador-indicadores">${indicadoresMulti.length} seleccionados</span>
-                    </div>
-                `;
-                document.getElementById('btnSeleccionarIndicadores').addEventListener('click', () => abrirModalIndicadores());
-            } else {
-                const indicadorUnico = indicadoresMulti.length > 0 ? indicadoresMulti[0] : 'machsJugados';
-                panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
-                    <span class="filtro-etiqueta">📊 Indicador</span>
-                    <select id="indicadorUnico" class="filtro-control">
-                        ${TODOS_INDICADORES.map(ind => `<option value="${ind.key}" ${ind.key === indicadorUnico ? 'selected' : ''}>${ind.label}</option>`).join('')}
-                    </select>
-                </div>`;
-                document.getElementById('indicadorUnico').addEventListener('change', () => dibujarGrafico());
-            }
-        } else {
-            panel.innerHTML = `<div class="filtros-grid" style="margin:0;">
-                <span class="filtro-etiqueta">⏱️ Métrica de tiempo</span>
-                <select id="metricaTiempo" class="filtro-control">
-                    ${METRICAS_TIEMPO.map(met => `<option value="${met.key}" ${met.key === metricaTiempoActual ? 'selected' : ''}>${met.label}</option>`).join('')}
-                </select>
-            </div>`;
-            document.getElementById('metricaTiempo').addEventListener('change', (e) => {
-                metricaTiempoActual = e.target.value;
-                dibujarGrafico();
-            });
-        }
-    }
-
-    function abrirModalIndicadores() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-indicadores';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <h3>📊 Selecciona los indicadores</h3>
-                <div class="indicadores-lista" id="modalIndicadoresLista">
-                    ${TODOS_INDICADORES.map(ind => `
-                        <div class="indicador-item">
-                            <label style="width:100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                                <span>${ind.label}</span>
-                                <input type="checkbox" value="${ind.key}" ${indicadoresMulti.includes(ind.key) ? 'checked' : ''}>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button id="modalIndicadoresCancelar" class="secundario" style="background:#6b7280;">Cancelar</button>
-                    <button id="modalIndicadoresAceptar" class="secundario" style="background:#10b981;">Aceptar</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        const aceptarBtn = modal.querySelector('#modalIndicadoresAceptar');
-        const cancelarBtn = modal.querySelector('#modalIndicadoresCancelar');
-
-        aceptarBtn.onclick = () => {
-            const checks = modal.querySelectorAll('input[type="checkbox"]:checked');
-            const nuevos = Array.from(checks).map(cb => cb.value);
-            if (nuevos.length === 0) {
-                alert('Debes seleccionar al menos un indicador');
-                return;
-            }
-            indicadoresMulti = nuevos;
-            const contador = document.getElementById('contadorIndicadores');
-            if (contador) contador.innerText = `${indicadoresMulti.length} seleccionados`;
-            document.body.removeChild(modal);
-            dibujarGrafico();
-        };
-
-        cancelarBtn.onclick = () => {
-            document.body.removeChild(modal);
-        };
-    }
-
-    function ordenarJugadoresPorPrioridad(jugadoresArray) {
-        const statsMap = new Map();
-        for (let p of participaciones) {
-            const jug = jugadoresArray.find(j => j.id === p.jugadorId);
-            if (!jug) continue;
-            if (!statsMap.has(jug.id)) {
-                statsMap.set(jug.id, {
-                    id: jug.id,
-                    nombre: jug.nombre,
-                    machsGanados: 0,
-                    patas: 0,
-                    pollonas: 0,
-                    capicuas: 0,
-                    pegado: 0,
-                    paseManoDados: 0,
-                    empatesParticipados: 0,
-                    empatesGanados: 0,
-                    forros: 0,
-                    aguas: 0
-                });
-            }
-            const s = statsMap.get(jug.id);
-            s.machsGanados += p.machsGanados || 0;
-            s.patas += p.patasNetas || 0;
-            s.pollonas += p.pollonas || 0;
-            s.capicuas += p.capicuas || 0;
-            s.pegado += p.pegado || 0;
-            s.paseManoDados += p.paseManoDados || 0;
-            s.empatesParticipados += p.empatesParticipados || 0;
-            s.empatesGanados += p.empatesGanados || 0;
-            s.forros += p.forros || 0;
-            s.aguas += p.aguas || 0;
-        }
-        const jugadoresConStats = Array.from(statsMap.values());
-        jugadoresConStats.sort((a, b) => {
-            if (a.machsGanados !== b.machsGanados) return b.machsGanados - a.machsGanados;
-            if (a.patas !== b.patas) return b.patas - a.patas;
-            if (a.pollonas !== b.pollonas) return b.pollonas - a.pollonas;
-            if (a.capicuas !== b.capicuas) return b.capicuas - a.capicuas;
-            if (a.pegado !== b.pegado) return b.pegado - a.pegado;
-            if (a.paseManoDados !== b.paseManoDados) return b.paseManoDados - a.paseManoDados;
-            if (a.empatesParticipados !== b.empatesParticipados) return b.empatesParticipados - a.empatesParticipados;
-            if (a.empatesGanados !== b.empatesGanados) return b.empatesGanados - a.empatesGanados;
-            if (a.forros !== b.forros) return a.forros - b.forros;
-            if (a.aguas !== b.aguas) return a.aguas - b.aguas;
-            return a.nombre.localeCompare(b.nombre);
-        });
-        return jugadoresConStats.map(s => ({ id: s.id, nombre: s.nombre }));
-    }
-
-    function renderizarChecklistJugadores() {
-        const container = document.getElementById('jugadoresChecklist');
-        if (!container) return;
-        container.innerHTML = '';
-        if (jugadores.length === 0) {
-            container.innerHTML = '<p style="color:gray">No hay jugadores registrados</p>';
-            return;
-        }
-        const jugadoresOrdenados = ordenarJugadoresPorPrioridad(jugadores);
-        jugadoresOrdenados.forEach((j, idx) => {
-            const label = document.createElement('label');
-            label.innerHTML = `<span>${idx+1}º ${escapeHtml(j.nombre)}</span><input type="checkbox" value="${j.id}" class="check-jugador">`;
-            container.appendChild(label);
-        });
-        const checks = document.querySelectorAll('.check-jugador');
-        checks.forEach(cb => cb.checked = true);
-        actualizarCheckTodos();
-        checks.forEach(cb => cb.addEventListener('change', () => {
-            actualizarCheckTodos();
-            dibujarGrafico();
-        }));
-    }
-
-    function actualizarCheckTodos() {
-        const checks = document.querySelectorAll('.check-jugador');
-        const checkTodos = document.getElementById('seleccionarTodos');
-        if (!checkTodos) return;
-        const todosMarcados = checks.length > 0 && Array.from(checks).every(cb => cb.checked);
-        checkTodos.checked = todosMarcados;
-    }
-
-    function seleccionarTodos(estado) {
-        const checks = document.querySelectorAll('.check-jugador');
-        checks.forEach(cb => cb.checked = estado);
-        actualizarCheckTodos();
-        dibujarGrafico();
-    }
-
-    function obtenerDatosPorJugadorConMachsJugados(idsJugadores, indicadorKey, desde, hasta) {
-        const machsReales = contarMachsReales({ machs, dias }, desde, hasta);
-        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
-        const mapa = new Map();
-        for (let id of idsJugadores) {
-            const jug = jugadores.find(j => j.id == id);
-            if (jug) mapa.set(id, { nombre: jug.nombre, total: 0, machsJugados: 0 });
-        }
-        
-        for (let [key, valor] of machsReales) {
-            const [diaId, jugadorId] = key.split('-');
-            const jId = parseInt(jugadorId);
-            if (mapa.has(jId)) {
-                mapa.get(jId).machsJugados += valor;
-            }
-        }
-        
-        for (let p of participacionesFiltradas) {
-            if (mapa.has(p.jugadorId)) {
-                let valor = 0;
-                if (indicadorKey === 'machsJugados') {
-                    valor = mapa.get(p.jugadorId).machsJugados;
-                } else if (indicadorKey === 'machsPerdidos') {
-                    const machsJugados = mapa.get(p.jugadorId).machsJugados;
-                    const machsGanados = p.machsGanados || 0;
-                    valor = machsJugados - machsGanados;
-                } else {
-                    valor = p[indicadorKey] || 0;
-                }
-                mapa.get(p.jugadorId).total += valor;
-            }
-        }
-        
-        for (let [id, data] of mapa) {
-            if (indicadorKey === 'machsJugados') {
-                data.total = data.machsJugados;
-            } else if (indicadorKey === 'machsPerdidos') {
-                data.total = data.machsJugados - (data.total || 0);
-                if (data.total < 0) data.total = 0;
-            }
-        }
-        
-        return Array.from(mapa.values());
-    }
-
-    function obtenerDatosMultiIndicadorConMachsJugados(idsJugadores, indicadoresKeys, desde, hasta) {
-        const machsReales = contarMachsReales({ machs, dias }, desde, hasta);
-        const participacionesFiltradas = filtrarParticipacionesPorFecha(desde, hasta);
-        
-        const mapa = new Map();
-        for (let id of idsJugadores) {
-            const jug = jugadores.find(j => j.id == id);
-            if (jug) mapa.set(id, { nombre: jug.nombre, valores: {}, machsJugados: 0 });
-        }
-        
-        for (let [key, valor] of machsReales) {
-            const [diaId, jugadorId] = key.split('-');
-            const jId = parseInt(jugadorId);
-            if (mapa.has(jId)) {
-                mapa.get(jId).machsJugados += valor;
-            }
-        }
-        
-        for (let p of participacionesFiltradas) {
-            if (mapa.has(p.jugadorId)) {
-                const entry = mapa.get(p.jugadorId);
-                for (let key of indicadoresKeys) {
-                    if (key === 'machsJugados') {
-                        entry.valores[key] = (entry.valores[key] || 0) + entry.machsJugados;
-                    } else if (key === 'machsPerdidos') {
-                        const machsJugados = entry.machsJugados;
-                        const machsGanados = p.machsGanados || 0;
-                        entry.valores[key] = (entry.valores[key] || 0) + (machsJugados - machsGanados);
+            
+            metricasTiempo.partidas.forEach(partida => {
+                if (partida.ganador) {
+                    const ganador = partida.ganador;
+                    if (tiempoPorJugador[ganador]) {
+                        tiempoPorJugador[ganador].tiempoTotalMs += partida.duracionMs;
+                        tiempoPorJugador[ganador].partidasJugadas++;
                     } else {
-                        entry.valores[key] = (entry.valores[key] || 0) + (p[key] || 0);
-                    }
-                }
-            }
-        }
-        
-        for (let entry of mapa.values()) {
-            if (entry.valores['machsPerdidos'] < 0) entry.valores['machsPerdidos'] = 0;
-        }
-        
-        return Array.from(mapa.values());
-    }
-
-    function filtrarParticipacionesPorFecha(desde, hasta) {
-        if (!desde && !hasta) return participaciones;
-        let diasFiltrados = dias;
-        if (desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
-        if (hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
-        const idsDias = new Set(diasFiltrados.map(d => d.id));
-        return participaciones.filter(p => idsDias.has(p.diaId));
-    }
-
-    const coloresBase = [
-        { bg: 'rgba(239, 68, 68, 0.7)', border: 'rgb(220, 38, 38)' },
-        { bg: 'rgba(59, 130, 246, 0.7)', border: 'rgb(37, 99, 235)' },
-        { bg: 'rgba(16, 185, 129, 0.7)', border: 'rgb(5, 150, 105)' },
-        { bg: 'rgba(245, 158, 11, 0.7)', border: 'rgb(217, 119, 6)' },
-        { bg: 'rgba(139, 92, 246, 0.7)', border: 'rgb(124, 58, 237)' },
-        { bg: 'rgba(236, 72, 153, 0.7)', border: 'rgb(219, 39, 119)' },
-        { bg: 'rgba(20, 184, 166, 0.7)', border: 'rgb(13, 148, 136)' },
-        { bg: 'rgba(249, 115, 22, 0.7)', border: 'rgb(234, 88, 12)' }
-    ];
-
-    let ctx = null;
-
-    function inicializarCanvas() {
-        const canvas = document.getElementById('miGrafica');
-        const wrapper = canvas.parentElement;
-        if (wrapper) {
-            const ancho = wrapper.clientWidth - 20;
-            canvas.width = ancho;
-            canvas.height = Math.min(500, Math.max(400, ancho * 0.5));
-            canvas.style.width = `${ancho}px`;
-            canvas.style.height = `${canvas.height}px`;
-        }
-        ctx = canvas.getContext('2d');
-    }
-
-    function actualizarInfoRango(desde, hasta) {
-        const info = document.getElementById('infoRango');
-        if (desde === hasta) info.innerText = `📅 Datos del ${desde}`;
-        else info.innerText = `📅 Datos desde ${desde} hasta ${hasta}`;
-    }
-
-    function redimensionarCanvas() {
-        const canvas = document.getElementById('miGrafica');
-        const wrapper = canvas.parentElement;
-        if (wrapper) {
-            const nuevoAncho = wrapper.clientWidth - 20;
-            if (nuevoAncho > 0) {
-                canvas.width = nuevoAncho;
-                canvas.height = Math.min(500, Math.max(400, nuevoAncho * 0.5));
-                canvas.style.width = `${nuevoAncho}px`;
-                canvas.style.height = `${canvas.height}px`;
-                if (chartInstance) {
-                    chartInstance.resize(canvas.width, canvas.height);
-                }
-            }
-        }
-    }
-
-    async function dibujarGrafico() {
-        const desde = document.getElementById('fechaDesde').value;
-        const hasta = document.getElementById('fechaHasta').value;
-        actualizarInfoRango(desde, hasta);
-        
-        const tipo = document.getElementById('tipoGrafico').value;
-        const modo = document.querySelector('input[name="modo"]:checked').value;
-        const checksJugadores = document.querySelectorAll('.check-jugador:checked');
-        const idsJugadores = Array.from(checksJugadores).map(cb => parseInt(cb.value));
-        
-        if (idsJugadores.length === 0) {
-            if (chartInstance) chartInstance.destroy();
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillStyle = '#ccc';
-            ctx.font = '14px sans-serif';
-            ctx.fillText('Selecciona al menos un jugador', 10, 50);
-            return;
-        }
-        
-        // Redimensionar canvas ANTES de dibujar
-        redimensionarCanvas();
-        
-        if (modo === 'tiempo') {
-            const datosTiempo = obtenerDatosTiempoPorJugador(idsJugadores, desde, hasta);
-            if (datosTiempo.length === 0) {
-                if (chartInstance) chartInstance.destroy();
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ctx.fillStyle = '#ccc';
-                ctx.font = '14px sans-serif';
-                ctx.fillText('No hay datos de tiempo para los jugadores seleccionados', 10, 50);
-                return;
-            }
-            
-            const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores)
-                .filter(j => idsJugadores.includes(j.id))
-                .map(j => j.nombre);
-            
-            const datosOrdenados = jugadoresOrden.map(nombre => datosTiempo.find(d => d.nombre === nombre)).filter(d => d);
-            
-            let valores = [];
-            let label = '';
-            let unidad = '';
-            
-            if (metricaTiempoActual === 'tiempoTotal') {
-                valores = datosOrdenados.map(d => d.tiempoTotal);
-                label = '⏱️ Tiempo total jugado';
-                unidad = 'minutos';
-            } else if (metricaTiempoActual === 'promedioPorMach') {
-                valores = datosOrdenados.map(d => d.promedioPorMach);
-                label = '📊 Promedio de tiempo por mach';
-                unidad = 'minutos';
-            } else {
-                valores = datosOrdenados.map(d => d.tiempoPorMachGanado);
-                label = '🏆 Tiempo por mach ganado';
-                unidad = 'minutos';
-            }
-            
-            const tooltipCallback = (context) => {
-                const valorMinutos = context.raw;
-                return `${context.dataset.label}: ${formatearMinutosAHoras(valorMinutos)}`;
-            };
-            
-            let config;
-            if (tipo === 'pie' || tipo === 'polarArea') {
-                config = {
-                    type: tipo,
-                    data: {
-                        labels: jugadoresOrden,
-                        datasets: [{
-                            data: valores,
-                            backgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].bg),
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: { position: 'right' },
-                            tooltip: { callbacks: { label: tooltipCallback } }
+                        if (!tiempoPorJugador[ganador]) {
+                            tiempoPorJugador[ganador] = { tiempoTotalMs: 0, partidasJugadas: 0, tiempoPromedioMs: 0 };
                         }
+                        tiempoPorJugador[ganador].tiempoTotalMs += partida.duracionMs;
+                        tiempoPorJugador[ganador].partidasJugadas++;
                     }
-                };
-            } else if (tipo === 'radar') {
-                config = {
-                    type: 'radar',
-                    data: {
-                        labels: jugadoresOrden,
-                        datasets: [{
-                            label: label,
-                            data: valores,
-                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                            borderColor: 'rgb(79, 70, 229)',
-                            borderWidth: 2,
-                            pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border)
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: { r: { beginAtZero: true } },
-                        plugins: { tooltip: { callbacks: { label: tooltipCallback } } }
-                    }
-                };
-            } else {
-                config = {
-                    type: tipo === 'line' ? 'line' : 'bar',
-                    data: {
-                        labels: jugadoresOrden,
-                        datasets: [{
-                            label: label,
-                            data: valores,
-                            borderColor: 'rgb(79, 70, 229)',
-                            backgroundColor: tipo === 'line' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.7)',
-                            fill: tipo === 'line' ? false : undefined,
-                            tension: 0.2,
-                            pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border),
-                            pointBorderColor: '#fff',
-                            pointRadius: 5
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: { y: { beginAtZero: true, title: { display: true, text: unidad } } },
-                        plugins: { tooltip: { callbacks: { label: tooltipCallback } } }
-                    }
-                };
-            }
-            
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, config);
-            return;
-        }
-        
-        if (tipo === 'bar') {
-            if (indicadoresMulti.length === 0) {
-                alert('Selecciona al menos un indicador para el gráfico de barras.');
-                return;
-            }
-            const datosMulti = obtenerDatosMultiIndicadorConMachsJugados(idsJugadores, indicadoresMulti, desde, hasta);
-            const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
-            const datosOrdenados = jugadoresOrden.map(nom => datosMulti.find(d => d.nombre === nom)).filter(d => d);
-            
-            const datasets = indicadoresMulti.map((key, idx) => {
-                const color = coloresBase[idx % coloresBase.length];
-                const label = TODOS_INDICADORES.find(i => i.key === key).label;
-                return {
-                    label: label,
-                    data: datosOrdenados.map(j => j.valores[key] || 0),
-                    backgroundColor: color.bg,
-                    borderColor: color.border,
-                    borderWidth: 1
-                };
-            });
-            const config = {
-                type: 'bar',
-                data: {
-                    labels: jugadoresOrden,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } }
-                    },
-                    scales: { y: { beginAtZero: true } }
                 }
-            };
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, config);
-            return;
+            });
+            
+            for (let jugador in tiempoPorJugador) {
+                if (tiempoPorJugador[jugador].partidasJugadas > 0) {
+                    tiempoPorJugador[jugador].tiempoPromedioMs = 
+                        tiempoPorJugador[jugador].tiempoTotalMs / tiempoPorJugador[jugador].partidasJugadas;
+                }
+            }
+            
+            return { tiempoPorJugador, jugadores };
         }
         
-        let indicadorKey;
-        const indicadorUnicoSelect = document.getElementById('indicadorUnico');
-        if (!indicadorUnicoSelect) return;
-        indicadorKey = indicadorUnicoSelect.value;
+        // Variables para gráficos
+        let graficoPatasGanadas = null;
+        let graficoCapicuas = null;
+        let graficoPuntosContra = null;
+        let graficoTiempoPromedio = null;
+        let graficoTiempoTotal = null;
         
-        const datos = obtenerDatosPorJugadorConMachsJugados(idsJugadores, indicadorKey, desde, hasta);
-        const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
-        const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
-        const datosOrdenados = jugadoresOrden.map(nom => datos.find(d => d.nombre === nom)?.total || 0);
-        
-        let config;
-        if (tipo === 'line') {
-            config = {
-                type: 'line',
-                data: {
-                    labels: jugadoresOrden,
-                    datasets: [{
-                        label: nombreIndicador,
-                        data: datosOrdenados,
-                        borderColor: 'rgb(79, 70, 229)',
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        fill: false,
-                        tension: 0.2,
-                        pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border),
-                        pointBorderColor: '#fff',
-                        pointRadius: 5
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } } }
-            };
-        } else if (tipo === 'radar') {
-            config = {
-                type: 'radar',
-                data: {
-                    labels: jugadoresOrden,
-                    datasets: [{
-                        label: nombreIndicador,
-                        data: datosOrdenados,
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        borderColor: 'rgb(79, 70, 229)',
-                        borderWidth: 2,
-                        pointBackgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].border)
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true } } }
-            };
-        } else if (tipo === 'pie' || tipo === 'polarArea') {
-            config = {
-                type: tipo,
-                data: {
-                    labels: jugadoresOrden,
-                    datasets: [{
-                        data: datosOrdenados,
-                        backgroundColor: jugadoresOrden.map((_, idx) => coloresBase[idx % coloresBase.length].bg),
-                        borderColor: '#fff'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right' } } }
-            };
-        } else {
-            config = {
+        // Actualizar gráficos de juego
+        function actualizarGraficosJuego() {
+            const estadisticas = getEstadisticasDia();
+            const jugadores = Object.keys(estadisticas);
+            const patasGanadas = jugadores.map(j => estadisticas[j].patasGanadas);
+            const capicuas = jugadores.map(j => estadisticas[j].capicuas);
+            const puntosContra = jugadores.map(j => estadisticas[j].puntosEnContra);
+            
+            // Actualizar resumen
+            const resumenDiv = document.getElementById('resumenJugadoresDia');
+            if (resumenDiv && jugadores.length > 0) {
+                let resumenHtml = '<h3>📋 Resumen del día</h3><table class="tabla-estadisticas"><thead><tr><th>Jugador</th><th>Patas ganadas</th><th>Capicúas</th><th>Puntos en contra</th></tr></thead><tbody>';
+                jugadores.forEach(jugador => {
+                    resumenHtml += `<tr>
+                        <td>${jugador}</td>
+                        <td>${estadisticas[jugador].patasGanadas}</td>
+                        <td>${estadisticas[jugador].capicuas}</td>
+                        <td>${estadisticas[jugador].puntosEnContra}</td>
+                    </tr>`;
+                });
+                resumenHtml += '</tbody></table>';
+                resumenDiv.innerHTML = resumenHtml;
+            } else if (resumenDiv) {
+                resumenDiv.innerHTML = '<p>No hay datos para el día de hoy. Juega algunos machs para ver estadísticas.</p>';
+            }
+            
+            // Gráfico de patas ganadas
+            if (graficoPatasGanadas) graficoPatasGanadas.destroy();
+            const ctx1 = document.getElementById('graficoPatasGanadas').getContext('2d');
+            graficoPatasGanadas = new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: jugadoresOrden,
+                    labels: jugadores,
                     datasets: [{
-                        label: nombreIndicador,
-                        data: datosOrdenados,
-                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
-                        borderColor: 'rgb(124, 58, 237)',
+                        label: 'Patas ganadas',
+                        data: patasGanadas,
+                        backgroundColor: '#2ecc71',
+                        borderColor: '#27ae60',
                         borderWidth: 1
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } } }
-            };
-        }
-        
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, config);
-    }
-
-    function exportarCSV() {
-        const desde = document.getElementById('fechaDesde').value;
-        const hasta = document.getElementById('fechaHasta').value;
-        const modo = document.querySelector('input[name="modo"]:checked').value;
-        
-        if (modo === 'tiempo') {
-            const checks = document.querySelectorAll('.check-jugador:checked');
-            const ids = Array.from(checks).map(cb => parseInt(cb.value));
-            if (ids.length === 0) return;
-            
-            const datosTiempo = obtenerDatosTiempoPorJugador(ids, desde, hasta);
-            let csv = "Jugador,Tiempo total (min),Promedio por mach (min),Tiempo por mach ganado (min)\n";
-            for (let d of datosTiempo) {
-                csv += `"${d.nombre}",${d.tiempoTotal},${d.promedioPorMach},${d.tiempoPorMachGanado}\n`;
-            }
-            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
-            saveAs(blob, `pintintin_tiempo_jugadores_${new Date().toISOString().slice(0,19)}.csv`);
-            return;
-        }
-        
-        const checks = document.querySelectorAll('.check-jugador:checked');
-        const ids = Array.from(checks).map(cb => parseInt(cb.value));
-        if (ids.length === 0) return;
-        
-        const tipo = document.getElementById('tipoGrafico').value;
-        if (tipo === 'bar') {
-            const datosMulti = obtenerDatosMultiIndicadorConMachsJugados(ids, indicadoresMulti, desde, hasta);
-            let csv = `"Jugador",${indicadoresMulti.map(k => `"${TODOS_INDICADORES.find(i=>i.key===k).label}"`).join(',')}\n`;
-            datosMulti.forEach(j => {
-                csv += `"${j.nombre}",${indicadoresMulti.map(k => j.valores[k] || 0).join(',')}\n`;
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, stepSize: 1 } }
+                }
             });
-            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
-            saveAs(blob, `pintintin_datos_multi_${new Date().toISOString().slice(0,19)}.csv`);
-        } else {
-            const indicadorUnico = document.getElementById('indicadorUnico');
-            if (!indicadorUnico) return;
-            const indicadorKey = indicadorUnico.value;
-            const datos = obtenerDatosPorJugadorConMachsJugados(ids, indicadorKey, desde, hasta);
-            const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
-            let csv = `"Jugador","${nombreIndicador}"\n`;
-            datos.forEach(d => { csv += `"${d.nombre}",${d.total}\n`; });
-            const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
-            saveAs(blob, `pintintin_datos_${indicadorKey}_${new Date().toISOString().slice(0,19)}.csv`);
-        }
-    }
-
-    function exportarPDF() {
-        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-            alert('❌ La librería PDF no está cargada. Recarga la página.');
-            return;
-        }
-        
-        const { jsPDF } = window.jspdf || jspdf;
-        const doc = new jsPDF('landscape', 'mm', 'a4');
-        
-        doc.setFontSize(16);
-        doc.text("Gráficas - Dominó Pintintín", 20, 20);
-        doc.setFontSize(10);
-        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Período: ${document.getElementById('fechaDesde').value || 'inicio'} al ${document.getElementById('fechaHasta').value || 'hoy'}`, 20, 38);
-        
-        const canvas = document.getElementById('miGrafica');
-        if (canvas && chartInstance) {
-            const imgData = canvas.toDataURL('image/png');
-            doc.addImage(imgData, 'PNG', 20, 45, 250, 140);
-        } else {
-            doc.text("No hay gráfico para exportar", 20, 60);
-        }
-        
-        doc.save(`pintintin_graficas_${new Date().toISOString().slice(0,19)}.pdf`);
-    }
-
-    function descargarImagen() {
-        if (!chartInstance) return alert('Primero genera un gráfico');
-        const canvas = document.getElementById('miGrafica');
-        const link = document.createElement('a');
-        link.download = `pintintin_grafico_${new Date().toISOString().slice(0,19)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    window.addEventListener('resize', function() {
-        if (chartInstance) {
-            setTimeout(() => {
-                redimensionarCanvas();
-                chartInstance.resize();
-                chartInstance.update();
-            }, 100);
-        }
-    });
-
-    async function iniciarModulo() {
-        cargarDatosLocales();
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        if (jugadores.length === 0) {
-            document.querySelector('.graficas-container').innerHTML = '<p class="mensaje-carga">⚠️ No hay datos. Inicia un día en la app principal primero.</p>';
-            return;
+            
+            // Gráfico de capicuas
+            if (graficoCapicuas) graficoCapicuas.destroy();
+            const ctx2 = document.getElementById('graficoCapicuas').getContext('2d');
+            graficoCapicuas = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: jugadores,
+                    datasets: [{
+                        label: 'Capicúas',
+                        data: capicuas,
+                        backgroundColor: '#e74c3c',
+                        borderColor: '#c0392b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, stepSize: 1 } }
+                }
+            });
+            
+            // Gráfico de puntos en contra
+            if (graficoPuntosContra) graficoPuntosContra.destroy();
+            const ctx3 = document.getElementById('graficoPuntosContra').getContext('2d');
+            graficoPuntosContra = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: jugadores,
+                    datasets: [{
+                        label: 'Puntos en contra',
+                        data: puntosContra,
+                        backgroundColor: '#3498db',
+                        borderColor: '#2980b9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         }
         
-        inicializarFechas();
-        renderizarChecklistJugadores();
-        actualizarPanelIndicador();
+        // Actualizar gráficos de tiempo
+        function actualizarGraficosTiempo() {
+            const { tiempoPorJugador, jugadores } = getMetricasTiempoPorJugador();
+            const nombresJugadores = jugadores.map(j => j.nombre);
+            const tiempoPromedioMin = nombresJugadores.map(n => 
+                (tiempoPorJugador[n]?.tiempoPromedioMs || 0) / 60000
+            );
+            const tiempoTotalHoras = nombresJugadores.map(n => 
+                (tiempoPorJugador[n]?.tiempoTotalMs || 0) / 3600000
+            );
+            
+            // Tabla de métricas
+            const tablaBody = document.querySelector('#tablaMetricasTiempo tbody');
+            if (tablaBody) {
+                tablaBody.innerHTML = '';
+                nombresJugadores.forEach(nombre => {
+                    const fila = tablaBody.insertRow();
+                    fila.innerHTML = `
+                        <td>${nombre}</td>
+                        <td>${tiempoTotalHoras[nombresJugadores.indexOf(nombre)].toFixed(2)} horas</td>
+                        <td>${tiempoPromedioMin[nombresJugadores.indexOf(nombre)].toFixed(2)} minutos</td>
+                        <td>${tiempoPorJugador[nombre]?.partidasJugadas || 0}</td>
+                    `;
+                });
+            }
+            
+            // Gráfico tiempo promedio
+            if (graficoTiempoPromedio) graficoTiempoPromedio.destroy();
+            const ctx4 = document.getElementById('graficoTiempoPromedio').getContext('2d');
+            graficoTiempoPromedio = new Chart(ctx4, {
+                type: 'bar',
+                data: {
+                    labels: nombresJugadores,
+                    datasets: [{
+                        label: 'Tiempo promedio (minutos)',
+                        data: tiempoPromedioMin,
+                        backgroundColor: '#f39c12',
+                        borderColor: '#e67e22',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutos' } } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw.toFixed(2)} minutos`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico tiempo total
+            if (graficoTiempoTotal) graficoTiempoTotal.destroy();
+            const ctx5 = document.getElementById('graficoTiempoTotal').getContext('2d');
+            graficoTiempoTotal = new Chart(ctx5, {
+                type: 'bar',
+                data: {
+                    labels: nombresJugadores,
+                    datasets: [{
+                        label: 'Tiempo total jugado (horas)',
+                        data: tiempoTotalHoras,
+                        backgroundColor: '#9b59b6',
+                        borderColor: '#8e44ad',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas' } } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw.toFixed(2)} horas`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
         
-        inicializarCanvas();
-        
-        setTimeout(() => {
-            redimensionarCanvas();
-            dibujarGrafico();
-        }, 200);
-        
-        document.getElementById('fechaDesde').addEventListener('change', dibujarGrafico);
-        document.getElementById('fechaHasta').addEventListener('change', dibujarGrafico);
-        document.getElementById('tipoGrafico').addEventListener('change', () => {
-            actualizarPanelIndicador();
-            dibujarGrafico();
-        });
-        document.getElementById('seleccionarTodos').addEventListener('change', (e) => seleccionarTodos(e.target.checked));
-        
-        const radios = document.querySelectorAll('input[name="modo"]');
-        radios.forEach(radio => radio.addEventListener('change', () => {
-            actualizarPanelIndicador();
-            dibujarGrafico();
-        }));
-        
-        document.getElementById('btnDescargarImagen').addEventListener('click', descargarImagen);
-        document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
-        document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
-        
-        const btnVolver = document.getElementById('btnVolver');
-        if (btnVolver) {
-            btnVolver.onclick = () => {
-                sessionStorage.setItem('volviendoDeGraficas', 'true');
-                window.location.href = 'index.html';
+        // Exportar a PDF (sin emojis)
+        function exportarPDF() {
+            const element = document.getElementById('reporteEstadisticas');
+            const opciones = {
+                margin: [10, 10, 10, 10],
+                filename: `estadisticas_pintintin_${formatearFechaDDMMYYYY(new Date())}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
+            
+            // Reemplazar temporalmente emojis en el título
+            const tituloOriginal = document.querySelector('h1').innerHTML;
+            document.querySelector('h1').innerHTML = 'Estadisticas - Domino Pintintin';
+            
+            html2pdf().set(opciones).from(element).save().then(() => {
+                document.querySelector('h1').innerHTML = tituloOriginal;
+            });
         }
-    }
-
-    function inicializarFechas() {
-        const min = obtenerMinFecha();
-        const max = obtenerMaxFecha();
-        document.getElementById('fechaDesde').value = min;
-        document.getElementById('fechaHasta').value = max;
-    }
-
-    function obtenerMinFecha() {
-        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
-        return fechas[0] || obtenerFechaActual();
-    }
-    
-    function obtenerMaxFecha() {
-        const fechas = dias.map(d => d.fecha).filter(f => f).sort();
-        return fechas[fechas.length - 1] || obtenerFechaActual();
-    }
-    
-    function obtenerFechaActual() {
-        const hoy = new Date();
-        return hoy.toISOString().slice(0,10);
-    }
-
-    window.onload = iniciarModulo;
-</script>
+        
+        // Alternar entre juego y tiempo
+        function setupSelector() {
+            const radios = document.querySelectorAll('input[name="tipoEstadistica"]');
+            const contenidoJuego = document.getElementById('contenidoJuego');
+            const contenidoTiempo = document.getElementById('contenidoTiempo');
+            
+            radios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'juego') {
+                        contenidoJuego.style.display = 'block';
+                        contenidoTiempo.style.display = 'none';
+                        actualizarGraficosJuego();
+                    } else {
+                        contenidoJuego.style.display = 'none';
+                        contenidoTiempo.style.display = 'block';
+                        actualizarGraficosTiempo();
+                    }
+                });
+            });
+        }
+        
+        // Inicializar
+        function inicializar() {
+            const fechaActualSpan = document.getElementById('fechaActual');
+            fechaActualSpan.innerHTML = `Estadísticas del día: ${formatearFechaDDMMYYYY(new Date())}`;
+            
+            actualizarGraficosJuego();
+            setupSelector();
+        }
+        
+        document.addEventListener('DOMContentLoaded', inicializar);
+    </script>
 </body>
 </html>
