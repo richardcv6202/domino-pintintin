@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar tiempos de machs - Dominó Pintintín</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        h1 {
+            color: #1e293b;
+            text-align: center;
+            border-bottom: 3px solid #8b5cf6;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .warning p {
+            margin: 0;
+        }
+        .info {
+            background: #e0e7ff;
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 0.5rem 0;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #7c3aed;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: #475569;
+        }
+        .btn-secondary:hover {
+            background: #334155;
+        }
+        .btn-volver {
+            background: #475569;
+            margin-top: 1rem;
+        }
+        .btn-volver:hover {
+            background: #334155;
+        }
+        .resultado {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .exito {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #86efac;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .progreso {
+            background: #e2e8f0;
+            border-radius: 0.5rem;
+            height: 20px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        .progreso-bar {
+            background: #8b5cf6;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            text-align: center;
+            color: white;
+            font-size: 0.7rem;
+            line-height: 20px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .stat-card {
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        /* ==================== MODALES PERSONALIZADOS ==================== */
+        .modal-personalizado {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(3px); } }
+        .modal-contenido {
+            background: white;
+            border-radius: 1.5rem;
+            max-width: 450px;
+            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.2s ease-out;
+        }
+        @keyframes modalSlideIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header {
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal-header .btn-cerrar-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .modal-header .btn-cerrar-modal:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .modal-body { padding: 1.5rem; font-size: 0.95rem; color: #1e293b; line-height: 1.5; text-align: center; }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .modal-footer .btn-aceptar { background: #8b5cf6; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+        .modal-footer .btn-aceptar:hover { background: #7c3aed; }
+        .modal-footer .btn-confirmar { background: #10b981; }
+        .modal-footer .btn-confirmar:hover { background: #059669; }
+        .modal-footer .btn-cancelar { background: #6b7280; }
+        .modal-footer .btn-cancelar:hover { background: #4b5563; }
+        .modal-peligro .modal-header { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .toast-personalizado {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.7rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: toastEntrada 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        @keyframes toastEntrada { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .toast-salida { animation: toastSalida 0.3s ease-in forwards; }
+        @keyframes toastSalida { to { opacity: 0; transform: translateX(-50%) translateY(20px); } }
+        .toast-exito { background: #10b981; }
+        .toast-error { background: #dc2626; }
+        .toast-info { background: #8b5cf6; }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .stats { flex-direction: column; }
+            .modal-footer { flex-direction: column; }
+            .modal-footer button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛠️ Actualizador de tiempos para machs antiguos</h1>
+    
+    <div class="warning">
+        <p>⚠️ <strong>ADVERTENCIA:</strong> Esta herramienta modificará los machs que no tengan <code>fechaHoraInicio</code>.</p>
+        <p>Se asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.</p>
+        <p>📌 <strong>Esta herramienta es de USO ÚNICO.</strong> No la incluyas en la aplicación principal.</p>
+    </div>
+    
+    <div class="info">
+        <p>📋 <strong>Instrucciones:</strong></p>
+        <ol>
+            <li>Haz clic en "🔍 Analizar machs antiguos" para ver cuántos machs necesitan actualización.</li>
+            <li>Luego haz clic en "🔄 Actualizar machs" para asignar horas de inicio aleatorias.</li>
+            <li>Después de la actualización, verifica en la aplicación que los machs tengan hora de inicio.</li>
+            <li>Esta herramienta NO afecta los machs que ya tienen <code>fechaHoraInicio</code>.</li>
+        </ol>
+    </div>
+    
+    <button id="btnAnalizar">🔍 Analizar machs antiguos</button>
+    <button id="btnActualizar" class="btn-secondary" disabled>🔄 Actualizar machs</button>
+    
+    <div id="progresoContainer" style="display:none;">
+        <div class="progreso">
+            <div id="progresoBar" class="progreso-bar">0%</div>
+        </div>
+    </div>
+    
+    <div id="resultado" class="resultado">
+        <p style="color: #64748b; text-align:center;">Haz clic en "Analizar machs antiguos" para comenzar.</p>
+    </div>
+
+    <button id="btnVolverAdmin" class="btn-volver">← Volver al panel de administración</button>
+</div>
+
+<script>
+    // ==================== MODALES PERSONALIZADOS ====================
+    function mostrarAlerta(mensaje, titulo = 'Información', tipo = 'info') {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = `modal-personalizado modal-alerta`;
+            modal.innerHTML = `
+                <div class="modal-contenido">
+                    <div class="modal-header">
+                        <h3>${tipo === 'error' ? '❌ Error' : (tipo === 'exito' ? '✅ Éxito' : 'ℹ️ Información')}</h3>
+                        <button class="btn-cerrar-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${mensaje}</div>
+                    <div class="modal-footer"><button class="btn-aceptar">Aceptar</button></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const cerrar = () => { modal.remove(); resolve(); };
+            modal.querySelector('.btn-aceptar').onclick = cerrar;
+            modal.querySelector('.btn-cerrar-modal').onclick = cerrar;
+            modal.onclick = (e) => { if (e.target === modal) cerrar(); };
+        });
+    }
+
+    function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = `modal-personalizado ${tipo === 'peligro' ? 'modal-peligro' : ''}`;
+            modal.innerHTML = `
+                <div class="modal-contenido">
+                    <div class="modal-header">
+                        <h3>${tipo === 'peligro' ? '⚠️ ' : '❓ '}${titulo}</h3>
+                        <button class="btn-cerrar-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${mensaje}</div>
+                    <div class="modal-footer">
+                        <button class="btn-cancelar">Cancelar</button>
+                        <button class="btn-confirmar">Aceptar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const resolver = (resultado) => { modal.remove(); resolve(resultado); };
+            modal.querySelector('.btn-confirmar').onclick = () => resolver(true);
+            modal.querySelector('.btn-cancelar').onclick = () => resolver(false);
+            modal.querySelector('.btn-cerrar-modal').onclick = () => resolver(false);
+            modal.onclick = (e) => { if (e.target === modal) resolver(false); };
+        });
+    }
+
+    function mostrarToast(mensaje, tipo = 'info', duracion = 2500) {
+        const toast = document.createElement('div');
+        toast.className = `toast-personalizado toast-${tipo}`;
+        toast.innerHTML = `${tipo === 'exito' ? '✅ ' : tipo === 'error' ? '❌ ' : 'ℹ️ '}${mensaje}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-salida');
+            setTimeout(() => toast.remove(), 300);
+        }, duracion);
+    }
+
+    const STORAGE_KEYS = {
+        jugadores: 'pintintin_jugadores',
+        dias: 'pintintin_dias',
+        participaciones: 'pintintin_participaciones',
+        machs: 'pintintin_machs',
+        preferencia: 'pintintin_preferencia'
+    };
+
+    function minutosAleatorios(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function restarMinutos(fechaISO, minutos) {
+        const fecha = new Date(fechaISO);
+        fecha.setMinutes(fecha.getMinutes() - minutos);
+        return fecha.toISOString();
+    }
+
+    function cargarDatos() {
+        try {
+            const machs = JSON.parse(localStorage.getItem(STORAGE_KEYS.machs)) || [];
+            return machs;
+        } catch(e) {
+            console.error("Error cargando datos:", e);
+            return [];
+        }
+    }
+
+    function guardarDatos(machs) {
+        localStorage.setItem(STORAGE_KEYS.machs, JSON.stringify(machs));
+    }
+
+    async function analizarMachs() {
+        const machs = cargarDatos();
+        const machsSinInicio = machs.filter(m => !m.fechaHoraInicio || m.fechaHoraInicio === null);
+        
+        const resultadoDiv = document.getElementById('resultado');
+        const btnActualizar = document.getElementById('btnActualizar');
+        
+        if (machsSinInicio.length === 0) {
+            resultadoDiv.innerHTML = `
+                <div class="exito" style="padding:1rem;">
+                    ✅ <strong>No hay machs antiguos.</strong><br>
+                    Todos los machs ya tienen <code>fechaHoraInicio</code>. No es necesario actualizar nada.
+                </div>
+            `;
+            btnActualizar.disabled = true;
+            mostrarToast("No hay machs antiguos que actualizar", "exito", 2000);
+        } else {
+            resultadoDiv.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${machs.length}</div>
+                        <div>Total machs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#f59e0b;">${machsSinInicio.length}</div>
+                        <div>Machs sin inicio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#10b981;">${machs.length - machsSinInicio.length}</div>
+                        <div>Machs con inicio</div>
+                    </div>
+                </div>
+                <div class="warning" style="margin-top:0.5rem;">
+                    <p>⚠️ Se encontraron <strong>${machsSinInicio.length}</strong> machs sin hora de inicio.</p>
+                    <p>Se les asignará una hora aleatoria entre 8 y 15 minutos antes de su hora de finalización.</p>
+                </div>
+            `;
+            btnActualizar.disabled = false;
+            mostrarToast(`Se encontraron ${machsSinInicio.length} machs sin hora de inicio`, "info", 2000);
+        }
+        
+        window.machsPendientes = machsSinInicio;
+    }
+    
+    async function actualizarMachs() {
+        if (!window.machsPendientes || window.machsPendientes.length === 0) {
+            await mostrarAlerta('No hay machs pendientes. Ejecuta "Analizar" primero.', '⚠️ Atención', 'error');
+            return;
+        }
+        
+        const machs = cargarDatos();
+        const machsSinInicio = window.machsPendientes;
+        const total = machsSinInicio.length;
+        
+        if (total === 0) {
+            await mostrarAlerta('No hay machs para actualizar.', '⚠️ Atención', 'error');
+            return;
+        }
+        
+        const confirmado = await mostrarConfirmacion(
+            `⚠️ ¿Estás seguro de actualizar ${total} machs?\n\nSe asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.\n\nEsta acción NO se puede deshacer.`,
+            '⚠️ Confirmación',
+            'peligro'
+        );
+        
+        if (!confirmado) return;
+        
+        const progresoContainer = document.getElementById('progresoContainer');
+        const progresoBar = document.getElementById('progresoBar');
+        const resultadoDiv = document.getElementById('resultado');
+        const btnActualizar = document.getElementById('btnActualizar');
+        const btnAnalizar = document.getElementById('btnAnalizar');
+        
+        progresoContainer.style.display = 'block';
+        btnActualizar.disabled = true;
+        btnAnalizar.disabled = true;
+        
+        let actualizados = 0;
+        let errores = 0;
+        
+        for (let i = 0; i < machs.length; i++) {
+            const mach = machs[i];
+            if (!mach.fechaHoraInicio || mach.fechaHoraInicio === null) {
+                if (mach.fechaHora) {
+                    const minutos = minutosAleatorios(8, 15);
+                    const nuevaHoraInicio = restarMinutos(mach.fechaHora, minutos);
+                    mach.fechaHoraInicio = nuevaHoraInicio;
+                    actualizados++;
+                } else {
+                    errores++;
+                    console.warn(`Mach #${mach.numeroMach} (ID: ${mach.id}) no tiene fechaHora`, mach);
+                }
+            }
+            
+            const porcentaje = Math.round(((i + 1) / machs.length) * 100);
+            progresoBar.style.width = `${porcentaje}%`;
+            progresoBar.textContent = `${porcentaje}%`;
+            await new Promise(resolve => setTimeout(resolve, 5));
+        }
+        
+        guardarDatos(machs);
+        
+        resultadoDiv.innerHTML = `
+            <div class="exito" style="padding:1rem;">
+                ✅ <strong>Actualización completada</strong><br>
+                Machs actualizados: <strong>${actualizados}</strong><br>
+                Errores (sin fechaHora): <strong>${errores}</strong>
+            </div>
+            <div class="info" style="margin-top:1rem;">
+                <p>📌 <strong>Recomendación:</strong> Abre la aplicación principal y verifica que los machs tengan hora de inicio visible en el módulo "Ver machs por día".</p>
+                <p>⚠️ Puedes cerrar esta herramienta. No es necesario volver a ejecutarla.</p>
+            </div>
+        `;
+        
+        mostrarToast(`Actualización completada: ${actualizados} machs actualizados`, "exito", 3000);
+        
+        btnAnalizar.disabled = false;
+        btnActualizar.disabled = true;
+        window.machsPendientes = null;
+        
+        setTimeout(() => {
+            progresoContainer.style.display = 'none';
+        }, 3000);
+    }
+    
+    function volverAdmin() {
+        window.location.href = 'admin.html';
+    }
+    
+    document.getElementById('btnAnalizar').addEventListener('click', analizarMachs);
+    document.getElementById('btnActualizar').addEventListener('click', actualizarMachs);
+    document.getElementById('btnVolverAdmin').addEventListener('click', volverAdmin);
+    
+    console.log("🛠️ Herramienta de actualización de tiempos lista.");
+</script>
+</body>
+</html>
