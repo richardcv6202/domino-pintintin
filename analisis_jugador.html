@@ -18,6 +18,7 @@
         .grupo-filtro { flex: 1; min-width: 150px; }
         .grupo-filtro label { display: block; font-size: 0.7rem; font-weight: bold; color: #475569; margin-bottom: 0.25rem; }
         .grupo-filtro input, .grupo-filtro select, .grupo-filtro button { width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: white; font-size: 0.85rem; }
+        .grupo-filtro input[type="date"] { padding: 0.5rem; }
         .grupo-filtro button { background: #8b5cf6; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .grupo-filtro button:hover { background: #7c3aed; }
         .btn-excel { background: #10b981 !important; }
@@ -48,16 +49,12 @@
         .estrellas { display: flex; gap: 0.2rem; }
         .estrella { font-size: 1.2rem; color: #cbd5e1; }
         .estrella.activa { color: #fbbf24; }
-        .radar-item { display: flex; align-items: center; gap: 0.5rem; margin: 0.6rem 0; }
-        .radar-label { width: 95px; font-size: 0.75rem; font-weight: bold; }
-        .radar-bar { flex: 1; height: 18px; background: #e2e8f0; border-radius: 20px; overflow: hidden; }
-        .radar-fill { height: 100%; background: linear-gradient(90deg, #8b5cf6, #4f46e5); border-radius: 20px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.3rem; color: white; font-size: 0.65rem; }
         .comparacion-titulo { font-size: 1rem; font-weight: bold; text-align: center; margin: 0.5rem 0 1rem; }
         .acciones { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
         .btn-volver { background: #475569; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.6rem; font-weight: bold; cursor: pointer; transition: background 0.2s; text-decoration: none; display: inline-block; font-size: 0.9rem; }
         .btn-volver:hover { background: #334155; }
         .filtro-fechas { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-        .filtro-fechas .grupo-filtro { min-width: 120px; }
+        .filtro-fechas .grupo-filtro { min-width: 150px; }
         .footer { text-align: center; padding: 1rem; font-size: 0.7rem; color: #64748b; }
         .nota-consistencia { background: #e0e7ff; border-left: 4px solid #8b5cf6; padding: 0.8rem; border-radius: 0.5rem; margin: 1rem 0; font-size: 0.85rem; }
         .insight-card { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; }
@@ -76,7 +73,6 @@
     <div class="nota-consistencia">
         <strong>📌 NOTA SOBRE CONSISTENCIA DE DATOS:</strong><br>
         Este módulo calcula TODOS los indicadores recorriendo mach por mach, sin depender de tablas de participaciones que puedan estar desincronizadas.
-        Esto garantiza que los datos de Patas, Forros y Aguas sean 100% precisos y consistentes con el historial real de juego.
     </div>
 
     <div class="panel">
@@ -89,8 +85,8 @@
                 </select>
             </div>
             <div class="filtro-fechas">
-                <div class="grupo-filtro"><label>📅 Desde</label><input type="date" id="fechaDesde"></div>
-                <div class="grupo-filtro"><label>📅 Hasta</label><input type="date" id="fechaHasta"></div>
+                <div class="grupo-filtro"><label>📅 Desde</label><input type="date" id="fechaDesde" value=""></div>
+                <div class="grupo-filtro"><label>📅 Hasta</label><input type="date" id="fechaHasta" value=""></div>
             </div>
             <div id="selectorComparacion" class="comparador">
                 <div class="grupo-filtro"><label>👤 Jugador 1</label><select id="jugadorComparar1"></select></div>
@@ -104,17 +100,31 @@
     <div id="resultados"></div>
 
     <div class="acciones"><button id="btnCerrar" class="btn-volver">← Cerrar y volver al juego</button></div>
-    <div class="footer">Datos basados en el historial de partidas | Dominó Pintintín v5.3.0</div>
+    <div class="footer">Datos basados en el historial de partidas | Dominó Pintintín v6.0.6</div>
 </div>
 
 <script>
     // ============================================
-    // ANÁLISIS DE RENDIMIENTO - VERSIÓN COMPLETA v6
-    // Incluye Análisis de Eficiencia Relativa
+    // ANÁLISIS DE RENDIMIENTO - VERSIÓN 6.0.6
     // ============================================
 
     let datosReales = { jugadores: [], dias: [], machs: [] };
     let promediosGlobales = {};
+
+    // ==================== FUNCIONES DE FECHAS ====================
+    function formatearFechaDDMMYYYY(fechaISO) {
+        if (!fechaISO) return '';
+        const partes = fechaISO.split('-');
+        if (partes.length !== 3) return fechaISO;
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function formatearFechaParaInput(fechaDDMMYYYY) {
+        if (!fechaDDMMYYYY) return '';
+        const partes = fechaDDMMYYYY.split('/');
+        if (partes.length !== 3) return fechaDDMMYYYY;
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
 
     function cargarDatosReales() {
         try {
@@ -127,17 +137,42 @@
                 if (m.manos === undefined) m.manos = [];
                 if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
             }
-            
-            const fechas = datosReales.dias.map(d => d.fecha).filter(f => f).sort();
-            if (fechas.length) {
-                document.getElementById('fechaDesde').value = fechas[0];
-                document.getElementById('fechaHasta').value = fechas[fechas.length - 1];
-            }
             return true;
         } catch(e) { 
             console.error("Error cargando datos:", e); 
             return false; 
         }
+    }
+
+    function inicializarFechasAnalisis() {
+        const desdeInput = document.getElementById('fechaDesde');
+        const hastaInput = document.getElementById('fechaHasta');
+        
+        if (!desdeInput || !hastaInput) return;
+        
+        // Obtener primera y última fecha real de los machs
+        let fechasConMachs = new Set();
+        for (let m of datosReales.machs) {
+            const dia = datosReales.dias.find(d => d.id === m.diaId);
+            if (dia && dia.fecha) fechasConMachs.add(dia.fecha);
+        }
+        
+        const fechasOrdenadas = Array.from(fechasConMachs).sort();
+        
+        if (fechasOrdenadas.length > 0) {
+            desdeInput.value = fechasOrdenadas[0];
+            hastaInput.value = fechasOrdenadas[fechasOrdenadas.length - 1];
+        } else if (datosReales.dias.length > 0) {
+            const diasOrdenados = [...datosReales.dias].sort((a,b) => a.fecha.localeCompare(b.fecha));
+            desdeInput.value = diasOrdenados[0].fecha;
+            hastaInput.value = diasOrdenados[diasOrdenados.length - 1].fecha;
+        } else {
+            const hoy = new Date().toISOString().slice(0,10);
+            desdeInput.value = hoy;
+            hastaInput.value = hoy;
+        }
+        
+        console.log("📅 Fechas análisis:", desdeInput.value, "hasta", hastaInput.value);
     }
 
     function getFechasFiltro() { 
@@ -276,7 +311,6 @@
         return { efectividad, promedioPatas, eficiencia, machsPerdidos, disciplina };
     }
 
-    // ==================== NUEVAS MÉTRICAS DE EFICIENCIA RELATIVA ====================
     function calcularEficienciaRelativa(s) {
         const forrosPorMach = s.machsJugados ? (s.forros / s.machsJugados).toFixed(3) : 0;
         const aguasPorMach = s.machsJugados ? (s.aguas / s.machsJugados).toFixed(3) : 0;
@@ -290,19 +324,14 @@
         const aguasPorPata = s.patasAcumuladas ? (s.aguas / s.patasAcumuladas).toFixed(4) : 0;
         const erroresPorPata = s.patasAcumuladas ? ((s.forros + s.aguas) / s.patasAcumuladas).toFixed(4) : 0;
         
-        // Índice de Eficiencia Relativa (IER)
-        // IER = (MachsGanados × 10) / (Forros × 5 + Aguas × 1)
         const ierNumerador = s.machsGanados * 10;
         const ierDenominador = (s.forros * 5) + (s.aguas * 1);
         const ier = ierDenominador > 0 ? (ierNumerador / ierDenominador).toFixed(3) : 0;
         
-        // Índice de Disciplina Corregido (IDC)
-        // IDC = (MachsGanados × PatasTotales) / (Forros × 100 + Aguas × 10)
         const idcNumerador = s.machsGanados * s.patasAcumuladas;
         const idcDenominador = (s.forros * 100) + (s.aguas * 10);
         const idc = idcDenominador > 0 ? (idcNumerador / idcDenominador).toFixed(3) : 0;
         
-        // Costo de oportunidad
         const costoPorAgua = s.aguas > 0 ? (s.patasAcumuladas / s.aguas).toFixed(2) : 0;
         const costoPorForro = s.forros > 0 ? (s.patasAcumuladas / s.forros).toFixed(2) : 0;
         
@@ -317,35 +346,30 @@
     function generarInsightsEficiencia(s1, s2, e1, e2) {
         const insights = [];
         
-        // Comparar forros por mach
         if (parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach)) {
             insights.push(`✅ ${s1.nombre} tiene MENOS forros por mach (${e1.forrosPorMach} vs ${e2.forrosPorMach}) → es más disciplinado en evitar forros.`);
         } else {
             insights.push(`⚠️ ${s2.nombre} tiene MENOS forros por mach (${e2.forrosPorMach} vs ${e1.forrosPorMach}) → es más disciplinado en evitar forros.`);
         }
         
-        // Comparar aguas por mach
         if (parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach)) {
             insights.push(`✅ ${s1.nombre} tiene MENOS aguas por mach (${e1.aguasPorMach} vs ${e2.aguasPorMach}) → da menos agua.`);
         } else {
             insights.push(`⚠️ ${s2.nombre} tiene MENOS aguas por mach (${e2.aguasPorMach} vs ${e1.aguasPorMach}) → da menos agua.`);
         }
         
-        // Comparar IER (Índice de Eficiencia Relativa) - mayor es mejor
         if (parseFloat(e1.ier) > parseFloat(e2.ier)) {
             insights.push(`🏆 ${s1.nombre} tiene mejor Índice de Eficiencia Relativa (IER: ${e1.ier} vs ${e2.ier}) → convierte mejor sus victorias en eficiencia.`);
         } else {
             insights.push(`🏆 ${s2.nombre} tiene mejor Índice de Eficiencia Relativa (IER: ${e2.ier} vs ${e1.ier}) → convierte mejor sus victorias en eficiencia.`);
         }
         
-        // Comparar IDC (Índice de Disciplina Corregido) - mayor es mejor
         if (parseFloat(e1.idc) > parseFloat(e2.idc)) {
             insights.push(`📊 ${s1.nombre} tiene mejor Índice de Disciplina Corregido (IDC: ${e1.idc} vs ${e2.idc}) → maximiza patas minimizando errores.`);
         } else {
             insights.push(`📊 ${s2.nombre} tiene mejor Índice de Disciplina Corregido (IDC: ${e2.idc} vs ${e1.idc}) → maximiza patas minimizando errores.`);
         }
         
-        // Costo de oportunidad
         if (parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro)) {
             insights.push(`💪 Los forros de ${s1.nombre} son "más costosos" (${e1.costoPorForro} patas perdidas por forro vs ${e2.costoPorForro} de ${s2.nombre}) → cada forro le duele más.`);
         } else {
@@ -366,12 +390,11 @@
         const cal2 = calcularCalificacion(s2, m2);
         
         return `
-            <div class="comparacion-titulo">📊 Comparativa: ${s1.nombre} vs ${s2.nombre}</div>
+            <div class="comparacion-titulo">📊 Comparativa: ${escapeHtml(s1.nombre)} vs ${escapeHtml(s2.nombre)}</div>
             
-            <!-- Sección 1: Métricas Básicas -->
             <div class="dashboard">
                 <div class="card">
-                    <h3>📋 ${s1.nombre} - Resumen</h3>
+                    <h3>📋 ${escapeHtml(s1.nombre)} - Resumen</h3>
                     <div class="metricas-clave">
                         <div class="metrica"><div class="valor">${s1.machsJugados}</div><div class="label">Machs jugados</div></div>
                         <div class="metrica"><div class="valor">${s1.machsGanados}</div><div class="label">Machs ganados</div></div>
@@ -390,7 +413,7 @@
                     </div>
                 </div>
                 <div class="card">
-                    <h3>📋 ${s2.nombre} - Resumen</h3>
+                    <h3>📋 ${escapeHtml(s2.nombre)} - Resumen</h3>
                     <div class="metricas-clave">
                         <div class="metrica"><div class="valor">${s2.machsJugados}</div><div class="label">Machs jugados</div></div>
                         <div class="metrica"><div class="valor">${s2.machsGanados}</div><div class="label">Machs ganados</div></div>
@@ -410,67 +433,50 @@
                 </div>
             </div>
             
-            <!-- Sección 2: Eficiencia Relativa (NUEVA) -->
             <div class="card">
                 <h3>📊 ANÁLISIS DE EFICIENCIA RELATIVA</h3>
                 <p style="font-size:0.75rem; color:#64748b; margin-bottom:1rem;">
-                    Estas métricas normalizan los errores (Forros y Aguas) por la exposición del jugador (Machs jugados, Machs ganados, Patas logradas).
-                    Permiten una comparación justa entre jugadores con diferente cantidad de partidas.
+                    Estas métricas normalizan los errores (Forros y Aguas) por la exposición del jugador.
                 </p>
                 
                 <h4 style="margin:1rem 0 0.5rem 0;">📐 Normalización por Machs Jugados</h4>
                 <table class="tabla-comparativa">
-                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>${escapeHtml(s1.nombre)}</th><th>${escapeHtml(s2.nombre)}</th><th>Ventaja</th></tr></thead>
                     <tbody>
                         <tr><td class="text-center">🧤 Forros / Mach</td><td class="text-center">${e1.forrosPorMach}</td><td class="text-center">${e2.forrosPorMach}</td><td class="${parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorMach) < parseFloat(e2.forrosPorMach) ? s1.nombre : s2.nombre}</td></tr>
                         <tr><td class="text-center">💧 Aguas / Mach</td><td class="text-center">${e1.aguasPorMach}</td><td class="text-center">${e2.aguasPorMach}</td><td class="${parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorMach) < parseFloat(e2.aguasPorMach) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">⚠️ Errores totales / Mach</td><td class="text-center">${e1.erroresPorMach}</td><td class="text-center">${e2.erroresPorMach}</td><td class="${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">⚠️ Errores / Mach</td><td class="text-center">${e1.erroresPorMach}</td><td class="text-center">${e2.erroresPorMach}</td><td class="${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorMach) < parseFloat(e2.erroresPorMach) ? s1.nombre : s2.nombre}</td></tr>
                     </tbody>
                 </table>
                 
                 <h4 style="margin:1rem 0 0.5rem 0;">🏆 Normalización por Machs Ganados</h4>
                 <table class="tabla-comparativa">
-                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>${escapeHtml(s1.nombre)}</th><th>${escapeHtml(s2.nombre)}</th><th>Ventaja</th></tr></thead>
                     <tbody>
                         <tr><td class="text-center">🧤 Forros / Mach ganado</td><td class="text-center">${e1.forrosPorMachGanado}</td><td class="text-center">${e2.forrosPorMachGanado}</td><td class="${parseFloat(e1.forrosPorMachGanado) < parseFloat(e2.forrosPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorMachGanado) < parseFloat(e2.forrosPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
                         <tr><td class="text-center">💧 Aguas / Mach ganado</td><td class="text-center">${e1.aguasPorMachGanado}</td><td class="text-center">${e2.aguasPorMachGanado}</td><td class="${parseFloat(e1.aguasPorMachGanado) < parseFloat(e2.aguasPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorMachGanado) < parseFloat(e2.aguasPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">⚠️ Errores / Mach ganado</td><td class="text-center">${e1.erroresPorMachGanado}</td><td class="text-center">${e2.erroresPorMachGanado}</td><td class="${parseFloat(e1.erroresPorMachGanado) < parseFloat(e2.erroresPorMachGanado) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorMachGanado) < parseFloat(e2.erroresPorMachGanado) ? s1.nombre : s2.nombre}</td></tr>
-                    </tbody>
-                </table>
-                
-                <h4 style="margin:1rem 0 0.5rem 0;">🦶 Normalización por Patas Logradas</h4>
-                <table class="tabla-comparativa">
-                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
-                    <tbody>
-                        <tr><td class="text-center">🧤 Forros / Pata</td><td class="text-center">${e1.forrosPorPata}</td><td class="text-center">${e2.forrosPorPata}</td><td class="${parseFloat(e1.forrosPorPata) < parseFloat(e2.forrosPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.forrosPorPata) < parseFloat(e2.forrosPorPata) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">💧 Aguas / Pata</td><td class="text-center">${e1.aguasPorPata}</td><td class="text-center">${e2.aguasPorPata}</td><td class="${parseFloat(e1.aguasPorPata) < parseFloat(e2.aguasPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.aguasPorPata) < parseFloat(e2.aguasPorPata) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">⚠️ Errores / Pata</td><td class="text-center">${e1.erroresPorPata}</td><td class="text-center">${e2.erroresPorPata}</td><td class="${parseFloat(e1.erroresPorPata) < parseFloat(e2.erroresPorPata) ? 'positivo' : 'negativo'}">${parseFloat(e1.erroresPorPata) < parseFloat(e2.erroresPorPata) ? s1.nombre : s2.nombre}</td></tr>
                     </tbody>
                 </table>
                 
                 <h4 style="margin:1rem 0 0.5rem 0;">📈 Índices Compuestos</h4>
                 <table class="tabla-comparativa">
-                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>${escapeHtml(s1.nombre)}</th><th>${escapeHtml(s2.nombre)}</th><th>Ventaja</th></tr></thead>
                     <tbody>
-                        <tr><td class="text-center">🏆 IER (Índice Eficiencia Relativa)<br><span style="font-size:0.6rem;">(mayor es mejor)</span></td><td class="text-center"><strong>${e1.ier}</strong></td><td class="text-center"><strong>${e2.ier}</strong></td><td class="${parseFloat(e1.ier) > parseFloat(e2.ier) ? 'positivo' : 'negativo'}">${parseFloat(e1.ier) > parseFloat(e2.ier) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">📊 IDC (Índice Disciplina Corregido)<br><span style="font-size:0.6rem;">(mayor es mejor)</span></td><td class="text-center"><strong>${e1.idc}</strong></td><td class="text-center"><strong>${e2.idc}</strong></td><td class="${parseFloat(e1.idc) > parseFloat(e2.idc) ? 'positivo' : 'negativo'}">${parseFloat(e1.idc) > parseFloat(e2.idc) ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">💰 Costo por Forro (patas perdidas)</td><td class="text-center">${e1.costoPorForro}</td><td class="text-center">${e2.costoPorForro}</td><td class="${parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro) ? 'negativo' : 'positivo'}">${parseFloat(e1.costoPorForro) > parseFloat(e2.costoPorForro) ? s1.nombre : s2.nombre} (sufre más)</td></tr>
-                        <tr><td class="text-center">💧 Costo por Agua (patas perdidas)</td><td class="text-center">${e1.costoPorAgua}</td><td class="text-center">${e2.costoPorAgua}</td><td class="${parseFloat(e1.costoPorAgua) > parseFloat(e2.costoPorAgua) ? 'negativo' : 'positivo'}">${parseFloat(e1.costoPorAgua) > parseFloat(e2.costoPorAgua) ? s1.nombre : s2.nombre} (sufre más)</td></tr>
+                        <tr><td class="text-center">🏆 IER (mayor es mejor)</td><td class="text-center"><strong>${e1.ier}</strong></td><td class="text-center"><strong>${e2.ier}</strong></td><td class="${parseFloat(e1.ier) > parseFloat(e2.ier) ? 'positivo' : 'negativo'}">${parseFloat(e1.ier) > parseFloat(e2.ier) ? s1.nombre : s2.nombre}</td></tr>
+                        <tr><td class="text-center">📊 IDC (mayor es mejor)</td><td class="text-center"><strong>${e1.idc}</strong></td><td class="text-center"><strong>${e2.idc}</strong></td><td class="${parseFloat(e1.idc) > parseFloat(e2.idc) ? 'positivo' : 'negativo'}">${parseFloat(e1.idc) > parseFloat(e2.idc) ? s1.nombre : s2.nombre}</td></tr>
                     </tbody>
                 </table>
             </div>
             
-            <!-- Sección 3: Insights y Recomendaciones -->
             <div class="insight-card">
                 <h4>💡 ANÁLISIS ESTRATÉGICO</h4>
                 ${insights.map(i => `<p style="margin: 0.3rem 0;">${i}</p>`).join('')}
             </div>
             
-            <!-- Sección 4: Comparativa Directa Tradicional -->
             <div class="card">
                 <h3>📋 Comparativa directa tradicional</h3>
                 <table class="tabla-comparativa">
-                    <thead><tr><th>Indicador</th><th>${s1.nombre}</th><th>${s2.nombre}</th><th>Ventaja</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>${escapeHtml(s1.nombre)}</th><th>${escapeHtml(s2.nombre)}</th><th>Ventaja</th></tr></thead>
                     <tbody>
                         <tr><td class="text-center">🏆 Machs ganados</td><td class="text-center">${s1.machsGanados}</td><td class="text-center">${s2.machsGanados}</td><td class="${s1.machsGanados > s2.machsGanados ? 'positivo' : 'negativo'}">${s1.machsGanados > s2.machsGanados ? s1.nombre : s2.nombre}</td></tr>
                         <tr><td class="text-center">🦶 Patas totales</td><td class="text-center">${s1.patasAcumuladas}</td><td class="text-center">${s2.patasAcumuladas}</td><td class="${s1.patasAcumuladas > s2.patasAcumuladas ? 'positivo' : 'negativo'}">${s1.patasAcumuladas > s2.patasAcumuladas ? s1.nombre : s2.nombre}</td></tr>
@@ -478,7 +484,6 @@
                         <tr><td class="text-center">🧤 Forros</td><td class="text-center">${s1.forros}</td><td class="text-center">${s2.forros}</td><td class="${s1.forros < s2.forros ? 'positivo' : 'negativo'}">${s1.forros < s2.forros ? s1.nombre : s2.nombre}</td></tr>
                         <tr><td class="text-center">💧 Aguas</td><td class="text-center">${s1.aguas}</td><td class="text-center">${s2.aguas}</td><td class="${s1.aguas < s2.aguas ? 'positivo' : 'negativo'}">${s1.aguas < s2.aguas ? s1.nombre : s2.nombre}</td></tr>
                         <tr><td class="text-center">🔥 Racha máxima</td><td class="text-center">${s1.rachaMaxima}</td><td class="text-center">${s2.rachaMaxima}</td><td class="${s1.rachaMaxima > s2.rachaMaxima ? 'positivo' : 'negativo'}">${s1.rachaMaxima > s2.rachaMaxima ? s1.nombre : s2.nombre}</td></tr>
-                        <tr><td class="text-center">📐 Consistencia (σ)</td><td class="text-center">${s1.desviacionEstandar.toFixed(1)}</td><td class="text-center">${s2.desviacionEstandar.toFixed(1)}</td><td class="${s1.desviacionEstandar < s2.desviacionEstandar ? 'positivo' : 'negativo'}">${s1.desviacionEstandar < s2.desviacionEstandar ? s1.nombre : s2.nombre}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -519,57 +524,6 @@
         return { puntuacion, estrellas };
     }
 
-    function cargarSelectores(statsMap) {
-        const individual = document.getElementById('jugadorIndividual');
-        const comp1 = document.getElementById('jugadorComparar1');
-        const comp2 = document.getElementById('jugadorComparar2');
-        
-        const jugadoresArray = Array.from(statsMap.values()).sort((a, b) => {
-            if (a.machsGanados !== b.machsGanados) return b.machsGanados - a.machsGanados;
-            if (a.patasAcumuladas !== b.patasAcumuladas) return b.patasAcumuladas - a.patasAcumuladas;
-            return a.nombre.localeCompare(b.nombre);
-        });
-        
-        const opciones = jugadoresArray.map(s => `<option value="${s.id}">${s.nombre} (${s.machsGanados}🏆, ${s.machsJugados}🎲, ${s.patasAcumuladas}🦶)</option>`).join('');
-        individual.innerHTML = opciones;
-        comp1.innerHTML = opciones;
-        comp2.innerHTML = opciones;
-        
-        if (comp1.options.length) comp1.selectedIndex = 0;
-        if (comp2.options.length > 1) comp2.selectedIndex = Math.min(1, comp2.options.length - 1);
-    }
-
-    function analizar() {
-        const statsMap = calcularEstadisticasDesdeMachs();
-        if (statsMap.size === 0) {
-            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos de jugadores en el período seleccionado.</div>';
-            return;
-        }
-        
-        promediosGlobales = calcularPromedios(statsMap);
-        const modo = document.getElementById('modoAnalisis').value;
-        
-        if (modo === 'individual') {
-            const jugadorId = parseInt(document.getElementById('jugadorIndividual').value);
-            const jugador = statsMap.get(jugadorId);
-            if (jugador && jugador.machsJugados > 0) {
-                document.getElementById('resultados').innerHTML = renderizarIndividual(jugador, promediosGlobales);
-            } else {
-                document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos suficientes para este jugador</div>';
-            }
-        } else {
-            const j1Id = parseInt(document.getElementById('jugadorComparar1').value);
-            const j2Id = parseInt(document.getElementById('jugadorComparar2').value);
-            const j1 = statsMap.get(j1Id);
-            const j2 = statsMap.get(j2Id);
-            if (j1 && j2) {
-                document.getElementById('resultados').innerHTML = renderizarComparativaEficiencia(j1, j2, promediosGlobales);
-            } else {
-                document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos suficientes para la comparación</div>';
-            }
-        }
-    }
-
     function renderizarIndividual(s, promedios) {
         const metricas = calcularMetricas(s);
         const calificacion = calcularCalificacion(s, metricas);
@@ -578,7 +532,7 @@
         return `
             <div class="dashboard">
                 <div class="card">
-                    <h3>📋 Resumen de ${s.nombre}</h3>
+                    <h3>📋 Resumen de ${escapeHtml(s.nombre)}</h3>
                     <div class="metricas-clave">
                         <div class="metrica"><div class="valor">${s.machsJugados}</div><div class="label">Machs jugados</div></div>
                         <div class="metrica"><div class="valor">${s.machsGanados}</div><div class="label">Machs ganados</div></div>
@@ -621,6 +575,68 @@
         `;
     }
 
+    function cargarSelectores(statsMap) {
+        const individual = document.getElementById('jugadorIndividual');
+        const comp1 = document.getElementById('jugadorComparar1');
+        const comp2 = document.getElementById('jugadorComparar2');
+        
+        if (statsMap.size === 0) {
+            const msg = '<option value="">No hay jugadores con datos</option>';
+            individual.innerHTML = msg;
+            comp1.innerHTML = msg;
+            comp2.innerHTML = msg;
+            return;
+        }
+        
+        const jugadoresArray = Array.from(statsMap.values()).sort((a, b) => {
+            if (a.machsGanados !== b.machsGanados) return b.machsGanados - a.machsGanados;
+            if (a.patasAcumuladas !== b.patasAcumuladas) return b.patasAcumuladas - a.patasAcumuladas;
+            return a.nombre.localeCompare(b.nombre);
+        });
+        
+        const opciones = jugadoresArray.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)} (${s.machsGanados}🏆, ${s.machsJugados}🎲, ${s.patasAcumuladas}🦶)</option>`).join('');
+        individual.innerHTML = opciones;
+        comp1.innerHTML = opciones;
+        comp2.innerHTML = opciones;
+        
+        if (comp1.options.length) comp1.selectedIndex = 0;
+        if (comp2.options.length > 1) comp2.selectedIndex = Math.min(1, comp2.options.length - 1);
+    }
+
+    function analizar() {
+        const statsMap = calcularEstadisticasDesdeMachs();
+        
+        if (statsMap.size === 0) {
+            document.getElementById('resultados').innerHTML = '<div class="panel"><div style="padding:1rem; background:#fef3c7; border-radius:0.5rem;"><strong>⚠️ No hay datos de jugadores en el período seleccionado.</strong><br><br>Posibles causas:<br>• No hay machs registrados en las fechas seleccionadas<br>• Los jugadores no han participado en ningún mach<br>• El rango de fechas no contiene partidas</div></div>';
+            return;
+        }
+        
+        promediosGlobales = calcularPromedios(statsMap);
+        cargarSelectores(statsMap);
+        
+        const modo = document.getElementById('modoAnalisis').value;
+        
+        if (modo === 'individual') {
+            const jugadorId = parseInt(document.getElementById('jugadorIndividual').value);
+            const jugador = statsMap.get(jugadorId);
+            if (jugador && jugador.machsJugados > 0) {
+                document.getElementById('resultados').innerHTML = renderizarIndividual(jugador, promediosGlobales);
+            } else {
+                document.getElementById('resultados').innerHTML = '<div class="panel"><div style="padding:1rem;">⚠️ No hay datos suficientes para este jugador</div></div>';
+            }
+        } else {
+            const j1Id = parseInt(document.getElementById('jugadorComparar1').value);
+            const j2Id = parseInt(document.getElementById('jugadorComparar2').value);
+            const j1 = statsMap.get(j1Id);
+            const j2 = statsMap.get(j2Id);
+            if (j1 && j2) {
+                document.getElementById('resultados').innerHTML = renderizarComparativaEficiencia(j1, j2, promediosGlobales);
+            } else {
+                document.getElementById('resultados').innerHTML = '<div class="panel"><div style="padding:1rem;">⚠️ No hay datos suficientes para la comparación</div></div>';
+            }
+        }
+    }
+
     function exportarPDF() {
         const element = document.getElementById('resultados');
         if (!element || !element.innerHTML.trim()) {
@@ -637,10 +653,15 @@
         const doc = new jsPDF('p', 'mm', 'a4');
         
         doc.setFontSize(16);
-        doc.text("Análisis de Rendimiento - Dominó Pintintín", 20, 20);
+        doc.text("Análisis de Rendimiento - Dominó Pintintín v6.0.6", 20, 20);
         doc.setFontSize(10);
         doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Período: ${document.getElementById('fechaDesde').value || 'inicio'} al ${document.getElementById('fechaHasta').value || 'hoy'}`, 20, 38);
+        
+        const desde = document.getElementById('fechaDesde').value;
+        const hasta = document.getElementById('fechaHasta').value;
+        const desdeMostrar = desde ? formatearFechaDDMMYYYY(desde) : 'inicio';
+        const hastaMostrar = hasta ? formatearFechaDDMMYYYY(hasta) : 'hoy';
+        doc.text(`Período: ${desdeMostrar} al ${hastaMostrar}`, 20, 38);
         
         const tables = element.querySelectorAll('table');
         let yOffset = 50;
@@ -684,39 +705,49 @@
         const modo = document.getElementById('modoAnalisis').value;
         document.getElementById('selectorIndividual').style.display = modo === 'individual' ? 'block' : 'none';
         document.getElementById('selectorComparacion').style.display = modo === 'comparacion' ? 'flex' : 'none';
-        const statsMap = calcularEstadisticasDesdeMachs();
-        if (statsMap.size > 0) {
-            cargarSelectores(statsMap);
-        }
         analizar();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 
     function inicializar() {
         if (!cargarDatosReales()) {
-            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay datos. Inicia una partida primero.</div>';
+            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ Error al cargar datos. Asegúrate de haber iniciado una partida.</div>';
             return;
         }
+        
+        if (datosReales.machs.length === 0) {
+            document.getElementById('resultados').innerHTML = '<div class="panel"><div style="padding:1rem;">⚠️ No hay machs registrados. Inicia una partida primero.</div></div>';
+            return;
+        }
+        
+        // Inicializar fechas ANTES de analizar
+        inicializarFechasAnalisis();
+        
         const statsMap = calcularEstadisticasDesdeMachs();
+        
         if (statsMap.size === 0) {
-            document.getElementById('resultados').innerHTML = '<div class="panel">⚠️ No hay jugadores registrados en el período seleccionado.</div>';
+            document.getElementById('resultados').innerHTML = '<div class="panel"><div style="padding:1rem;">⚠️ No hay jugadores con datos en el período seleccionado.</div></div>';
             return;
         }
+        
         cargarSelectores(statsMap);
+        promediosGlobales = calcularPromedios(statsMap);
         
         document.getElementById('modoAnalisis').addEventListener('change', toggleModo);
         document.getElementById('jugadorIndividual').addEventListener('change', analizar);
         document.getElementById('jugadorComparar1').addEventListener('change', analizar);
         document.getElementById('jugadorComparar2').addEventListener('change', analizar);
-        document.getElementById('fechaDesde').addEventListener('change', () => {
-            const statsNuevo = calcularEstadisticasDesdeMachs();
-            cargarSelectores(statsNuevo);
-            analizar();
-        });
-        document.getElementById('fechaHasta').addEventListener('change', () => {
-            const statsNuevo = calcularEstadisticasDesdeMachs();
-            cargarSelectores(statsNuevo);
-            analizar();
-        });
+        document.getElementById('fechaDesde').addEventListener('change', analizar);
+        document.getElementById('fechaHasta').addEventListener('change', analizar);
         
         analizar();
     }
