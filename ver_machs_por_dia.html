@@ -2,158 +2,491 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Ver Machs por Día - Dominó Pintintín</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
-        .container-machs {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .fecha-display {
-            background: #2c3e50;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .tabla-machs {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0f172a; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; padding: 1rem; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 1.5rem; }
+        h1 { color: #1e293b; border-bottom: 3px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .filtros { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .grupo-filtro { flex: 1; min-width: 200px; }
+        .grupo-filtro label { display: block; font-size: 0.7rem; font-weight: bold; color: #475569; margin-bottom: 0.25rem; }
+        .grupo-filtro select, .grupo-filtro button { width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: white; font-size: 0.9rem; }
+        .grupo-filtro button { background: #8b5cf6; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .grupo-filtro button:hover { background: #7c3aed; }
+        .btn-excel { background: #10b981 !important; }
+        .btn-excel:hover { background: #059669 !important; }
+        .tabla-responsive { overflow-x: auto; margin: 1rem 0; }
+        .tabla-datos { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .tabla-datos th, .tabla-datos td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; vertical-align: top; }
+        .tabla-datos th { background: #e2e8f0; position: sticky; top: 0; }
+        .text-center { text-align: center; }
+        .resumen-dia { background: #f1f5f9; padding: 1rem; border-radius: 0.8rem; margin: 1rem 0; }
+        .resumen-dia h3 { margin-bottom: 0.5rem; color: #1e293b; }
+        .resumen-dia p { margin: 0.25rem 0; }
+        .info-tiempo { background: #e0e7ff; padding: 0.8rem; border-radius: 0.8rem; margin: 1rem 0; border-left: 4px solid #8b5cf6; }
+        .btn-volver { background: #475569; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.6rem; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        .btn-volver:hover { background: #334155; }
+        footer { text-align: center; padding: 1rem; margin-top: 1.5rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.8rem; }
+        .stats-badge { display: inline-block; background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 0.3rem; font-size: 0.7rem; margin: 0.1rem; }
+
+        /* ==================== MODALES PERSONALIZADOS ==================== */
+        .modal-personalizado {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-collapse: collapse;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(3px); } }
+        .modal-contenido {
             background: white;
+            border-radius: 1.5rem;
+            max-width: 450px;
+            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.2s ease-out;
         }
-        .tabla-machs th, .tabla-machs td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        .tabla-machs th {
-            background: #3498db;
+        @keyframes modalSlideIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header {
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
             color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .tabla-machs tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        .sin-datos {
-            text-align: center;
-            padding: 40px;
-            color: #7f8c8d;
-        }
-        .volver {
-            background: #95a5a6;
-            color: white;
-            padding: 10px 20px;
+        .modal-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal-header .btn-cerrar-modal {
+            background: rgba(255,255,255,0.2);
             border: none;
-            border-radius: 5px;
+            color: white;
+            font-size: 1.3rem;
             cursor: pointer;
-            margin-bottom: 20px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
         }
-        .fecha-actual-info {
-            font-size: 1.2em;
-            margin-top: 10px;
+        .modal-header .btn-cerrar-modal:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .modal-body { padding: 1.5rem; font-size: 0.95rem; color: #1e293b; line-height: 1.5; text-align: center; }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
         }
+        .modal-footer .btn-aceptar { background: #8b5cf6; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+        .modal-footer .btn-aceptar:hover { background: #7c3aed; }
+        .toast-personalizado {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.7rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: toastEntrada 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        @keyframes toastEntrada { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .toast-salida { animation: toastSalida 0.3s ease-in forwards; }
+        @keyframes toastSalida { to { opacity: 0; transform: translateX(-50%) translateY(20px); } }
+        .toast-exito { background: #10b981; }
+        .toast-error { background: #dc2626; }
+        .toast-info { background: #8b5cf6; }
+
+        @media (max-width: 640px) { .filtros { flex-direction: column; } .grupo-filtro { width: 100%; } .modal-footer { flex-direction: column; } .modal-footer button { width: 100%; } }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <div class="container-machs">
-        <button class="volver" onclick="window.location.href='index.html'">← Volver al juego</button>
-        <h1>🏆 Machs jugados</h1>
-        
-        <div class="fecha-display">
-            <strong>📅 Fecha actual:</strong>
-            <div class="fecha-actual-info" id="fechaActual"></div>
+<div class="container">
+    <h1>📋 Ver Machs por Día</h1>
+    
+    <div class="filtros">
+        <div class="grupo-filtro">
+            <label>📅 Selecciona fecha</label>
+            <select id="selectorFecha"></select>
         </div>
-        
-        <div id="contenidoMachs">
-            <table class="tabla-machs" id="tablaMachs">
-                <thead>
-                    <tr><th>#</th><th>Fecha/Hora</th><th>Total patas</th><th>Ganadores</th></tr>
-                </thead>
-                <tbody id="tablaMachsBody"></tbody>
-            </table>
+        <div class="grupo-filtro">
+            <button id="btnExportarCSV" class="btn-excel">📎 Exportar a CSV</button>
+        </div>
+        <div class="grupo-filtro">
+            <button id="btnExportarPDF" class="btn-excel">📄 Exportar a PDF</button>
         </div>
     </div>
+    
+    <div id="resultados">
+        <div id="infoTiempo" class="info-tiempo" style="display:none;"></div>
+        <div class="tabla-responsive" id="tablaMachs"></div>
+        <div id="resumenDia" class="resumen-dia" style="display:none;"></div>
+        <div id="resumenGlobal" class="resumen-dia" style="display:none;"></div>
+    </div>
+    
+    <button id="btnVolver" class="btn-volver">← Volver al juego</button>
+    <footer>Dominó Pintintín v6.0.6 - Historial de machs por día</footer>
+</div>
 
-    <script>
-        // Formatear fecha a dd/mm/yyyy
-        function formatearFechaDDMMYYYY(fecha) {
-            if (!fecha) return '';
-            const d = new Date(fecha);
-            if (isNaN(d.getTime())) return fecha;
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const anio = d.getFullYear();
-            return `${dia}/${mes}/${anio}`;
+<script>
+    // ==================== VARIABLES GLOBALES ====================
+    let jugadores = [];
+    let dias = [];
+    let machs = [];
+    let datosDiaActual = null;
+
+    // ==================== FUNCIONES DE MODALES ====================
+    function mostrarAlerta(mensaje, titulo = 'Información', tipo = 'info') {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = `modal-personalizado modal-alerta`;
+            modal.innerHTML = `
+                <div class="modal-contenido">
+                    <div class="modal-header">
+                        <h3>${tipo === 'error' ? '❌ Error' : (tipo === 'exito' ? '✅ Éxito' : 'ℹ️ Información')}</h3>
+                        <button class="btn-cerrar-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${mensaje}</div>
+                    <div class="modal-footer"><button class="btn-aceptar">Aceptar</button></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const cerrar = () => { modal.remove(); resolve(); };
+            modal.querySelector('.btn-aceptar').onclick = cerrar;
+            modal.querySelector('.btn-cerrar-modal').onclick = cerrar;
+            modal.onclick = (e) => { if (e.target === modal) cerrar(); };
+        });
+    }
+
+    function mostrarToast(mensaje, tipo = 'info', duracion = 2500) {
+        const toast = document.createElement('div');
+        toast.className = `toast-personalizado toast-${tipo}`;
+        toast.innerHTML = `${tipo === 'exito' ? '✅ ' : tipo === 'error' ? '❌ ' : 'ℹ️ '}${mensaje}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-salida');
+            setTimeout(() => toast.remove(), 300);
+        }, duracion);
+    }
+
+    // ==================== FUNCIONES DE FECHAS ====================
+    function formatearFechaDDMMYYYY(fechaISO) {
+        if (!fechaISO) return '';
+        const partes = fechaISO.split('-');
+        if (partes.length !== 3) return fechaISO;
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function formatearFechaParaInput(fechaDDMMYYYY) {
+        if (!fechaDDMMYYYY) return '';
+        const partes = fechaDDMMYYYY.split('/');
+        if (partes.length !== 3) return fechaDDMMYYYY;
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    function cargarDatos() {
+        jugadores = JSON.parse(localStorage.getItem('pintintin_jugadores')) || [];
+        dias = JSON.parse(localStorage.getItem('pintintin_dias')) || [];
+        machs = JSON.parse(localStorage.getItem('pintintin_machs')) || [];
+        
+        for (let m of machs) {
+            if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
+            if (!m.participantes) m.participantes = [];
+            if (!m.manos) m.manos = [];
+        }
+    }
+
+    function formatearHora(isoFecha) {
+        if (!isoFecha) return '⏳ No registrada';
+        const fecha = new Date(isoFecha);
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12 || 12;
+        return `${horas}:${minutos} ${ampm}`;
+    }
+
+    function calcularDuracionMach(mach) {
+        if (!mach.fechaHoraInicio || !mach.fechaHora) return null;
+        const inicio = new Date(mach.fechaHoraInicio);
+        const fin = new Date(mach.fechaHora);
+        const diffMs = fin - inicio;
+        if (diffMs <= 0) return null;
+        return Math.round(diffMs / 60000);
+    }
+
+    function cargarFecha() {
+        const selector = document.getElementById('selectorFecha');
+        const fechaSeleccionada = selector.value;
+        if (!fechaSeleccionada) return;
+        
+        const fechaISO = formatearFechaParaInput(fechaSeleccionada);
+        const dia = dias.find(d => d.fecha === fechaISO);
+        if (!dia) {
+            document.getElementById('tablaMachs').innerHTML = '<p>No hay datos para esta fecha</p>';
+            return;
         }
         
-        function formatearFechaHoraDDMMYYYY(fechaHora) {
-            if (!fechaHora) return '';
-            const d = new Date(fechaHora);
-            if (isNaN(d.getTime())) return fechaHora;
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const anio = d.getFullYear();
-            let horas = d.getHours();
-            const minutos = String(d.getMinutes()).padStart(2, '0');
-            const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
-            horas = horas % 12 || 12;
-            return `${dia}/${mes}/${anio} ${horas}:${minutos} ${ampm}`;
-        }
+        const machsDia = machs.filter(m => m.diaId === dia.id).sort((a, b) => a.numeroMach - b.numeroMach);
         
-        function getFechaActual() {
-            const hoy = new Date();
-            return hoy.toISOString().split('T')[0];
-        }
+        datosDiaActual = { fecha: fechaSeleccionada, dia, machs: machsDia };
         
-        function formatearFechaParaComparar(fechaStr) {
-            if (!fechaStr) return '';
-            if (fechaStr.includes('/')) {
-                const [dia, mes, anio] = fechaStr.split('/');
-                return `${anio}-${mes}-${dia}`;
+        // Calcular información de tiempo
+        let tiempoTotal = 0;
+        let machsConTiempo = 0;
+        for (let m of machsDia) {
+            const duracion = calcularDuracionMach(m);
+            if (duracion !== null) {
+                tiempoTotal += duracion;
+                machsConTiempo++;
             }
-            return fechaStr.split('T')[0];
+        }
+        const promedioTiempo = machsConTiempo > 0 ? Math.round(tiempoTotal / machsConTiempo) : 0;
+        
+        const infoTiempoDiv = document.getElementById('infoTiempo');
+        if (machsConTiempo > 0) {
+            infoTiempoDiv.style.display = 'block';
+            infoTiempoDiv.innerHTML = `
+                <strong>⏱️ ESTADÍSTICAS DE TIEMPO</strong><br>
+                📊 Total de machs: ${machsDia.length}<br>
+                ⏱️ Duración total de la sesión: ${tiempoTotal} minutos (${Math.floor(tiempoTotal/60)}h ${tiempoTotal%60}min)<br>
+                📊 Promedio por mach: ${promedioTiempo} minutos
+            `;
+        } else {
+            infoTiempoDiv.style.display = 'none';
         }
         
-        function cargarMachsDelDia() {
-            const fechaActual = getFechaActual();
-            const fechaActualLegible = formatearFechaDDMMYYYY(new Date());
-            document.getElementById('fechaActual').innerHTML = fechaActualLegible;
+        // Tabla de machs
+        let html = '<table class="tabla-datos"><thead>';
+        html += '<tr><th># Mach</th><th>Hora de inicio</th><th>Hora de fin</th><th>Duración</th><th>Ganador</th><th>Participantes</th></tr></thead><tbody>';
+        
+        for (let m of machsDia) {
+            const ganador = jugadores.find(j => j.id === m.ganadorId);
+            const duracion = calcularDuracionMach(m);
+            const duracionTexto = duracion ? `${duracion} min` : '⏳ No disponible';
             
-            const machsCompletados = JSON.parse(localStorage.getItem('pintintin_machs_completados') || '[]');
-            const machsDelDia = machsCompletados.filter(mach => {
-                const fechaMach = mach.fechaLegible || formatearFechaDDMMYYYY(mach.fecha);
-                const fechaMachComparar = formatearFechaParaComparar(fechaMach);
-                return fechaMachComparar === fechaActual || fechaMach === fechaActualLegible;
-            });
-            
-            const tbody = document.getElementById('tablaMachsBody');
-            tbody.innerHTML = '';
-            
-            if (machsDelDia.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="sin-datos">No hay machs registrados para el día de hoy</td></tr>';
-                return;
+            let participantesHtml = '';
+            for (let p of m.participantes) {
+                let nombre = p.nombre;
+                if (p.jugadorId && !nombre) {
+                    const jug = jugadores.find(j => j.id === p.jugadorId);
+                    nombre = jug ? jug.nombre : `Jugador ${p.jugadorId}`;
+                }
+                participantesHtml += `<span class="stats-badge">🪑 ${nombre}: ${p.patasFinales || 0}🦶</span><br>`;
             }
             
-            machsDelDia.forEach((mach, index) => {
-                const fila = tbody.insertRow();
-                const ganadoresStr = mach.ganadoresPorPartida 
-                    ? mach.ganadoresPorPartida.map((g, i) => `J${i+1}: ${g}`).join(', ')
-                    : 'No disponible';
-                
-                const fechaHora = mach.fecha ? formatearFechaHoraDDMMYYYY(mach.fecha) : (mach.fechaLegible || 'Fecha no disponible');
-                
-                fila.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${fechaHora}</td>
-                    <td>${mach.partidas?.length || 0}</td>
-                    <td>${ganadoresStr}</td>
-                `;
-            });
+            html += `<tr>
+                <td class="text-center">${m.numeroMach}</td>
+                <td class="text-center">${formatearHora(m.fechaHoraInicio)}</td>
+                <td class="text-center">${formatearHora(m.fechaHora)}</td>
+                <td class="text-center">${duracionTexto}</td>
+                <td class="text-center"><strong>${ganador ? escapeHtml(ganador.nombre) : '?'}</strong></td>
+                <td>${participantesHtml}</td>
+            </table>`;
         }
         
-        document.addEventListener('DOMContentLoaded', cargarMachsDelDia);
-    </script>
+        html += '</tbody></table>';
+        document.getElementById('tablaMachs').innerHTML = html;
+        
+        // Resumen del día
+        const statsDia = new Map();
+        for (let m of machsDia) {
+            for (let p of m.participantes) {
+                if (!p.jugadorId) continue;
+                const nombre = p.nombre || (jugadores.find(j => j.id === p.jugadorId)?.nombre || `Jugador ${p.jugadorId}`);
+                if (!statsDia.has(nombre)) {
+                    statsDia.set(nombre, { machsGanados: 0, patasTotal: 0 });
+                }
+                if (p.jugadorId === m.ganadorId) {
+                    statsDia.get(nombre).machsGanados++;
+                }
+                statsDia.get(nombre).patasTotal += (p.patasFinales || 0);
+            }
+        }
+        
+        const ordenado = Array.from(statsDia.entries()).sort((a, b) => b[1].machsGanados - a[1].machsGanados);
+        let resumenHtml = '<h3>📊 RESUMEN DEL DÍA</h3>';
+        resumenHtml += '<table class="tabla-datos"><thead><tr><th>Jugador</th><th>🏆 Machs ganados</th><th>🦶 Patas totales</th></tr></thead><tbody>';
+        for (let [nombre, stats] of ordenado) {
+            resumenHtml += `<tr><td class="text-center"><strong>${escapeHtml(nombre)}</strong></td><td class="text-center">${stats.machsGanados}</td><td class="text-center">${stats.patasTotal}</td></tr>`;
+        }
+        resumenHtml += '</tbody></table>';
+        document.getElementById('resumenDia').style.display = 'block';
+        document.getElementById('resumenDia').innerHTML = resumenHtml;
+        
+        // Resumen global acumulado
+        const statsGlobal = new Map();
+        for (let m of machs) {
+            for (let p of m.participantes) {
+                if (!p.jugadorId) continue;
+                const nombre = p.nombre || (jugadores.find(j => j.id === p.jugadorId)?.nombre || `Jugador ${p.jugadorId}`);
+                if (!statsGlobal.has(nombre)) {
+                    statsGlobal.set(nombre, { machsGanados: 0, patasTotal: 0 });
+                }
+                if (p.jugadorId === m.ganadorId) {
+                    statsGlobal.get(nombre).machsGanados++;
+                }
+                statsGlobal.get(nombre).patasTotal += (p.patasFinales || 0);
+            }
+        }
+        
+        const ordenadoGlobal = Array.from(statsGlobal.entries()).sort((a, b) => b[1].machsGanados - a[1].machsGanados);
+        let resumenGlobalHtml = '<h3>📊 RESUMEN GENERAL (TODOS LOS DÍAS)</h3>';
+        resumenGlobalHtml += '<table class="tabla-datos"><thead><tr><th>Jugador</th><th>🏆 Machs ganados</th><th>🦶 Patas totales</th></tr></thead><tbody>';
+        for (let [nombre, stats] of ordenadoGlobal) {
+            resumenGlobalHtml += `<tr><td class="text-center"><strong>${escapeHtml(nombre)}</strong></td><td class="text-center">${stats.machsGanados}</td><td class="text-center">${stats.patasTotal}</td></tr>`;
+        }
+        resumenGlobalHtml += '</tbody></table>';
+        document.getElementById('resumenGlobal').style.display = 'block';
+        document.getElementById('resumenGlobal').innerHTML = resumenGlobalHtml;
+    }
+
+    async function exportarCSV() {
+        if (!datosDiaActual || !datosDiaActual.machs.length) {
+            await mostrarAlerta('Primero selecciona una fecha con machs', '⚠️ Atención', 'error');
+            return;
+        }
+        
+        let csv = "N° Mach,Ganador,Participantes (Nombre:Patas)\n";
+        for (let m of datosDiaActual.machs) {
+            const ganador = jugadores.find(j => j.id === m.ganadorId);
+            const participantes = m.participantes.map(p => {
+                let nombre = p.nombre;
+                if (p.jugadorId && !nombre) {
+                    const jug = jugadores.find(j => j.id === p.jugadorId);
+                    nombre = jug ? jug.nombre : `Jugador ${p.jugadorId}`;
+                }
+                return `${nombre}:${p.patasFinales || 0}`;
+            }).join(', ');
+            csv += `${m.numeroMach},"${ganador ? ganador.nombre : '?'}","${participantes}"\n`;
+        }
+        
+        const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8;'});
+        const a = document.createElement('a');
+        a.download = `machs_${datosDiaActual.fecha.replace(/\//g, '-')}.csv`;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        mostrarToast("CSV exportado correctamente", "exito", 2000);
+    }
+
+    async function exportarPDF() {
+        if (!datosDiaActual || !datosDiaActual.machs.length) {
+            await mostrarAlerta('Primero selecciona una fecha con machs', '⚠️ Atención', 'error');
+            return;
+        }
+        
+        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+            await mostrarAlerta('La librería PDF no está cargada. Recarga la página.', '❌ Error', 'error');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf || jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        
+        doc.setFontSize(16);
+        doc.text(`Machs del día ${datosDiaActual.fecha}`, 20, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 30);
+        
+        const headers = ['N° Mach', 'Hora inicio', 'Hora fin', 'Duración', 'Ganador', 'Participantes (Nombre:Patas)'];
+        const data = datosDiaActual.machs.map(m => {
+            const ganador = jugadores.find(j => j.id === m.ganadorId);
+            const duracion = calcularDuracionMach(m);
+            const duracionTexto = duracion ? `${duracion} min` : 'N/D';
+            const participantes = m.participantes.map(p => {
+                let nombre = p.nombre;
+                if (p.jugadorId && !nombre) {
+                    const jug = jugadores.find(j => j.id === p.jugadorId);
+                    nombre = jug ? jug.nombre : `Jugador ${p.jugadorId}`;
+                }
+                return `${nombre}:${p.patasFinales || 0}`;
+            }).join(', ');
+            return [m.numeroMach, formatearHora(m.fechaHoraInicio), formatearHora(m.fechaHora), duracionTexto, ganador ? ganador.nombre : '?', participantes];
+        });
+        
+        doc.autoTable({
+            head: [headers],
+            body: data,
+            startY: 40,
+            theme: 'striped',
+            styles: { fontSize: 7, cellPadding: 1.5 },
+            headStyles: { fillColor: [139, 92, 246], textColor: 255 }
+        });
+        
+        doc.save(`machs_${datosDiaActual.fecha.replace(/\//g, '-')}.pdf`);
+        mostrarToast("PDF exportado correctamente", "exito", 2000);
+    }
+
+    function cargarSelectorFechas() {
+        const selector = document.getElementById('selectorFecha');
+        selector.innerHTML = '<option value="">-- Selecciona una fecha --</option>';
+        
+        const fechasConMachs = new Set();
+        for (let m of machs) {
+            const dia = dias.find(d => d.id === m.diaId);
+            if (dia) fechasConMachs.add(dia.fecha);
+        }
+        
+        const fechasOrdenadas = Array.from(fechasConMachs).sort().reverse();
+        for (let fecha of fechasOrdenadas) {
+            const option = document.createElement('option');
+            option.value = formatearFechaDDMMYYYY(fecha);
+            option.textContent = formatearFechaDDMMYYYY(fecha);
+            selector.appendChild(option);
+        }
+        
+        if (fechasOrdenadas.length > 0) {
+            selector.value = formatearFechaDDMMYYYY(fechasOrdenadas[0]);
+            cargarFecha();
+        }
+        
+        selector.addEventListener('change', cargarFecha);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function inicializar() {
+        cargarDatos();
+        cargarSelectorFechas();
+        
+        document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
+        document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
+        document.getElementById('btnVolver').addEventListener('click', () => {
+            sessionStorage.setItem('volviendoDeMachs', 'true');
+            window.location.href = 'index.html';
+        });
+    }
+    
+    inicializar();
+</script>
 </body>
 </html>
