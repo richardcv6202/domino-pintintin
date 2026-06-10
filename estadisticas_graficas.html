@@ -214,6 +214,7 @@
             position: relative;
             cursor: pointer;
             transition: all 0.2s;
+            min-height: 450px;
         }
 
         .canvas-wrapper:hover {
@@ -242,8 +243,8 @@
             display: block;
             width: 100%;
             height: auto;
-            min-height: 450px;
-            max-height: 550px;
+            min-height: 400px;
+            max-height: 500px;
         }
 
         .botones-grafica {
@@ -579,7 +580,7 @@
             .filtro-control { min-width: 100%; }
             .radio-group { justify-content: center; }
             .selector-jugadores label { min-width: 100%; }
-            .canvas-wrapper { padding: 0.5rem; }
+            .canvas-wrapper { padding: 0.5rem; min-height: 300px; }
             canvas { min-height: 300px; }
             .botones-grafica { justify-content: center; }
             .modal-footer { flex-direction: column; }
@@ -1189,23 +1190,49 @@
 
     let ctx = null;
 
-    function inicializarCanvas() {
+    // ==================== FUNCIÓN ROBUSTA PARA INICIALIZAR CANVAS ====================
+    function inicializarCanvasRobusto() {
         const canvas = document.getElementById('miGrafica');
-        if (!canvas) return false;
+        if (!canvas) {
+            console.error("❌ Canvas no encontrado");
+            return false;
+        }
         
         const wrapper = canvas.parentElement;
-        if (wrapper) {
-            const ancho = wrapper.clientWidth - 20;
-            const alto = Math.min(500, Math.max(400, ancho * 0.5));
-            canvas.width = ancho;
-            canvas.height = alto;
-            canvas.style.width = `${ancho}px`;
-            canvas.style.height = `${alto}px`;
-            console.log(`📐 Canvas inicializado: ${ancho}x${alto}`);
+        if (!wrapper) {
+            console.error("❌ Wrapper del canvas no encontrado");
+            return false;
+        }
+        
+        // Forzar dimensiones explícitas
+        const ancho = wrapper.clientWidth - 20;
+        const alto = Math.min(500, Math.max(400, ancho * 0.5));
+        
+        if (ancho <= 0 || alto <= 0) {
+            console.warn("⚠️ Dimensiones del canvas inválidas, reintentando...");
+            setTimeout(() => inicializarCanvasRobusto(), 100);
+            return false;
+        }
+        
+        canvas.width = ancho;
+        canvas.height = alto;
+        canvas.style.width = `${ancho}px`;
+        canvas.style.height = `${alto}px`;
+        canvas.style.display = 'block';
+        
+        // Limpiar cualquier gráfico previo
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
         }
         
         ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('Cargando gráfico...', 20, 50);
+        
+        console.log(`📐 Canvas inicializado: ${ancho}x${alto}`);
         return true;
     }
 
@@ -1222,6 +1249,7 @@
                 canvas.style.height = `${canvas.height}px`;
                 if (chartInstance) {
                     chartInstance.resize();
+                    chartInstance.update();
                 }
             }
         }
@@ -1238,55 +1266,48 @@
         }
     }
 
-    // ==================== DIBUJAR GRÁFICO CON REINTENTO ====================
+    // ==================== DIBUJAR GRÁFICO CORREGIDO ====================
     async function dibujarGraficoConReintento() {
         reintentos = 0;
         await dibujarGrafico();
     }
 
     async function dibujarGrafico() {
-        if (!inicializado) {
-            console.log("⏳ Módulo no inicializado, reintentando...");
-            if (reintentos < MAX_REINTENTOS) {
-                reintentos++;
-                setTimeout(() => dibujarGrafico(), 500);
-            }
-            return;
-        }
-        
-        let desde = document.getElementById('fechaDesde').value;
-        let hasta = document.getElementById('fechaHasta').value;
-        
-        if (desde === '') desde = null;
-        if (hasta === '') hasta = null;
-        
-        actualizarInfoRango(desde, hasta);
-        
-        const tipo = document.getElementById('tipoGrafico').value;
-        const modo = document.querySelector('input[name="modo"]:checked').value;
-        const checksJugadores = document.querySelectorAll('.check-jugador:checked');
-        const idsJugadores = Array.from(checksJugadores).map(cb => parseInt(cb.value));
-        
-        if (idsJugadores.length === 0) {
-            if (chartInstance) chartInstance.destroy();
-            if (ctx) {
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '14px sans-serif';
-                ctx.fillText('Selecciona al menos un jugador', 20, 50);
-            }
-            return;
-        }
-        
-        const canvas = document.getElementById('miGrafica');
-        if (!canvas || canvas.width === 0 || canvas.height === 0) {
-            console.warn("Canvas sin dimensiones, reinicializando...");
-            inicializarCanvas();
-        }
-        
-        redimensionarCanvas();
-        
         try {
+            // Asegurar que el canvas esté listo
+            if (!inicializarCanvasRobusto()) {
+                console.warn("Canvas no inicializado, reintentando...");
+                if (reintentos < MAX_REINTENTOS) {
+                    reintentos++;
+                    setTimeout(() => dibujarGrafico(), 500);
+                }
+                return;
+            }
+            
+            let desde = document.getElementById('fechaDesde').value;
+            let hasta = document.getElementById('fechaHasta').value;
+            
+            if (desde === '') desde = null;
+            if (hasta === '') hasta = null;
+            
+            actualizarInfoRango(desde, hasta);
+            
+            const tipo = document.getElementById('tipoGrafico').value;
+            const modo = document.querySelector('input[name="modo"]:checked').value;
+            const checksJugadores = document.querySelectorAll('.check-jugador:checked');
+            const idsJugadores = Array.from(checksJugadores).map(cb => parseInt(cb.value));
+            
+            if (idsJugadores.length === 0) {
+                if (chartInstance) chartInstance.destroy();
+                if (ctx) {
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('Selecciona al menos un jugador', 20, 50);
+                }
+                return;
+            }
+            
             if (modo === 'tiempo') {
                 const datosTiempo = obtenerDatosTiempoPorJugador(idsJugadores, desde, hasta);
                 if (datosTiempo.length === 0) {
@@ -1408,8 +1429,25 @@
                     return;
                 }
                 const datosMulti = obtenerDatosMultiIndicadorConMachsJugados(idsJugadores, indicadoresMulti, desde, hasta);
+                
+                if (datosMulti.length === 0) {
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('No hay datos de juego para el período seleccionado', 20, 50);
+                    return;
+                }
+                
                 const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
                 const datosOrdenados = jugadoresOrden.map(nom => datosMulti.find(d => d.nombre === nom)).filter(d => d);
+                
+                if (datosOrdenados.length === 0) {
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('No hay datos para los jugadores seleccionados', 20, 50);
+                    return;
+                }
                 
                 const datasets = indicadoresMulti.map((key, idx) => {
                     const color = coloresBase[idx % coloresBase.length];
@@ -1451,6 +1489,15 @@
             indicadorKey = indicadorUnicoSelect.value;
             
             const datos = obtenerDatosPorJugadorConMachsJugados(idsJugadores, indicadorKey, desde, hasta);
+            
+            if (datos.length === 0 || datos.every(d => d.total === 0)) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('No hay datos para el indicador seleccionado en este período', 20, 50);
+                return;
+            }
+            
             const nombreIndicador = TODOS_INDICADORES.find(i => i.key === indicadorKey).label;
             const jugadoresOrden = ordenarJugadoresPorPrioridad(jugadores).filter(j => idsJugadores.includes(j.id)).map(j => j.nombre);
             const datosOrdenados = jugadoresOrden.map(nom => datos.find(d => d.nombre === nom)?.total || 0);
@@ -1531,9 +1578,9 @@
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.fillStyle = '#dc2626';
                 ctx.font = '14px sans-serif';
-                ctx.fillText('Error al generar el gráfico. Intenta refrescar.', 20, 50);
+                ctx.fillText('Error al generar el gráfico. Usa doble tap para refrescar.', 20, 50);
             }
-            mostrarAlerta('Error al generar el gráfico. Intenta refrescar la página.', 'Error', 'error');
+            mostrarToast("Error al generar el gráfico. Intenta refrescar.", "error", 3000);
         }
     }
 
@@ -1688,7 +1735,7 @@
     });
 
     function iniciarModulo() {
-        console.log("🚀 Iniciando módulo de gráficas...");
+        console.log("🚀 Iniciando módulo de gráficas v6.0.6...");
         
         if (!cargarDatosLocales()) {
             const container = document.querySelector('.graficas-container');
@@ -1710,8 +1757,8 @@
         renderizarChecklistJugadores();
         actualizarPanelIndicador();
         
-        const canvasInicializado = inicializarCanvas();
-        if (!canvasInicializado) {
+        // Inicializar canvas con dimensiones correctas
+        if (!inicializarCanvasRobusto()) {
             console.error("❌ No se pudo inicializar el canvas");
             return;
         }
@@ -1721,7 +1768,7 @@
         setTimeout(() => {
             redimensionarCanvas();
             dibujarGraficoConReintento();
-        }, 200);
+        }, 300);
         
         configurarDobleTap();
         
