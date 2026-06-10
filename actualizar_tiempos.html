@@ -138,9 +138,102 @@
             font-weight: bold;
             color: #8b5cf6;
         }
+
+        /* ==================== MODALES PERSONALIZADOS ==================== */
+        .modal-personalizado {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(3px); } }
+        .modal-contenido {
+            background: white;
+            border-radius: 1.5rem;
+            max-width: 450px;
+            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.2s ease-out;
+        }
+        @keyframes modalSlideIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header {
+            background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal-header .btn-cerrar-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .modal-header .btn-cerrar-modal:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .modal-body { padding: 1.5rem; font-size: 0.95rem; color: #1e293b; line-height: 1.5; text-align: center; }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .modal-footer .btn-aceptar { background: #8b5cf6; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+        .modal-footer .btn-aceptar:hover { background: #7c3aed; }
+        .modal-footer .btn-confirmar { background: #10b981; }
+        .modal-footer .btn-confirmar:hover { background: #059669; }
+        .modal-footer .btn-cancelar { background: #6b7280; }
+        .modal-footer .btn-cancelar:hover { background: #4b5563; }
+        .modal-peligro .modal-header { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .toast-personalizado {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.7rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: toastEntrada 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        @keyframes toastEntrada { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .toast-salida { animation: toastSalida 0.3s ease-in forwards; }
+        @keyframes toastSalida { to { opacity: 0; transform: translateX(-50%) translateY(20px); } }
+        .toast-exito { background: #10b981; }
+        .toast-error { background: #dc2626; }
+        .toast-info { background: #8b5cf6; }
+
         @media (max-width: 640px) {
             body { padding: 1rem; }
             .stats { flex-direction: column; }
+            .modal-footer { flex-direction: column; }
+            .modal-footer button { width: 100%; }
         }
     </style>
 </head>
@@ -181,6 +274,66 @@
 </div>
 
 <script>
+    // ==================== MODALES PERSONALIZADOS ====================
+    function mostrarAlerta(mensaje, titulo = 'Información', tipo = 'info') {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = `modal-personalizado modal-alerta`;
+            modal.innerHTML = `
+                <div class="modal-contenido">
+                    <div class="modal-header">
+                        <h3>${tipo === 'error' ? '❌ Error' : (tipo === 'exito' ? '✅ Éxito' : 'ℹ️ Información')}</h3>
+                        <button class="btn-cerrar-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${mensaje}</div>
+                    <div class="modal-footer"><button class="btn-aceptar">Aceptar</button></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const cerrar = () => { modal.remove(); resolve(); };
+            modal.querySelector('.btn-aceptar').onclick = cerrar;
+            modal.querySelector('.btn-cerrar-modal').onclick = cerrar;
+            modal.onclick = (e) => { if (e.target === modal) cerrar(); };
+        });
+    }
+
+    function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = `modal-personalizado ${tipo === 'peligro' ? 'modal-peligro' : ''}`;
+            modal.innerHTML = `
+                <div class="modal-contenido">
+                    <div class="modal-header">
+                        <h3>${tipo === 'peligro' ? '⚠️ ' : '❓ '}${titulo}</h3>
+                        <button class="btn-cerrar-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${mensaje}</div>
+                    <div class="modal-footer">
+                        <button class="btn-cancelar">Cancelar</button>
+                        <button class="btn-confirmar">Aceptar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const resolver = (resultado) => { modal.remove(); resolve(resultado); };
+            modal.querySelector('.btn-confirmar').onclick = () => resolver(true);
+            modal.querySelector('.btn-cancelar').onclick = () => resolver(false);
+            modal.querySelector('.btn-cerrar-modal').onclick = () => resolver(false);
+            modal.onclick = (e) => { if (e.target === modal) resolver(false); };
+        });
+    }
+
+    function mostrarToast(mensaje, tipo = 'info', duracion = 2500) {
+        const toast = document.createElement('div');
+        toast.className = `toast-personalizado toast-${tipo}`;
+        toast.innerHTML = `${tipo === 'exito' ? '✅ ' : tipo === 'error' ? '❌ ' : 'ℹ️ '}${mensaje}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('toast-salida');
+            setTimeout(() => toast.remove(), 300);
+        }, duracion);
+    }
+
     const STORAGE_KEYS = {
         jugadores: 'pintintin_jugadores',
         dias: 'pintintin_dias',
@@ -213,7 +366,7 @@
         localStorage.setItem(STORAGE_KEYS.machs, JSON.stringify(machs));
     }
 
-    function analizarMachs() {
+    async function analizarMachs() {
         const machs = cargarDatos();
         const machsSinInicio = machs.filter(m => !m.fechaHoraInicio || m.fechaHoraInicio === null);
         
@@ -228,6 +381,7 @@
                 </div>
             `;
             btnActualizar.disabled = true;
+            mostrarToast("No hay machs antiguos que actualizar", "exito", 2000);
         } else {
             resultadoDiv.innerHTML = `
                 <div class="stats">
@@ -250,6 +404,7 @@
                 </div>
             `;
             btnActualizar.disabled = false;
+            mostrarToast(`Se encontraron ${machsSinInicio.length} machs sin hora de inicio`, "info", 2000);
         }
         
         window.machsPendientes = machsSinInicio;
@@ -257,7 +412,7 @@
     
     async function actualizarMachs() {
         if (!window.machsPendientes || window.machsPendientes.length === 0) {
-            alert("No hay machs pendientes. Ejecuta 'Analizar' primero.");
+            await mostrarAlerta('No hay machs pendientes. Ejecuta "Analizar" primero.', '⚠️ Atención', 'error');
             return;
         }
         
@@ -266,13 +421,17 @@
         const total = machsSinInicio.length;
         
         if (total === 0) {
-            alert("No hay machs para actualizar.");
+            await mostrarAlerta('No hay machs para actualizar.', '⚠️ Atención', 'error');
             return;
         }
         
-        if (!confirm(`⚠️ ¿Estás seguro de actualizar ${total} machs?\n\nSe asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.\n\nEsta acción NO se puede deshacer.`)) {
-            return;
-        }
+        const confirmado = await mostrarConfirmacion(
+            `⚠️ ¿Estás seguro de actualizar ${total} machs?\n\nSe asignará una hora de inicio aleatoria entre 8 y 15 minutos antes de la hora de finalización.\n\nEsta acción NO se puede deshacer.`,
+            '⚠️ Confirmación',
+            'peligro'
+        );
+        
+        if (!confirmado) return;
         
         const progresoContainer = document.getElementById('progresoContainer');
         const progresoBar = document.getElementById('progresoBar');
@@ -320,6 +479,8 @@
                 <p>⚠️ Puedes cerrar esta herramienta. No es necesario volver a ejecutarla.</p>
             </div>
         `;
+        
+        mostrarToast(`Actualización completada: ${actualizados} machs actualizados`, "exito", 3000);
         
         btnAnalizar.disabled = false;
         btnActualizar.disabled = true;
