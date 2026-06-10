@@ -1,54 +1,70 @@
 {
-    "name": "Dominó Pintintín",
-    "short_name": "Pintintín",
-    "description": "Campeonato de dominó individual para 4 jugadores",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "theme_color": "#2c3e50",
-    "background_color": "#ffffff",
-    "orientation": "portrait",
-    "scope": "./",
-    "icons": [
-        {
-            "src": "./icons/icon-72x72.png",
-            "sizes": "72x72",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-96x96.png",
-            "sizes": "96x96",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-128x128.png",
-            "sizes": "128x128",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-144x144.png",
-            "sizes": "144x144",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-152x152.png",
-            "sizes": "152x152",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-384x384.png",
-            "sizes": "384x384",
-            "type": "image/png"
-        },
-        {
-            "src": "./icons/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ]
+  "name": "Dominó Pintintín",
+  "short_name": "Pintintín",
+  "description": "Aplicación para campeonato de dominó - Creada por Ricardo Castillo Valdés - v6.0.6",
+  "version": "6.0.6",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "author": {
+    "name": "Ricardo Castillo Valdés",
+    "email": "3sayricardo@gmail.com",
+    "whatsapp": "+53 55031725",
+    "location": "La Demajagua, Isla de la Juventud, Cuba"
+  },
+  "shortcuts": [
+    {
+      "name": "Nueva partida",
+      "short_name": "Jugar",
+      "url": ".",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Estadísticas",
+      "short_name": "Stats",
+      "url": "?stats=true",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Análisis",
+      "short_name": "Analizar",
+      "url": "analisis_jugador.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Reparar DB",
+      "short_name": "Reparar",
+      "url": "reparar_db.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }
