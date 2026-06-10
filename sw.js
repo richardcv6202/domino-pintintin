@@ -1,49 +1,72 @@
-const CACHE_NAME = 'pintintin-v6.0.1';
+const CACHE_NAME = 'pintintin-v6.0.6';
 const urlsToCache = [
-    './',
-    './index.html',
-    './app.js',
-    './styles.css',
-    './admin.html',
-    './estadisticas_graficas.html',
-    './ver_machs_por_dia.html',
-    './manual_pintintin.html',
-    './manifest.json',
-    './icons/icon-72x72.png',
-    './icons/icon-96x96.png',
-    './icons/icon-128x128.png',
-    './icons/icon-144x144.png',
-    './icons/icon-152x152.png',
-    './icons/icon-192x192.png',
-    './icons/icon-384x384.png',
-    './icons/icon-512x512.png'
+  './',
+  './index.html',
+  './admin.html',
+  './analisis_jugador.html',
+  './estadisticas_graficas.html',
+  './actualizar_tiempos.html',
+  './ver_machs_por_dia.html',
+  './reparar_db.html',
+  './manual_pintintin.html',
+  './app.js',
+  './styles.css',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-192.png',
+  './icon-maskable-512.png',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
-            .then(() => self.skipWaiting())
-    );
+  console.log('?? Service Worker instalando... v6.0.6');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('?? Archivos cacheados correctamente');
+        return cache.addAll(urlsToCache);
+      })
+      .catch(err => console.error('? Error al cachear:', err))
+  );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
-    );
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .then(response => {
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          });
+      })
+  );
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
-    );
+  console.log('?? Service Worker activado - v6.0.6');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('??? Eliminando cache antiguo:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
