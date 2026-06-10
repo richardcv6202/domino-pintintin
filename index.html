@@ -3,125 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2c3e50">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dominó Pintintín">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <title>Dominó Pintintín - Campeonato Individual</title>
+    <title>Dominó Pintintín</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Animación para aviso de empate */
-        @keyframes slideUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        #avisoEmpate {
-            transition: opacity 0.5s ease-out;
-        }
-    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🃏 DOMINÓ PINTINTÍN 🃏</h1>
-            <p class="subtitulo">Campeonato Individual - 4 Jugadores</p>
-            <p class="version">Versión 6.0.1</p>
-        </header>
+<div class="app-container">
+    <header>
+        <h1>🀰 Dominó Pintintín</h1>
+        <button id="btnAyuda" class="btn-ayuda-flotante" title="Ayuda">❓</button>
+        <div id="fechaMostrada" class="fecha-dia"></div>
+    </header>
 
-        <div class="progreso-mach">
-            <div id="progresoPatas">📊 Pata 0 de 5</div>
+    <section id="vistaConfig" class="vista">
+        <h2>⚙️ Nueva Jornada</h2>
+        <div class="campo-borde">
+            <div class="campo-label">📅 Fecha</div>
+            <input type="date" id="fechaDia" required>
         </div>
-
-        <div class="mesa-juego">
-            <div id="mesaFichas" class="mesa-fichas">
-                <div class="mesa-vacia">🃏 Coloque la primera ficha 🃏</div>
+        <div class="campo-borde">
+            <div class="campo-label">👥 Nombres <span class="obligatorio">(obligatorios)</span></div>
+            <div class="inputs-dobles">
+                <input type="text" id="jugador1" list="listaJugadores" placeholder="Jugador 1" autocomplete="off">
+                <input type="text" id="jugador2" list="listaJugadores" placeholder="Jugador 2" autocomplete="off">
             </div>
         </div>
-
-        <div class="turno-container">
-            <div id="turnoActual" class="turno-activo">🎲 Turno: Ninguno 🎲</div>
-        </div>
-
-        <!-- Área de aviso de empate persistente -->
-        <div id="avisoEmpate" style="display: none;"></div>
-
-        <div class="jugadores-container">
-            <div class="jugador">
-                <h3>🔵 JUGADOR 1</h3>
-                <div id="jugador0Fichas" class="fichas-jugador"></div>
-            </div>
-            <div class="jugador">
-                <h3>🟢 JUGADOR 2</h3>
-                <div id="jugador1Fichas" class="fichas-jugador"></div>
-            </div>
-            <div class="jugador">
-                <h3>🟡 JUGADOR 3</h3>
-                <div id="jugador2Fichas" class="fichas-jugador"></div>
-            </div>
-            <div class="jugador">
-                <h3>🔴 JUGADOR 4</h3>
-                <div id="jugador3Fichas" class="fichas-jugador"></div>
+        <div class="campo-borde">
+            <div class="campo-label">👥 Nombres <span class="opcional">(opcionales)</span></div>
+            <div class="inputs-dobles">
+                <input type="text" id="jugador3" list="listaJugadores" placeholder="Jugador 3" autocomplete="off">
+                <input type="text" id="jugador4" list="listaJugadores" placeholder="Jugador 4" autocomplete="off">
             </div>
         </div>
-
-        <div class="tabla-puntajes">
-            <h3>📋 Puntajes de la partida</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Jugador</th>
-                        <th>Fichas</th>
-                        <th>Puntos en contra</th>
-                        <th>Total acumulado</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaPuntajes">
-                    <tr><td colspan="4">Cargando...</td></tr>
-                </tbody>
-            </table>
+        <div class="checkbox-mantener">
+            <input type="checkbox" id="mantenerUbicacion">
+            <label for="mantenerUbicacion">🎲 Mantener ubicación de los jugadores (sin sorteo de sillas)</label>
         </div>
-
-        <div class="ranking">
-            <h3>🏆 Ranking del Mach</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Jugador</th>
-                        <th>Patas ganadas</th>
-                        <th>Puntos</th>
-                        <th>Capicúas</th>
-                        <th>Puntos en contra</th>
-                    </tr>
-                </thead>
-                <tbody id="rankingBody">
-                    <tr><td colspan="6">Cargando...</td></tr>
-                </tbody>
-            </table>
+        <div class="sorteo-buttons">
+            <button id="btnSortearEIniciar" class="sorteo-btn">🎲 Sortear sillas e iniciar</button>
         </div>
-
-        <div class="log-partida">
-            <h3>📝 Registro de la partida</h3>
-            <div id="logPartida" class="log-contenido"></div>
+        <div id="resultadoSorteo" class="resultado-sorteo"></div>
+        <hr>
+        <div class="botones-secundarios">
+            <button id="irAEstadisticas" class="secundario">📊 Estadísticas globales</button>
+            <button id="btnGraficasConfig" class="secundario">📈 Gráficas interactivas</button>
+            <button id="btnAnalisisRendimiento" class="secundario">🎯 Análisis de rendimiento</button>
+            <button id="btnVerMachsPorDia" class="secundario">📋 Ver machs por día</button>
+            <button id="btnBorrarTodo" class="secundario btn-borrar">⚠️ Borrar datos</button>
+            <div class="backup-buttons">
+                <button id="btnExportarBackup" class="secundario">💾 Exportar respaldo</button>
+                <label for="importBackupInput" class="secundario" style="display: inline-block; text-align: center;">📂 Importar respaldo</label>
+                <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+            </div>
         </div>
+        <div class="creditos">
+            <p>🎲 Creado por <strong>Ricardo Castillo Valdés (Richard)</strong></p>
+            <p>📍 La Demajagua, Isla de la Juventud, Cuba</p>
+            <p>📧 <a href="mailto:3sayricardo@gmail.com" style="color:#8b5cf6; text-decoration:none;">3sayricardo@gmail.com</a> | 📱 <a href="https://wa.me/5355031725" style="color:#8b5cf6; text-decoration:none;">+53 55031725</a></p>
+            <p>🀰 Dominó de 55 | ¡A botar gorda!</p>
+        </div>
+    </section>
 
-        <div class="botones-globales">
-            <button id="btnNuevaPartida" class="btn btn-primario">🔄 Nueva Pata</button>
-            <button id="btnReiniciarMach" class="btn btn-secundario">🔁 Reiniciar Mach</button>
-            <button id="btnTerminarMach" class="btn btn-peligro">🏁 Terminar Mach</button>
-            <button id="btnAdmin" class="btn btn-admin">⚙️ Admin</button>
-            <button id="btnManual" class="btn btn-info">📖 Manual</button>
+    <section id="vistaJuego" class="vista" style="display:none;">
+        <div class="marcador-mach">
+            <span>🏆 MACH #<span id="numMachActual">1</span></span>
+            <span id="ganadorMachMsg"></span>
+        </div>
+        <div id="jugadoresGrid" class="jugadores-grid"></div>
+        <div class="acciones-globales">
+            <button id="btnEmpate" class="empate">⚖️ Declarar empate</button>
+            <button id="btnGestionJugador" class="gestion-jugador">➕ Añadir jugador</button>
+            <button id="btnRetirarJugador" class="secundario" style="background:#dc2626;">➖ Salida de jugador</button>
+            <button id="btnStatsEnJuego" class="secundario">📊 Estadísticas del día</button>
+            <button id="btnEstadisticasGlobalesJuego" class="secundario">🌍 Estadísticas globales</button>
+            <button id="btnCerrarDia" class="cerrar-dia">🚪 Salir del juego</button>
+        </div>
+        <div id="avisoEmpate" class="aviso"></div>
+    </section>
+
+    <section id="vistaEstadisticas" class="vista" style="display:none;">
+        <h2>📊 Estadísticas Globales</h2>
+        <div class="filtros" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: flex-start; margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem;">Desde: <input type="date" id="fechaDesde" style="padding: 0.3rem; border-radius: 0.3rem; border: 1px solid #cbd5e1;"></label>
+            <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem;">Hasta: <input type="date" id="fechaHasta" style="padding: 0.3rem; border-radius: 0.3rem; border: 1px solid #cbd5e1;"></label>
+            <button id="btnFiltrar" style="padding: 0.3rem 0.8rem; background: #8b5cf6; color: white; border: none; border-radius: 0.4rem; cursor: pointer;">Filtrar</button>
+            <button id="btnExportarCSV" style="padding: 0.3rem 0.8rem; background: #10b981; color: white; border: none; border-radius: 0.4rem; cursor: pointer;">📎 CSV</button>
+            <button id="btnExportarPDF" style="padding: 0.3rem 0.8rem; background: #475569; color: white; border: none; border-radius: 0.4rem; cursor: pointer;">📄 PDF</button>
+            <button id="btnTransponer" class="btn-intercambiar" style="padding: 0.3rem 0.8rem; background: #f59e0b; color: white; border: none; border-radius: 0.4rem; cursor: pointer;">🔄 Intercambiar</button>
+        </div>
+        <div id="resultadosStats">
+            <div class="stats-container"></div>
+        </div>
+        <button id="volverInicioStats" class="secundario" style="margin-top: 1rem;">← Volver al juego</button>
+    </section>
+</div>
+
+<div id="modalEmpate" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>🤝 Jugadores empatados</h3>
+        <div id="checkEmpate"></div>
+        <button id="confirmarEmpate">Aceptar</button>
+        <button id="cancelarEmpate">Cancelar</button>
+    </div>
+</div>
+
+<div id="modalTerminacion" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>🎯 ¿Cómo terminó la mano?</h3>
+        <div id="terminacionInfo" style="margin-bottom: 1rem; font-weight: bold;"></div>
+        <button id="terminacionCierre" class="secundario" style="background:#475569;">🚪 Cierre</button>
+        <button id="terminacionPegado" class="secundario" style="background:#475569;">🏃 Pegado</button>
+        <button id="terminacionCapicua" class="secundario" style="background:#8b5cf6;">🀰 Capicua (Vale 2)</button>
+        <button id="cancelarTerminacion" style="background:#475569; margin-top:0.5rem;">Cancelar</button>
+    </div>
+</div>
+
+<div id="modalAgua" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>💧 ¿Quién da AGUA?</h3>
+        <div id="checkAgua"></div>
+        <div style="display:flex; gap:0.5rem; margin-top:1rem; justify-content:center;">
+            <button id="confirmarAgua" class="secundario" style="background:#10b981;">✅ Aceptar</button>
+            <button id="cancelarAgua" class="secundario" style="background:#6b7280;">❌ Cancelar</button>
         </div>
     </div>
+</div>
 
-    <script src="app.js"></script>
+<div id="modalAyuda" class="modal" style="display:none;">
+    <div class="modal-content modal-ayuda">
+        <div class="modal-ayuda-header">
+            <h3>📖 Manual de Usuario</h3>
+            <button id="cerrarAyuda" class="cerrar-modal">&times;</button>
+        </div>
+        <div id="contenidoAyuda" class="contenido-ayuda">
+            <div style="text-align:center; padding:2rem;">Cargando manual...</div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw.js')
+                .then(function(reg) {
+                    console.log('✅ Service Worker registrado correctamente:', reg);
+                })
+                .catch(function(err) {
+                    console.error('❌ Error al registrar el Service Worker:', err);
+                });
+        });
+    }
+</script>
+
 </body>
 </html>
