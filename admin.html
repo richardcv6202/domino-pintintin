@@ -59,7 +59,55 @@
         footer { text-align: center; padding: 1rem; margin-top: 1.5rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.8rem; }
         footer a { color: #8b5cf6; text-decoration: none; }
 
-        /* Estilos específicos para el reporte general */
+        /* Estilos mejorados para el reporte de días */
+        .reporte-dias-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .reporte-dias-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        .reporte-dias-tabla th,
+        .reporte-dias-tabla td {
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 0.4rem;
+            text-align: center;
+        }
+
+        .reporte-dias-tabla th {
+            background: #8b5cf6;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        .reporte-dias-tabla tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .reporte-dias-tabla tr:hover {
+            background: #e0e7ff;
+        }
+
+        .dia-header {
+            background: #f1f5f9;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0 0.5rem 0;
+            font-weight: bold;
+            color: #1e293b;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        /* Estilos para el reporte general */
         .reporte-container {
             background: white;
             border-radius: 0.8rem;
@@ -631,6 +679,7 @@
         for (let m of datosActuales.machs) {
             if (!m.participantes) m.participantes = [];
             if (!m.manos) m.manos = [];
+            if (m.fechaHoraInicio === undefined) m.fechaHoraInicio = null;
         }
     }
 
@@ -768,6 +817,64 @@
 
     function renderizarTodo() { renderizarMachs(); renderizarJugadores(); renderizarDias(); renderizarParticipaciones(); renderizarReporteGeneral(); }
 
+    // ==================== FUNCIÓN PARA EDITAR MACH (NUEVA) ====================
+    async function editarMach(id) {
+        const mach = datosActuales.machs.find(m => m.id === id);
+        if (!mach) return;
+        
+        const dia = datosActuales.dias.find(d => d.id === mach.diaId);
+        const fechaStr = dia ? formatearFechaDDMMYYYY(dia.fecha) : '';
+        
+        const fechaInicio = mach.fechaHoraInicio ? new Date(mach.fechaHoraInicio).toLocaleString() : '';
+        const fechaFin = mach.fechaHora ? new Date(mach.fechaHora).toLocaleString() : '';
+        
+        const nuevaFechaInicio = await mostrarPrompt(
+            `Fecha/Hora de INICIO del Mach #${mach.numeroMach} (${fechaStr})\n\nFormato: YYYY-MM-DD HH:MM:SS\n\nActual: ${fechaInicio || 'No registrada'}`,
+            '✏️ Editar hora de inicio',
+            mach.fechaHoraInicio || ''
+        );
+        
+        if (nuevaFechaInicio !== null && nuevaFechaInicio.trim()) {
+            try {
+                const fechaValidada = new Date(nuevaFechaInicio);
+                if (isNaN(fechaValidada.getTime())) {
+                    await mostrarAlerta('Formato de fecha inválido. Usa YYYY-MM-DD HH:MM:SS', '❌ Error', 'error');
+                    return;
+                }
+                mach.fechaHoraInicio = fechaValidada.toISOString();
+                mostrarToast('Hora de inicio actualizada', 'exito');
+            } catch(e) {
+                await mostrarAlerta('Formato inválido', '❌ Error', 'error');
+                return;
+            }
+        }
+        
+        const nuevaFechaFin = await mostrarPrompt(
+            `Fecha/Hora de FIN del Mach #${mach.numeroMach} (${fechaStr})\n\nFormato: YYYY-MM-DD HH:MM:SS\n\nActual: ${fechaFin}`,
+            '✏️ Editar hora de fin',
+            mach.fechaHora || ''
+        );
+        
+        if (nuevaFechaFin !== null && nuevaFechaFin.trim()) {
+            try {
+                const fechaValidada = new Date(nuevaFechaFin);
+                if (isNaN(fechaValidada.getTime())) {
+                    await mostrarAlerta('Formato de fecha inválido. Usa YYYY-MM-DD HH:MM:SS', '❌ Error', 'error');
+                    return;
+                }
+                mach.fechaHora = fechaValidada.toISOString();
+                mostrarToast('Hora de fin actualizada', 'exito');
+            } catch(e) {
+                await mostrarAlerta('Formato inválido', '❌ Error', 'error');
+                return;
+            }
+        }
+        
+        guardarTodo();
+        renderizarMachs();
+        mostrarToast(`Mach #${mach.numeroMach} actualizado correctamente`, 'exito');
+    }
+
     // ---------- JUGADORES ----------
     function renderizarJugadores() {
         const cont = document.getElementById('jugadoresTable');
@@ -826,9 +933,9 @@
         const cont = document.getElementById('diasTable');
         if (!cont) return;
         if (!datosActuales.dias.length) { cont.innerHTML = '<p>📭 No hay días.</p>'; return; }
-        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>Activo</th><th>Machs</th><th>Acciones</th></table></thead><tbody>';
+        let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>Activo</th><th>Machs</th><th>Acciones</th></tr></thead><tbody>';
         for (let d of datosActuales.dias) html += `<tr><td class="text-center">${d.id}</td><td>${formatearFechaDDMMYYYY(d.fecha)}</td><td class="text-center"><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td><td class="text-center">${datosActuales.machs.filter(m=>m.diaId===d.id).length}</td><td><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td></tr>`;
-        html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.dias.length}</strong></td></tr></tfoot><table>`;
+        html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.dias.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
     
@@ -890,7 +997,7 @@
             let dia = datosActuales.dias.find(d=>d.id===p.diaId);
             html += `<tr><td class="text-center">${p.id}</td><td>${jug?escapeHtml(jug.nombre):'?'}</td><td>${dia?formatearFechaDDMMYYYY(dia.fecha):'?'}</td><td class="text-center">${p.machsGanados}</td><td class="text-center">${p.patasNetas}</td><td><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td></tr>`;
         }
-        html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></td>`;
+        html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
     
@@ -993,8 +1100,8 @@
                                     case 'forro': tipoMostrado = '🧤 Forro'; break;
                                     case 'agua': tipoMostrado = '💧 Agua'; break;
                                     case 'capicua': tipoMostrado = '🀰 Capicua'; break;
-                                    case 'cierre': tipoMostrado = '🚪 Cierre'; break;
-                                    case 'pegado': tipoMostrado = '🏃 Pegado'; break;
+                                    case 'cierre': tipoMostrado = '🚪 Cierre (Última ficha)'; break;
+                                    case 'pegado': tipoMostrado = '🏃 Pegado (Ficha que encaja por ambas cabezas)'; break;
                                     default: tipoMostrado = mano.tipo || 'Desconocido';
                                 }
                                 const patasStr = (mano.patasAfectadas !== undefined && mano.patasAfectadas !== 0) ? ` <span style="background:#dcfce7; padding:0.2rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${mano.patasAfectadas > 0 ? '+' : ''}${mano.patasAfectadas} pata</span>` : '';
@@ -1032,7 +1139,17 @@
         for (let m of datosActuales.machs) {
             let dia = datosActuales.dias.find(d=>d.id===m.diaId);
             let gan = datosActuales.jugadores.find(j=>j.id===m.ganadorId);
-            html += `<tr><td class="text-center">${m.id}</td><td class="text-center">${dia?formatearFechaDDMMYYYY(dia.fecha):'?'}</td><td class="text-center">${m.numeroMach}</td><td class="text-center">${gan?escapeHtml(gan.nombre):'?'}</td><td><button class="btn-ver-detalle" onclick="mostrarDetalleMach(${m.id})">🔍 Ver</button> <button class="btn-eliminar" onclick="eliminarMach(${m.id})">🗑️ Eliminar</button></td></tr>`;
+            html += `<tr>
+                <td class="text-center">${m.id}</td>
+                <td class="text-center">${dia?formatearFechaDDMMYYYY(dia.fecha):'?'}</td>
+                <td class="text-center">${m.numeroMach}</td>
+                <td class="text-center">${gan?escapeHtml(gan.nombre):'?'}</td>
+                <td class="text-center">
+                    <button class="btn-editar" onclick="editarMach(${m.id})">✏️ Editar horas</button>
+                    <button class="btn-ver-detalle" onclick="mostrarDetalleMach(${m.id})">🔍 Ver</button>
+                    <button class="btn-eliminar" onclick="eliminarMach(${m.id})">🗑️ Eliminar</button>
+                </td>
+            </tr>`;
         }
         html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.machs.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
@@ -1052,7 +1169,7 @@
         return j ? j.nombre : `Jugador ${id}`; 
     }
 
-    // ---------- REPORTE GENERAL (CORREGIDO) ----------
+    // ---------- REPORTE GENERAL ----------
     function filtrarReportePorFechas() {
         let desde = document.getElementById('reporteFechaDesde').value;
         let hasta = document.getElementById('reporteFechaHasta').value;
@@ -1114,7 +1231,6 @@
             return;
         }
         
-        // Construir tabla con mejor formato
         let html = `
             <table class="reporte-tabla">
                 <thead>
@@ -1161,7 +1277,6 @@
             `;
         });
         
-        // Agregar fila de totales
         let totales = { machs: 0, patas: 0, pollonas: 0, capicuas: 0, cierres: 0, pegado: 0, forros: 0, aguas: 0, pmDados: 0, pmRecibidos: 0, empates: 0, empatesGan: 0, patasPorEmpate: 0 };
         ordenado.forEach(s => {
             totales.machs += s.machs;
@@ -1198,11 +1313,7 @@
             </tr>
         `;
         
-        html += `
-                </tbody>
-            </table>
-        `;
-        
+        html += `</tbody></table>`;
         container.innerHTML = html;
     }
 
@@ -1320,7 +1431,7 @@
         mostrarToast("Reporte exportado a PDF", "exito");
     }
 
-    // ---------- ESTADÍSTICAS DE TIEMPO ----------
+    // ---------- ESTADÍSTICAS DE TIEMPO (MEJORADO) ----------
     function cargarEstadisticasTiempo() {
         let desde = document.getElementById('tiempoFechaDesde').value;
         let hasta = document.getElementById('tiempoFechaHasta').value;
@@ -1345,18 +1456,46 @@
         
         tiempoDatosCache = [];
         if(porFecha.size===0){ container.innerHTML='<div class="stats-mini">📭 No hay datos de tiempo.</div>'; return; }
-        let html = '<div class="tabla-responsive"><table class="tabla-datos"><thead>';
-        html += '<tr><th>Fecha</th><th>Total machs</th><th>Hora primer mach</th><th>Hora último mach</th><th>Duración (min)</th></tr></thead><tbody>';
-        for(let [fechaISO,lista] of porFecha) {
+        
+        // Formato mejorado con estilos nuevos
+        let html = '<div class="reporte-dias-container">';
+        html += '<table class="reporte-dias-tabla"><thead>';
+        html += '<tr><th>📅 Fecha</th><th>🏆 Total machs</th><th>🕐 Hora primer mach</th><th>🕐 Hora último mach</th><th>⏱️ Duración (min)</th></tr></thead><tbody>';
+        
+        const fechasOrdenadas = Array.from(porFecha.keys()).sort();
+        for(let fechaISO of fechasOrdenadas) {
+            const lista = porFecha.get(fechaISO);
             const fecha = formatearFechaDDMMYYYY(fechaISO);
             lista.sort((a,b)=>new Date(a.fechaHora)-new Date(b.fechaHora));
             const primero = lista[0];
             const ultimo = lista[lista.length-1];
             const duracion = Math.round((new Date(ultimo.fechaHora) - new Date(primero.fechaHora))/60000);
-            const formatear = (d)=>new Date(d).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
-            html += `<tr><td class="text-center">${fecha}</td><td class="text-center">${lista.length}</td><td class="text-center">${formatear(primero.fechaHora)}</td><td class="text-center">${formatear(ultimo.fechaHora)}</td><td class="text-center">${duracion}</td></tr>`;
+            const formatear = (d)=>new Date(d).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            html += `<tr>
+                <td>${fecha}</td>
+                <td class="text-center">${lista.length}</td>
+                <td class="text-center">${formatear(primero.fechaHora)}</td>
+                <td class="text-center">${formatear(ultimo.fechaHora)}</td>
+                <td class="text-center"><strong>${duracion}</strong> min</td>
+            </tr>`;
             tiempoDatosCache.push({ fecha, totalMachs: lista.length, horaPrimero: formatear(primero.fechaHora), horaUltimo: formatear(ultimo.fechaHora), duracion });
         }
+        
+        // Calcular totales
+        let totalMachs = 0, totalDuracion = 0;
+        for(let item of tiempoDatosCache) {
+            totalMachs += item.totalMachs;
+            totalDuracion += item.duracion;
+        }
+        const promedioDuracion = tiempoDatosCache.length > 0 ? Math.round(totalDuracion / tiempoDatosCache.length) : 0;
+        
+        html += `<tr style="background:#e2e8f0; font-weight:bold;">
+            <td><strong>📊 TOTALES</strong></td>
+            <td class="text-center"><strong>${totalMachs}</strong></td>
+            <td colspan="2" class="text-center"><strong>${tiempoDatosCache.length} días</strong></td>
+            <td class="text-center"><strong>${totalDuracion}</strong> min (promedio ${promedioDuracion} min/día)</td>
+         </tr>`;
+        
         html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
