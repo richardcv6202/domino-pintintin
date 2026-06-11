@@ -516,29 +516,36 @@
 <script>
     console.log("Admin panel cargado - versión 6.0.6");
 
-    // ==================== FUNCIÓN PARA FORMATEAR FECHA LEGIBLE ====================
-    function formatearFechaHoraLegible(fechaISO) {
+    // ==================== FUNCIÓN PARA FORMATEAR FECHA LEGIBLE (SIMPLE) ====================
+    function formatearHoraSimple(fechaISO) {
+        if (!fechaISO) return 'No registrada';
+        const fecha = new Date(fechaISO);
+        if (isNaN(fecha.getTime())) return 'Fecha inválida';
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const segundos = fecha.getSeconds().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12 || 12;
+        return `${horas}:${minutos}:${segundos} ${ampm}`;
+    }
+
+    function formatearFechaSimple(fechaISO) {
         if (!fechaISO) return 'No registrada';
         const fecha = new Date(fechaISO);
         if (isNaN(fecha.getTime())) return 'Fecha inválida';
         const dia = fecha.getDate().toString().padStart(2, '0');
         const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
         const año = fecha.getFullYear();
-        let horas = fecha.getHours();
-        const minutos = fecha.getMinutes().toString().padStart(2, '0');
-        const segundos = fecha.getSeconds().toString().padStart(2, '0');
-        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
-        horas = horas % 12 || 12;
-        return `${dia}/${mes}/${año} - ${horas}:${minutos}:${segundos} ${ampm}`;
+        return `${dia}/${mes}/${año}`;
     }
 
-    // ==================== FUNCIÓN PARA CONVERTIR HORA INGRESADA A ISO ====================
-    function convertirHoraAIso(fechaOriginalISO, horaStr) {
-        // Si no se ingresó hora, devolver la original
-        if (!horaStr || horaStr.trim() === '') return fechaOriginalISO;
+    // ==================== FUNCIÓN PARA CONVERTIR HORA INGRESADA POR USUARIO ====================
+    function convertirHoraUsuario(horaStr, fechaBaseISO) {
+        // horaStr puede ser: "3:30 p.m", "15:30", "8:00am", "3:30pm"
+        if (!horaStr || horaStr.trim() === '') return fechaBaseISO;
         
-        const fechaBase = new Date(fechaOriginalISO);
-        if (isNaN(fechaBase.getTime())) return fechaOriginalISO;
+        const fechaBase = new Date(fechaBaseISO);
+        if (isNaN(fechaBase.getTime())) return fechaBaseISO;
         
         let horaNum = 0;
         let minutoNum = 0;
@@ -575,7 +582,7 @@
         if (horaNum < 0 || horaNum > 23) horaNum = 0;
         if (minutoNum < 0 || minutoNum > 59) minutoNum = 0;
         
-        // Crear nueva fecha con la misma fecha pero nueva hora
+        // Crear nueva fecha manteniendo el mismo día
         const nuevaFecha = new Date(fechaBase);
         nuevaFecha.setHours(horaNum, minutoNum, 0, 0);
         
@@ -650,7 +657,7 @@
                     </div>
                     <div class="modal-body">
                         <label>${mensaje}</label>
-                        <input type="text" id="promptInput" value="${escapeHtml(valorDefault)}" autocomplete="off" placeholder="Ej: 3:30 p.m o 15:30">
+                        <input type="text" id="promptInput" value="${escapeHtml(valorDefault)}" autocomplete="off" placeholder="Ej: 3:30 p.m">
                     </div>
                     <div class="modal-footer">
                         <button class="btn-cancelar">Cancelar</button>
@@ -883,7 +890,7 @@
 
     function renderizarTodo() { renderizarMachs(); renderizarJugadores(); renderizarDias(); renderizarParticipaciones(); renderizarReporteGeneral(); }
 
-    // ==================== FUNCIÓN PARA EDITAR MACH (CON HORA SIMPLIFICADA Y FUNCIONAL) ====================
+    // ==================== FUNCIÓN PARA EDITAR MACH (CON HORA SIMPLE) ====================
     async function editarMach(id) {
         const mach = datosActuales.machs.find(m => m.id === id);
         if (!mach) return;
@@ -891,61 +898,81 @@
         const dia = datosActuales.dias.find(d => d.id === mach.diaId);
         const fechaStr = dia ? formatearFechaDDMMYYYY(dia.fecha) : 'desconocida';
         
-        // Mostrar hora actual en formato legible
-        const horaInicioActual = formatearFechaHoraLegible(mach.fechaHoraInicio);
-        const horaFinActual = formatearFechaHoraLegible(mach.fechaHora);
+        // Mostrar horas actuales en formato SIMPLE (SOLO HORA, no el ISO)
+        const horaInicioActual = formatearHoraSimple(mach.fechaHoraInicio);
+        const horaFinActual = formatearHoraSimple(mach.fechaHora);
         
-        // Mostrar información del mach
+        // Mostrar información clara del mach
         await mostrarAlerta(
-            `📅 Mach #${mach.numeroMach}\n📆 Fecha: ${fechaStr}\n\n🕐 Hora de INICIO actual: ${horaInicioActual}\n🕐 Hora de FIN actual: ${horaFinActual}\n\nAhora podrás editar cada hora individualmente.`,
+            `📅 Mach #${mach.numeroMach}\n📆 FECHA: ${fechaStr}\n\n` +
+            `🕐 HORA DE INICIO actual: ${horaInicioActual}\n` +
+            `🕐 HORA DE FIN actual: ${horaFinActual}\n\n` +
+            `Ahora podrás cambiar la hora. SOLO necesitas escribir la nueva hora.`,
             `ℹ️ Información del Mach #${mach.numeroMach}`,
             'info'
         );
         
-        // Editar hora de inicio - solo preguntar por la hora
+        // Editar hora de inicio - formato simple
         const nuevaHoraInicio = await mostrarPrompt(
-            `📅 Mach #${mach.numeroMach} - Fecha: ${fechaStr}\n\n🕐 Hora de INICIO actual: ${horaInicioActual}\n\nIngresa la NUEVA HORA (ejemplos: 3:30 p.m, 15:30, 8:00 a.m):\n(Solo la hora, la fecha se mantiene igual)`,
-            '✏️ Editar hora de inicio del Mach',
+            `📅 Mach #${mach.numeroMach}\n📆 FECHA: ${fechaStr}\n\n` +
+            `🕐 HORA ACTUAL DE INICIO: ${horaInicioActual}\n\n` +
+            `📝 INGRESA LA NUEVA HORA (ejemplos):\n` +
+            `   • 3:30 p.m\n` +
+            `   • 15:30\n` +
+            `   • 8:00 a.m\n` +
+            `   • 9:45pm\n\n` +
+            `(La fecha se mantiene igual, solo cambia la hora)`,
+            '✏️ Cambiar hora de INICIO',
             ''
         );
         
         if (nuevaHoraInicio !== null && nuevaHoraInicio.trim() !== '') {
             try {
                 const fechaOriginal = mach.fechaHoraInicio || new Date().toISOString();
-                const nuevaFechaISO = convertirHoraAIso(fechaOriginal, nuevaHoraInicio);
-                mach.fechaHoraInicio = nuevaFechaISO;
-                mostrarToast('Hora de inicio actualizada correctamente', 'exito');
+                mach.fechaHoraInicio = convertirHoraUsuario(nuevaHoraInicio, fechaOriginal);
+                mostrarToast('✅ Hora de inicio actualizada', 'exito');
             } catch(e) {
-                mostrarToast('Error al procesar la hora', 'error');
+                mostrarToast('❌ Error al procesar la hora', 'error');
             }
         }
         
-        // Editar hora de fin - solo preguntar por la hora
+        // Editar hora de fin - formato simple
         const nuevaHoraFin = await mostrarPrompt(
-            `📅 Mach #${mach.numeroMach} - Fecha: ${fechaStr}\n\n🕐 Hora de FIN actual: ${horaFinActual}\n\nIngresa la NUEVA HORA (ejemplos: 3:30 p.m, 15:30, 8:00 a.m):\n(Solo la hora, la fecha se mantiene igual)`,
-            '✏️ Editar hora de fin del Mach',
+            `📅 Mach #${mach.numeroMach}\n📆 FECHA: ${fechaStr}\n\n` +
+            `🕐 HORA ACTUAL DE FIN: ${horaFinActual}\n\n` +
+            `📝 INGRESA LA NUEVA HORA (ejemplos):\n` +
+            `   • 3:30 p.m\n` +
+            `   • 15:30\n` +
+            `   • 8:00 a.m\n` +
+            `   • 9:45pm\n\n` +
+            `(La fecha se mantiene igual, solo cambia la hora)`,
+            '✏️ Cambiar hora de FIN',
             ''
         );
         
         if (nuevaHoraFin !== null && nuevaHoraFin.trim() !== '') {
             try {
                 const fechaOriginal = mach.fechaHora || new Date().toISOString();
-                const nuevaFechaISO = convertirHoraAIso(fechaOriginal, nuevaHoraFin);
-                mach.fechaHora = nuevaFechaISO;
-                mostrarToast('Hora de fin actualizada correctamente', 'exito');
+                mach.fechaHora = convertirHoraUsuario(nuevaHoraFin, fechaOriginal);
+                mostrarToast('✅ Hora de fin actualizada', 'exito');
             } catch(e) {
-                mostrarToast('Error al procesar la hora', 'error');
+                mostrarToast('❌ Error al procesar la hora', 'error');
             }
         }
         
         guardarTodo();
         renderizarMachs();
         
-        // Mostrar resumen de cambios
-        const nuevaInicioStr = formatearFechaHoraLegible(mach.fechaHoraInicio);
-        const nuevaFinStr = formatearFechaHoraLegible(mach.fechaHora);
+        // Mostrar resumen final
+        const nuevaInicioStr = formatearHoraSimple(mach.fechaHoraInicio);
+        const nuevaFinStr = formatearHoraSimple(mach.fechaHora);
+        
         await mostrarAlerta(
-            `✅ Mach #${mach.numeroMach} actualizado\n\n📅 Fecha: ${fechaStr}\n🕐 Nueva hora INICIO: ${nuevaInicioStr}\n🕐 Nueva hora FIN: ${nuevaFinStr}`,
+            `✅ Mach #${mach.numeroMach} ACTUALIZADO\n\n` +
+            `📆 FECHA: ${fechaStr}\n` +
+            `🕐 NUEVA HORA INICIO: ${nuevaInicioStr}\n` +
+            `🕐 NUEVA HORA FIN: ${nuevaFinStr}\n\n` +
+            `Los cambios se guardaron correctamente.`,
             '✅ Actualización completada',
             'exito'
         );
@@ -1103,7 +1130,7 @@
                 <td class="text-center">${p.machsGanados || 0}</td>
                 <td class="text-center">${p.patasNetas || 0}</td>
                 <td class="text-center"><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td>
-            </tr>`;
+            </table>`;
         }
         html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
