@@ -3,6 +3,7 @@
 // *** VERSIÓN CORREGIDA: IDs Únicos, Estadísticas del Día y Globales Funcionales ***
 // *** MEJORADA: Sistema de empate con mensajes persistentes ***
 // *** MEJORADA: Modales personalizados reemplazan alert/confirm/prompt ***
+// *** CORREGIDA: Definiciones de CIERRE y PEGADO ***
 
 console.log("🎲 Dominó Pintintín - Versión 6.0.6 (CORREGIDA)");
 
@@ -69,14 +70,6 @@ function getFechaLocalISO() {
     return `${año}-${mes}-${dia}`;
 }
 
-function getFechaLocalDDMMYYYY() {
-    const hoy = new Date();
-    const dd = String(hoy.getDate()).padStart(2, '0');
-    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    const yyyy = hoy.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-}
-
 function getFechasDesdeHastaInput() {
     const desdeInput = document.getElementById('fechaDesde');
     const hastaInput = document.getElementById('fechaHasta');
@@ -130,7 +123,6 @@ function inicializarFiltrosEstadisticasGlobales() {
 
 // ==================== MODALES PERSONALIZADOS ====================
 
-// Mostrar alerta simple
 function mostrarAlerta(mensaje, titulo = 'Información', tipo = 'info') {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
@@ -141,28 +133,18 @@ function mostrarAlerta(mensaje, titulo = 'Información', tipo = 'info') {
                     <h3>${tipo === 'error' ? '❌ Error' : (tipo === 'exito' ? '✅ Éxito' : 'ℹ️ Información')}</h3>
                     <button class="btn-cerrar-modal">&times;</button>
                 </div>
-                <div class="modal-body">
-                    ${mensaje}
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-aceptar">Aceptar</button>
-                </div>
+                <div class="modal-body">${mensaje}</div>
+                <div class="modal-footer"><button class="btn-aceptar">Aceptar</button></div>
             </div>
         `;
         document.body.appendChild(modal);
-        
-        const cerrar = () => {
-            modal.remove();
-            resolve();
-        };
-        
+        const cerrar = () => { modal.remove(); resolve(); };
         modal.querySelector('.btn-aceptar').onclick = cerrar;
         modal.querySelector('.btn-cerrar-modal').onclick = cerrar;
         modal.onclick = (e) => { if (e.target === modal) cerrar(); };
     });
 }
 
-// Mostrar confirmación (Sí/No)
 function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
@@ -173,9 +155,7 @@ function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
                     <h3>${tipo === 'peligro' ? '⚠️ ' : '❓ '}${titulo}</h3>
                     <button class="btn-cerrar-modal">&times;</button>
                 </div>
-                <div class="modal-body">
-                    ${mensaje}
-                </div>
+                <div class="modal-body">${mensaje}</div>
                 <div class="modal-footer">
                     <button class="btn-cancelar">Cancelar</button>
                     <button class="btn-confirmar">Aceptar</button>
@@ -183,12 +163,7 @@ function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
             </div>
         `;
         document.body.appendChild(modal);
-        
-        const resolver = (resultado) => {
-            modal.remove();
-            resolve(resultado);
-        };
-        
+        const resolver = (resultado) => { modal.remove(); resolve(resultado); };
         modal.querySelector('.btn-confirmar').onclick = () => resolver(true);
         modal.querySelector('.btn-cancelar').onclick = () => resolver(false);
         modal.querySelector('.btn-cerrar-modal').onclick = () => resolver(false);
@@ -196,7 +171,6 @@ function mostrarConfirmacion(mensaje, titulo = 'Confirmar', tipo = 'normal') {
     });
 }
 
-// Mostrar prompt (entrada de texto)
 function mostrarPrompt(mensaje, titulo = 'Ingresar dato', valorDefault = '') {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
@@ -218,28 +192,20 @@ function mostrarPrompt(mensaje, titulo = 'Ingresar dato', valorDefault = '') {
             </div>
         `;
         document.body.appendChild(modal);
-        
         const input = modal.querySelector('#promptInput');
         input.focus();
         input.select();
-        
-        const resolver = (resultado) => {
-            modal.remove();
-            resolve(resultado);
-        };
-        
+        const resolver = (resultado) => { modal.remove(); resolve(resultado); };
         modal.querySelector('.btn-confirmar').onclick = () => resolver(input.value.trim());
         modal.querySelector('.btn-cancelar').onclick = () => resolver(null);
         modal.querySelector('.btn-cerrar-modal').onclick = () => resolver(null);
         modal.onclick = (e) => { if (e.target === modal) resolver(null); };
-        
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') resolver(input.value.trim());
         });
     });
 }
 
-// Mostrar toast (mensaje temporal)
 function mostrarToast(mensaje, tipo = 'info', duracion = 2500) {
     const toast = document.createElement('div');
     toast.className = `toast-personalizado toast-${tipo}`;
@@ -465,8 +431,8 @@ function renderizarTablaNormal(stats, titulo) {
         { key: 'patas', icono: '🦶', nombre: 'Patas' },
         { key: 'pollonas', icono: '🐔', nombre: 'Pollonas' },
         { key: 'capicuas', icono: '🀰', nombre: 'Capicuas' },
-        { key: 'cierres', icono: '🚪', nombre: 'Cierres' },
-        { key: 'pegado', icono: '🏃', nombre: 'Pegados' },
+        { key: 'cierres', icono: '🚪', nombre: 'Cierres (Última ficha)' },
+        { key: 'pegado', icono: '🏃', nombre: 'Pegados (Ficha que encaja por ambas cabezas)' },
         { key: 'forros', icono: '🧤', nombre: 'Forros' },
         { key: 'aguas', icono: '💧', nombre: 'Aguas' },
         { key: 'paseManoDados', icono: '🎯', nombre: 'PM Dados' },
@@ -514,8 +480,8 @@ function renderizarTablaTranspuesta(stats, titulo) {
         { key: 'patas', icono: '🦶', nombre: 'Patas' },
         { key: 'pollonas', icono: '🐔', nombre: 'Pollonas' },
         { key: 'capicuas', icono: '🀰', nombre: 'Capicuas' },
-        { key: 'cierres', icono: '🚪', nombre: 'Cierres' },
-        { key: 'pegado', icono: '🏃', nombre: 'Pegados' },
+        { key: 'cierres', icono: '🚪', nombre: 'Cierres (Última ficha)' },
+        { key: 'pegado', icono: '🏃', nombre: 'Pegados (Ficha que encaja por ambas cabezas)' },
         { key: 'forros', icono: '🧤', nombre: 'Forros' },
         { key: 'aguas', icono: '💧', nombre: 'Aguas' },
         { key: 'paseManoDados', icono: '🎯', nombre: 'PM Dados' },
@@ -1804,8 +1770,8 @@ function mostrarHistorialGanadores() {
     reverso.forEach((item, idx) => {
         const hora = new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
         let formaMostrada = '';
-        if (item.forma === 'cierre') formaMostrada = '🚪 Cierre';
-        else if (item.forma === 'pegado') formaMostrada = '🏃 Pegado';
+        if (item.forma === 'cierre') formaMostrada = '🚪 Cierre (Última ficha)';
+        else if (item.forma === 'pegado') formaMostrada = '🏃 Pegado (Ficha que encaja por ambas cabezas)';
         else if (item.forma === 'capicua') formaMostrada = '🀰 Capicua';
         else if (item.forma === 'empate') formaMostrada = '⚖️ Empate (comienza partida)';
         else formaMostrada = item.forma;
@@ -1953,6 +1919,84 @@ function cargarVistaJuego() {
     actualizarVisibilidadBotones();
 }
 
+// ==================== MODAL TERMINACIÓN CON TEXTOS CORREGIDOS ====================
+function abrirModalTerminacion() {
+    if(!ganadorPendiente) return;
+    const ganadorNombre = jugadoresActuales.find(j => j.jugadorId === ganadorPendiente)?.nombre;
+    const terminacionInfo = document.getElementById('terminacionInfo');
+    if(terminacionInfo) terminacionInfo.innerText = `Ganador: ${ganadorNombre}`;
+    
+    // Actualizar textos de los botones para mayor claridad
+    const btnCierre = document.getElementById('terminacionCierre');
+    const btnPegado = document.getElementById('terminacionPegado');
+    const btnCapicua = document.getElementById('terminacionCapicua');
+    
+    if (btnCierre) btnCierre.textContent = "🚪 Cierre (Última ficha)";
+    if (btnPegado) btnPegado.textContent = "🏃 Pegado (Ficha que encaja por ambas cabezas)";
+    if (btnCapicua) btnCapicua.textContent = "🀰 Capicua (Ficha doble, vale 2)";
+    
+    const modalTerminacion = document.getElementById('modalTerminacion');
+    if(modalTerminacion) modalTerminacion.style.display = 'flex';
+}
+
+function cerrarModalTerminacion() { 
+    const modalTerminacion = document.getElementById('modalTerminacion');
+    if(modalTerminacion) modalTerminacion.style.display = 'none'; 
+}
+
+function aplicarModalTerminacion(forma) {
+    if(!ganadorPendiente) return;
+    let partGanador = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === ganadorPendiente);
+    let empatesAcumulados = partGanador ? (partGanador.empatesAcumulados || 0) : 0;
+    let patasBase = (forma === 'capicua') ? 2 : 1;
+    let patasAApuntar = patasBase * Math.pow(2, empatesAcumulados);
+    cerrarModalTerminacion();
+    const jugadoresActivosConSilla = jugadoresActuales.filter(j => j.jugadorId !== null);
+    if (jugadoresActivosConSilla.length === 2) {
+        const jugadorAgua = jugadoresActivosConSilla.find(j => j.jugadorId !== ganadorPendiente);
+        if (jugadorAgua) finalizarPataConAgua(ganadorPendiente, forma, patasAApuntar, empatesAcumulados, jugadorAgua.jugadorId);
+    } else {
+        mostrarModalAgua(jugadoresActivosConSilla, ganadorPendiente, forma, patasAApuntar, empatesAcumulados);
+    }
+}
+
+function finalizarPataConAgua(ganadorId, forma, patasAApuntar, empatesAcumulados, jugadorAguaId) {
+    let patasBase = (forma === 'capicua') ? 2 : 1;
+    let patasConTope = calcularPatasConTope(ganadorId, patasBase, empatesAcumulados);
+    let partGanador = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === ganadorId);
+    if (empatesAcumulados > 0 && partGanador) {
+        partGanador.empatesGanados = (partGanador.empatesGanados || 0) + 1;
+        let extraPorEmpate = patasConTope - patasBase;
+        if (extraPorEmpate > 0) partGanador.patasPorEmpate = (partGanador.patasPorEmpate || 0) + extraPorEmpate;
+    }
+    if (estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) {
+        estadoMachActual.empatePendiente = null;
+        estadoMachActual.empateMultiplicador = 0;
+        estadoMachActual.jugadorQueSale = null;
+        actualizarAvisoEmpate();
+    }
+    let actual = estadoMachActual.patasActuales.get(ganadorId) || 0;
+    estadoMachActual.patasActuales.set(ganadorId, actual + patasConTope);
+    estadoMachActual.historialManos.push({ tipo: forma, jugadorId: ganadorId, patasAfectadas: patasConTope, timestamp: new Date().toISOString() });
+    if (partGanador) {
+        if (forma === 'capicua') partGanador.capicuas = (partGanador.capicuas || 0) + 1;
+        else if (forma === 'cierre') partGanador.cierres = (partGanador.cierres || 0) + 1;
+        else if (forma === 'pegado') partGanador.pegado = (partGanador.pegado || 0) + 1;
+    }
+    let partAgua = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorAguaId);
+    if (partAgua) partAgua.aguas = (partAgua.aguas || 0) + 1;
+    estadoMachActual.historialManos.push({ tipo: 'agua', jugadorId: jugadorAguaId, patasAfectadas: 0, timestamp: new Date().toISOString() });
+    for (let part of almacenamiento.participaciones.filter(p => p.diaId === diaActivo.id)) part.empatesAcumulados = 0;
+    ultimaJugadaFueAgua = true;
+    guardarTodoEnLocalStorage();
+    renderizarJugadores();
+    agregarAlHistorial(ganadorId, forma, patasConTope);
+    actualizarGanadores(ganadorId);
+    let tempGanador = ganadorId;
+    ganadorPendiente = null;
+    verificarFinMach(tempGanador);
+}
+
 function renderizarJugadores() {
     const jugadoresGrid = document.getElementById('jugadoresGrid');
     if(!jugadoresGrid) return;
@@ -2054,73 +2098,6 @@ function mostrarModalAgua(jugadoresCandidatos, ganadorId, formaTerminacion, pata
     cancelarAgua.removeEventListener('click', cancelarHandler);
     confirmarAgua.addEventListener('click', confirmarHandler);
     cancelarAgua.addEventListener('click', cancelarHandler);
-}
-
-// ==================== FUNCIÓN FINALIZAR PATA CON TOPE DE 5 ====================
-function finalizarPataConAgua(ganadorId, forma, patasAApuntar, empatesAcumulados, jugadorAguaId) {
-    let patasBase = (forma === 'capicua') ? 2 : 1;
-    let patasConTope = calcularPatasConTope(ganadorId, patasBase, empatesAcumulados);
-    let partGanador = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === ganadorId);
-    if (empatesAcumulados > 0 && partGanador) {
-        partGanador.empatesGanados = (partGanador.empatesGanados || 0) + 1;
-        let extraPorEmpate = patasConTope - patasBase;
-        if (extraPorEmpate > 0) partGanador.patasPorEmpate = (partGanador.patasPorEmpate || 0) + extraPorEmpate;
-    }
-    if (estadoMachActual.empatePendiente && !estadoMachActual.empatePendiente.resuelto) {
-        estadoMachActual.empatePendiente = null;
-        estadoMachActual.empateMultiplicador = 0;
-        estadoMachActual.jugadorQueSale = null;
-        actualizarAvisoEmpate();
-    }
-    let actual = estadoMachActual.patasActuales.get(ganadorId) || 0;
-    estadoMachActual.patasActuales.set(ganadorId, actual + patasConTope);
-    estadoMachActual.historialManos.push({ tipo: forma, jugadorId: ganadorId, patasAfectadas: patasConTope, timestamp: new Date().toISOString() });
-    if (partGanador) {
-        if (forma === 'capicua') partGanador.capicuas = (partGanador.capicuas || 0) + 1;
-        else if (forma === 'cierre') partGanador.cierres = (partGanador.cierres || 0) + 1;
-        else if (forma === 'pegado') partGanador.pegado = (partGanador.pegado || 0) + 1;
-    }
-    let partAgua = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === jugadorAguaId);
-    if (partAgua) partAgua.aguas = (partAgua.aguas || 0) + 1;
-    estadoMachActual.historialManos.push({ tipo: 'agua', jugadorId: jugadorAguaId, patasAfectadas: 0, timestamp: new Date().toISOString() });
-    for (let part of almacenamiento.participaciones.filter(p => p.diaId === diaActivo.id)) part.empatesAcumulados = 0;
-    ultimaJugadaFueAgua = true;
-    guardarTodoEnLocalStorage();
-    renderizarJugadores();
-    agregarAlHistorial(ganadorId, forma, patasConTope);
-    actualizarGanadores(ganadorId);
-    let tempGanador = ganadorId;
-    ganadorPendiente = null;
-    verificarFinMach(tempGanador);
-}
-
-// --- MODAL TERMINACIÓN ---
-const modalTerminacion = document.getElementById('modalTerminacion');
-const terminacionInfo = document.getElementById('terminacionInfo');
-
-function abrirModalTerminacion() {
-    if(!ganadorPendiente) return;
-    const ganadorNombre = jugadoresActuales.find(j => j.jugadorId === ganadorPendiente)?.nombre;
-    if(terminacionInfo) terminacionInfo.innerText = `Ganador: ${ganadorNombre}`;
-    if(modalTerminacion) modalTerminacion.style.display = 'flex';
-}
-
-function cerrarModalTerminacion() { if(modalTerminacion) modalTerminacion.style.display = 'none'; }
-
-function aplicarModalTerminacion(forma) {
-    if(!ganadorPendiente) return;
-    let partGanador = almacenamiento.participaciones.find(p => p.diaId === diaActivo.id && p.jugadorId === ganadorPendiente);
-    let empatesAcumulados = partGanador ? (partGanador.empatesAcumulados || 0) : 0;
-    let patasBase = (forma === 'capicua') ? 2 : 1;
-    let patasAApuntar = patasBase * Math.pow(2, empatesAcumulados);
-    cerrarModalTerminacion();
-    const jugadoresActivosConSilla = jugadoresActuales.filter(j => j.jugadorId !== null);
-    if (jugadoresActivosConSilla.length === 2) {
-        const jugadorAgua = jugadoresActivosConSilla.find(j => j.jugadorId !== ganadorPendiente);
-        if (jugadorAgua) finalizarPataConAgua(ganadorPendiente, forma, patasAApuntar, empatesAcumulados, jugadorAgua.jugadorId);
-    } else {
-        mostrarModalAgua(jugadoresActivosConSilla, ganadorPendiente, forma, patasAApuntar, empatesAcumulados);
-    }
 }
 
 async function verificarFinMach(ganadorId) {
