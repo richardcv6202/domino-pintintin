@@ -516,6 +516,72 @@
 <script>
     console.log("Admin panel cargado - versión 6.0.6");
 
+    // ==================== FUNCIÓN PARA FORMATEAR FECHA LEGIBLE ====================
+    function formatearFechaHoraLegible(fechaISO) {
+        if (!fechaISO) return 'No registrada';
+        const fecha = new Date(fechaISO);
+        if (isNaN(fecha.getTime())) return 'Fecha inválida';
+        const dia = fecha.getDate().toString().padStart(2, '0');
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        const año = fecha.getFullYear();
+        let horas = fecha.getHours();
+        const minutos = fecha.getMinutes().toString().padStart(2, '0');
+        const segundos = fecha.getSeconds().toString().padStart(2, '0');
+        const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
+        horas = horas % 12 || 12;
+        return `${dia}/${mes}/${año} - ${horas}:${minutos}:${segundos} ${ampm}`;
+    }
+
+    // ==================== FUNCIÓN PARA CONVERTIR HORA INGRESADA A ISO ====================
+    function convertirHoraAIso(fechaOriginalISO, horaStr) {
+        // Si no se ingresó hora, devolver la original
+        if (!horaStr || horaStr.trim() === '') return fechaOriginalISO;
+        
+        const fechaBase = new Date(fechaOriginalISO);
+        if (isNaN(fechaBase.getTime())) return fechaOriginalISO;
+        
+        let horaNum = 0;
+        let minutoNum = 0;
+        
+        // Limpiar la cadena
+        let horaClean = horaStr.trim().toLowerCase();
+        
+        // Detectar si tiene a.m/p.m
+        let esPM = false;
+        let esAM = false;
+        
+        if (horaClean.includes('p.m') || horaClean.includes('pm')) {
+            esPM = true;
+            horaClean = horaClean.replace(/p\.?m\.?/g, '').trim();
+        } else if (horaClean.includes('a.m') || horaClean.includes('am')) {
+            esAM = true;
+            horaClean = horaClean.replace(/a\.?m\.?/g, '').trim();
+        }
+        
+        // Parsear hora:minuto
+        const partes = horaClean.split(':');
+        if (partes.length >= 1) {
+            horaNum = parseInt(partes[0]) || 0;
+            if (partes.length >= 2) {
+                minutoNum = parseInt(partes[1]) || 0;
+            }
+        }
+        
+        // Ajustar para 12h AM/PM
+        if (esPM && horaNum !== 12) horaNum += 12;
+        if (esAM && horaNum === 12) horaNum = 0;
+        
+        // Validar rangos
+        if (horaNum < 0 || horaNum > 23) horaNum = 0;
+        if (minutoNum < 0 || minutoNum > 59) minutoNum = 0;
+        
+        // Crear nueva fecha con la misma fecha pero nueva hora
+        const nuevaFecha = new Date(fechaBase);
+        nuevaFecha.setHours(horaNum, minutoNum, 0, 0);
+        
+        return nuevaFecha.toISOString();
+    }
+
     // ==================== GENERAR IDs ÚNICOS ====================
     function generarNuevoId(array) {
         if (!array || array.length === 0) return 1;
@@ -584,7 +650,7 @@
                     </div>
                     <div class="modal-body">
                         <label>${mensaje}</label>
-                        <input type="text" id="promptInput" value="${escapeHtml(valorDefault)}" autocomplete="off">
+                        <input type="text" id="promptInput" value="${escapeHtml(valorDefault)}" autocomplete="off" placeholder="Ej: 3:30 p.m o 15:30">
                     </div>
                     <div class="modal-footer">
                         <button class="btn-cancelar">Cancelar</button>
@@ -817,62 +883,72 @@
 
     function renderizarTodo() { renderizarMachs(); renderizarJugadores(); renderizarDias(); renderizarParticipaciones(); renderizarReporteGeneral(); }
 
-    // ==================== FUNCIÓN PARA EDITAR MACH (NUEVA) ====================
+    // ==================== FUNCIÓN PARA EDITAR MACH (CON HORA SIMPLIFICADA Y FUNCIONAL) ====================
     async function editarMach(id) {
         const mach = datosActuales.machs.find(m => m.id === id);
         if (!mach) return;
         
         const dia = datosActuales.dias.find(d => d.id === mach.diaId);
-        const fechaStr = dia ? formatearFechaDDMMYYYY(dia.fecha) : '';
+        const fechaStr = dia ? formatearFechaDDMMYYYY(dia.fecha) : 'desconocida';
         
-        const fechaInicio = mach.fechaHoraInicio ? new Date(mach.fechaHoraInicio).toLocaleString() : '';
-        const fechaFin = mach.fechaHora ? new Date(mach.fechaHora).toLocaleString() : '';
+        // Mostrar hora actual en formato legible
+        const horaInicioActual = formatearFechaHoraLegible(mach.fechaHoraInicio);
+        const horaFinActual = formatearFechaHoraLegible(mach.fechaHora);
         
-        const nuevaFechaInicio = await mostrarPrompt(
-            `Fecha/Hora de INICIO del Mach #${mach.numeroMach} (${fechaStr})\n\nFormato: YYYY-MM-DD HH:MM:SS\n\nActual: ${fechaInicio || 'No registrada'}`,
-            '✏️ Editar hora de inicio',
-            mach.fechaHoraInicio || ''
+        // Mostrar información del mach
+        await mostrarAlerta(
+            `📅 Mach #${mach.numeroMach}\n📆 Fecha: ${fechaStr}\n\n🕐 Hora de INICIO actual: ${horaInicioActual}\n🕐 Hora de FIN actual: ${horaFinActual}\n\nAhora podrás editar cada hora individualmente.`,
+            `ℹ️ Información del Mach #${mach.numeroMach}`,
+            'info'
         );
         
-        if (nuevaFechaInicio !== null && nuevaFechaInicio.trim()) {
+        // Editar hora de inicio - solo preguntar por la hora
+        const nuevaHoraInicio = await mostrarPrompt(
+            `📅 Mach #${mach.numeroMach} - Fecha: ${fechaStr}\n\n🕐 Hora de INICIO actual: ${horaInicioActual}\n\nIngresa la NUEVA HORA (ejemplos: 3:30 p.m, 15:30, 8:00 a.m):\n(Solo la hora, la fecha se mantiene igual)`,
+            '✏️ Editar hora de inicio del Mach',
+            ''
+        );
+        
+        if (nuevaHoraInicio !== null && nuevaHoraInicio.trim() !== '') {
             try {
-                const fechaValidada = new Date(nuevaFechaInicio);
-                if (isNaN(fechaValidada.getTime())) {
-                    await mostrarAlerta('Formato de fecha inválido. Usa YYYY-MM-DD HH:MM:SS', '❌ Error', 'error');
-                    return;
-                }
-                mach.fechaHoraInicio = fechaValidada.toISOString();
-                mostrarToast('Hora de inicio actualizada', 'exito');
+                const fechaOriginal = mach.fechaHoraInicio || new Date().toISOString();
+                const nuevaFechaISO = convertirHoraAIso(fechaOriginal, nuevaHoraInicio);
+                mach.fechaHoraInicio = nuevaFechaISO;
+                mostrarToast('Hora de inicio actualizada correctamente', 'exito');
             } catch(e) {
-                await mostrarAlerta('Formato inválido', '❌ Error', 'error');
-                return;
+                mostrarToast('Error al procesar la hora', 'error');
             }
         }
         
-        const nuevaFechaFin = await mostrarPrompt(
-            `Fecha/Hora de FIN del Mach #${mach.numeroMach} (${fechaStr})\n\nFormato: YYYY-MM-DD HH:MM:SS\n\nActual: ${fechaFin}`,
-            '✏️ Editar hora de fin',
-            mach.fechaHora || ''
+        // Editar hora de fin - solo preguntar por la hora
+        const nuevaHoraFin = await mostrarPrompt(
+            `📅 Mach #${mach.numeroMach} - Fecha: ${fechaStr}\n\n🕐 Hora de FIN actual: ${horaFinActual}\n\nIngresa la NUEVA HORA (ejemplos: 3:30 p.m, 15:30, 8:00 a.m):\n(Solo la hora, la fecha se mantiene igual)`,
+            '✏️ Editar hora de fin del Mach',
+            ''
         );
         
-        if (nuevaFechaFin !== null && nuevaFechaFin.trim()) {
+        if (nuevaHoraFin !== null && nuevaHoraFin.trim() !== '') {
             try {
-                const fechaValidada = new Date(nuevaFechaFin);
-                if (isNaN(fechaValidada.getTime())) {
-                    await mostrarAlerta('Formato de fecha inválido. Usa YYYY-MM-DD HH:MM:SS', '❌ Error', 'error');
-                    return;
-                }
-                mach.fechaHora = fechaValidada.toISOString();
-                mostrarToast('Hora de fin actualizada', 'exito');
+                const fechaOriginal = mach.fechaHora || new Date().toISOString();
+                const nuevaFechaISO = convertirHoraAIso(fechaOriginal, nuevaHoraFin);
+                mach.fechaHora = nuevaFechaISO;
+                mostrarToast('Hora de fin actualizada correctamente', 'exito');
             } catch(e) {
-                await mostrarAlerta('Formato inválido', '❌ Error', 'error');
-                return;
+                mostrarToast('Error al procesar la hora', 'error');
             }
         }
         
         guardarTodo();
         renderizarMachs();
-        mostrarToast(`Mach #${mach.numeroMach} actualizado correctamente`, 'exito');
+        
+        // Mostrar resumen de cambios
+        const nuevaInicioStr = formatearFechaHoraLegible(mach.fechaHoraInicio);
+        const nuevaFinStr = formatearFechaHoraLegible(mach.fechaHora);
+        await mostrarAlerta(
+            `✅ Mach #${mach.numeroMach} actualizado\n\n📅 Fecha: ${fechaStr}\n🕐 Nueva hora INICIO: ${nuevaInicioStr}\n🕐 Nueva hora FIN: ${nuevaFinStr}`,
+            '✅ Actualización completada',
+            'exito'
+        );
     }
 
     // ---------- JUGADORES ----------
@@ -928,13 +1004,23 @@
         mostrarToast('Jugador eliminado', 'info');
     }
 
-    // ---------- DÍAS ----------
+    // ---------- DÍAS (CORREGIDO) ----------
     function renderizarDias() {
         const cont = document.getElementById('diasTable');
         if (!cont) return;
         if (!datosActuales.dias.length) { cont.innerHTML = '<p>📭 No hay días.</p>'; return; }
         let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>Activo</th><th>Machs</th><th>Acciones</th></tr></thead><tbody>';
-        for (let d of datosActuales.dias) html += `<tr><td class="text-center">${d.id}</td><td>${formatearFechaDDMMYYYY(d.fecha)}</td><td class="text-center"><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td><td class="text-center">${datosActuales.machs.filter(m=>m.diaId===d.id).length}</td><td><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td></tr>`;
+        for (let d of datosActuales.dias) {
+            const fechaMostrada = formatearFechaDDMMYYYY(d.fecha);
+            const machsCount = datosActuales.machs.filter(m => m.diaId === d.id).length;
+            html += `<tr>
+                <td class="text-center">${d.id}</td>
+                <td class="text-center"><strong>${fechaMostrada}</strong></td>
+                <td class="text-center"><input type="checkbox" class="checkbox-activo" ${d.activo===1?'checked':''} onchange="cambiarActivoDia(${d.id}, this.checked)"></td>
+                <td class="text-center">${machsCount}</td>
+                <td class="text-center"><button class="btn-eliminar" onclick="eliminarDia(${d.id})">🗑️ Eliminar</button></td>
+            </tr>`;
+        }
         html += `</tbody><tfoot><tr><td colspan="5"><strong>Total: ${datosActuales.dias.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
     }
@@ -958,14 +1044,24 @@
         mostrarToast('Día agregado', 'exito');
     }
     
-    function cambiarActivoDia(id, activo) { let d=datosActuales.dias.find(d=>d.id===id); if(d){ d.activo=activo?1:0; guardarTodo(); renderizarDias(); } }
+    function cambiarActivoDia(id, activo) { 
+        let d = datosActuales.dias.find(d => d.id === id); 
+        if(d){ 
+            d.activo = activo ? 1 : 0; 
+            guardarTodo(); 
+            renderizarDias(); 
+            mostrarToast(`Día ${formatearFechaDDMMYYYY(d.fecha)} ${activo ? 'activado' : 'desactivado'}`, 'info');
+        } 
+    }
     
     async function eliminarDia(id) { 
-        const confirmado = await mostrarConfirmacion('¿Eliminar día con todos sus machs y participaciones?', '⚠️ Confirmar', 'peligro');
+        const dia = datosActuales.dias.find(d => d.id === id);
+        if (!dia) return;
+        const confirmado = await mostrarConfirmacion(`¿Eliminar el día ${formatearFechaDDMMYYYY(dia.fecha)} con todos sus machs y participaciones?`, '⚠️ Confirmar', 'peligro');
         if(!confirmado) return;
-        datosActuales.machs = datosActuales.machs.filter(m=>m.diaId!==id); 
-        datosActuales.participaciones = datosActuales.participaciones.filter(p=>p.diaId!==id); 
-        datosActuales.dias = datosActuales.dias.filter(d=>d.id!==id); 
+        datosActuales.machs = datosActuales.machs.filter(m => m.diaId !== id); 
+        datosActuales.participaciones = datosActuales.participaciones.filter(p => p.diaId !== id); 
+        datosActuales.dias = datosActuales.dias.filter(d => d.id !== id); 
         guardarTodo(); 
         renderizarTodo(); 
         mostrarToast('Día eliminado', 'info');
@@ -976,8 +1072,13 @@
         if(!f) return; 
         const fechaISO = formatearFechaParaInput(f); 
         let cerrados = 0; 
-        for(let d of datosActuales.dias) if(d.fecha===fechaISO && d.activo===1){ d.activo=0; cerrados++; } 
-        if(cerrados){ 
+        for(let d of datosActuales.dias) {
+            if(d.fecha === fechaISO && d.activo === 1){ 
+                d.activo = 0; 
+                cerrados++; 
+            } 
+        }
+        if(cerrados > 0){ 
             guardarTodo(); 
             renderizarDias(); 
             await mostrarAlerta(`Cerrados ${cerrados} día(s)`, '✅ Completado', 'exito');
@@ -993,9 +1094,16 @@
         if (!datosActuales.participaciones.length) { cont.innerHTML = '<p>📭 No hay participaciones.</p>'; return; }
         let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Jugador</th><th>Día</th><th>Machs</th><th>Patas</th><th>Acciones</th></tr></thead><tbody>';
         for (let p of datosActuales.participaciones) {
-            let jug = datosActuales.jugadores.find(j=>j.id===p.jugadorId);
-            let dia = datosActuales.dias.find(d=>d.id===p.diaId);
-            html += `<tr><td class="text-center">${p.id}</td><td>${jug?escapeHtml(jug.nombre):'?'}</td><td>${dia?formatearFechaDDMMYYYY(dia.fecha):'?'}</td><td class="text-center">${p.machsGanados}</td><td class="text-center">${p.patasNetas}</td><td><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td></tr>`;
+            let jug = datosActuales.jugadores.find(j => j.id === p.jugadorId);
+            let dia = datosActuales.dias.find(d => d.id === p.diaId);
+            html += `<tr>
+                <td class="text-center">${p.id}</td>
+                <td class="text-center">${jug ? escapeHtml(jug.nombre) : '?'}</td>
+                <td class="text-center">${dia ? formatearFechaDDMMYYYY(dia.fecha) : '?'}</td>
+                <td class="text-center">${p.machsGanados || 0}</td>
+                <td class="text-center">${p.patasNetas || 0}</td>
+                <td class="text-center"><button class="btn-editar" onclick="editarParticipacion(${p.id})">✏️ Editar</button> <button class="btn-eliminar" onclick="eliminarParticipacion(${p.id})">🗑️ Eliminar</button></td>
+            </tr>`;
         }
         html += `</tbody><tfoot><tr><td colspan="6"><strong>Total: ${datosActuales.participaciones.length}</strong></td></tr></tfoot></table>`;
         cont.innerHTML = html;
@@ -1006,12 +1114,12 @@
     }
     
     async function editarParticipacion(id) { 
-        let p = datosActuales.participaciones.find(p=>p.id===id); 
+        let p = datosActuales.participaciones.find(p => p.id === id); 
         if(!p) return; 
-        let nm = await mostrarPrompt('Nuevo machsGanados:', '✏️ Editar participación', p.machsGanados.toString()); 
-        if(nm!==null) p.machsGanados = parseInt(nm)||0; 
-        let np = await mostrarPrompt('Nuevo patasNetas:', '✏️ Editar participación', p.patasNetas.toString()); 
-        if(np!==null) p.patasNetas = parseInt(np)||0; 
+        let nm = await mostrarPrompt('Nuevo machsGanados:', '✏️ Editar participación', (p.machsGanados || 0).toString()); 
+        if(nm !== null) p.machsGanados = parseInt(nm) || 0; 
+        let np = await mostrarPrompt('Nuevo patasNetas:', '✏️ Editar participación', (p.patasNetas || 0).toString()); 
+        if(np !== null) p.patasNetas = parseInt(np) || 0; 
         guardarTodo(); 
         renderizarParticipaciones(); 
         mostrarToast('Participación actualizada', 'exito');
@@ -1020,7 +1128,7 @@
     async function eliminarParticipacion(id) { 
         const confirmado = await mostrarConfirmacion('¿Eliminar esta participación?', '⚠️ Confirmar', 'peligro');
         if(!confirmado) return;
-        datosActuales.participaciones = datosActuales.participaciones.filter(p=>p.id!==id); 
+        datosActuales.participaciones = datosActuales.participaciones.filter(p => p.id !== id); 
         guardarTodo(); 
         renderizarParticipaciones(); 
         mostrarToast('Participación eliminada', 'info');
@@ -1037,6 +1145,7 @@
         const formatearHora = (isoFecha) => {
             if (!isoFecha) return '<span style="color:#94a3b8;">⏳ No registrada</span>';
             const fecha = new Date(isoFecha);
+            if (isNaN(fecha.getTime())) return '<span style="color:#94a3b8;">⏳ Inválida</span>';
             let horas = fecha.getHours();
             const minutos = fecha.getMinutes().toString().padStart(2, '0');
             const segundos = fecha.getSeconds().toString().padStart(2, '0');
@@ -1049,14 +1158,18 @@
         if (mach.fechaHoraInicio && mach.fechaHora) {
             const inicio = new Date(mach.fechaHoraInicio);
             const fin = new Date(mach.fechaHora);
-            const diffMs = fin - inicio;
-            if (diffMs > 0) {
-                const duracionMinutos = Math.floor(diffMs / 60000);
-                const duracionSegundos = Math.floor((diffMs % 60000) / 1000);
-                if (duracionMinutos > 0) duracionTexto = `${duracionMinutos} min ${duracionSegundos > 0 ? duracionSegundos + ' seg' : ''}`;
-                else duracionTexto = `${duracionSegundos} segundos`;
+            if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
+                const diffMs = fin - inicio;
+                if (diffMs > 0) {
+                    const duracionMinutos = Math.floor(diffMs / 60000);
+                    const duracionSegundos = Math.floor((diffMs % 60000) / 1000);
+                    if (duracionMinutos > 0) duracionTexto = `${duracionMinutos} min ${duracionSegundos > 0 ? duracionSegundos + ' seg' : ''}`;
+                    else duracionTexto = `${duracionSegundos} segundos`;
+                } else {
+                    duracionTexto = '0 segundos';
+                }
             } else {
-                duracionTexto = '0 segundos';
+                duracionTexto = '<span style="color:#94a3b8;">No disponible</span>';
             }
         } else {
             duracionTexto = '<span style="color:#94a3b8;">No disponible</span>';
@@ -1137,13 +1250,13 @@
         if (!datosActuales.machs.length) { cont.innerHTML = '<p>📭 No hay machs.</p>'; return; }
         let html = '<table class="tabla-datos"><thead><tr><th>ID</th><th>Fecha</th><th>#Mach</th><th>Ganador</th><th>Acciones</th></tr></thead><tbody>';
         for (let m of datosActuales.machs) {
-            let dia = datosActuales.dias.find(d=>d.id===m.diaId);
-            let gan = datosActuales.jugadores.find(j=>j.id===m.ganadorId);
+            let dia = datosActuales.dias.find(d => d.id === m.diaId);
+            let gan = datosActuales.jugadores.find(j => j.id === m.ganadorId);
             html += `<tr>
                 <td class="text-center">${m.id}</td>
-                <td class="text-center">${dia?formatearFechaDDMMYYYY(dia.fecha):'?'}</td>
+                <td class="text-center">${dia ? formatearFechaDDMMYYYY(dia.fecha) : '?'}</td>
                 <td class="text-center">${m.numeroMach}</td>
-                <td class="text-center">${gan?escapeHtml(gan.nombre):'?'}</td>
+                <td class="text-center">${gan ? escapeHtml(gan.nombre) : '?'}</td>
                 <td class="text-center">
                     <button class="btn-editar" onclick="editarMach(${m.id})">✏️ Editar horas</button>
                     <button class="btn-ver-detalle" onclick="mostrarDetalleMach(${m.id})">🔍 Ver</button>
@@ -1158,14 +1271,14 @@
     async function eliminarMach(id) { 
         const confirmado = await mostrarConfirmacion('¿Eliminar este mach?', '⚠️ Confirmar', 'peligro');
         if(!confirmado) return;
-        datosActuales.machs = datosActuales.machs.filter(m=>m.id!==id); 
+        datosActuales.machs = datosActuales.machs.filter(m => m.id !== id); 
         guardarTodo(); 
         renderizarMachs(); 
         mostrarToast('Mach eliminado', 'info');
     }
     
     function obtenerNombreJugador(id) { 
-        const j = datosActuales.jugadores.find(j=>j.id===id); 
+        const j = datosActuales.jugadores.find(j => j.id === id); 
         return j ? j.nombre : `Jugador ${id}`; 
     }
 
@@ -1431,7 +1544,7 @@
         mostrarToast("Reporte exportado a PDF", "exito");
     }
 
-    // ---------- ESTADÍSTICAS DE TIEMPO (MEJORADO) ----------
+    // ---------- ESTADÍSTICAS DE TIEMPO ----------
     function cargarEstadisticasTiempo() {
         let desde = document.getElementById('tiempoFechaDesde').value;
         let hasta = document.getElementById('tiempoFechaHasta').value;
@@ -1442,22 +1555,21 @@
         
         const container = document.getElementById('tiempoResultados');
         let diasFiltrados = datosActuales.dias;
-        if(desde) diasFiltrados = diasFiltrados.filter(d=>d.fecha>=desde);
-        if(hasta) diasFiltrados = diasFiltrados.filter(d=>d.fecha<=hasta);
-        const ids = new Set(diasFiltrados.map(d=>d.id));
-        let machsDia = datosActuales.machs.filter(m=>ids.has(m.diaId));
+        if(desde) diasFiltrados = diasFiltrados.filter(d => d.fecha >= desde);
+        if(hasta) diasFiltrados = diasFiltrados.filter(d => d.fecha <= hasta);
+        const ids = new Set(diasFiltrados.map(d => d.id));
+        let machsDia = datosActuales.machs.filter(m => ids.has(m.diaId));
         const porFecha = new Map();
         for(let m of machsDia) {
-            const dia = datosActuales.dias.find(d=>d.id===m.diaId);
+            const dia = datosActuales.dias.find(d => d.id === m.diaId);
             if(!dia) continue;
             if(!porFecha.has(dia.fecha)) porFecha.set(dia.fecha, []);
             porFecha.get(dia.fecha).push(m);
         }
         
         tiempoDatosCache = [];
-        if(porFecha.size===0){ container.innerHTML='<div class="stats-mini">📭 No hay datos de tiempo.</div>'; return; }
+        if(porFecha.size === 0){ container.innerHTML = '<div class="stats-mini">📭 No hay datos de tiempo.</div>'; return; }
         
-        // Formato mejorado con estilos nuevos
         let html = '<div class="reporte-dias-container">';
         html += '<table class="reporte-dias-tabla"><thead>';
         html += '<tr><th>📅 Fecha</th><th>🏆 Total machs</th><th>🕐 Hora primer mach</th><th>🕐 Hora último mach</th><th>⏱️ Duración (min)</th></tr></thead><tbody>';
@@ -1466,13 +1578,13 @@
         for(let fechaISO of fechasOrdenadas) {
             const lista = porFecha.get(fechaISO);
             const fecha = formatearFechaDDMMYYYY(fechaISO);
-            lista.sort((a,b)=>new Date(a.fechaHora)-new Date(b.fechaHora));
+            lista.sort((a,b) => new Date(a.fechaHora) - new Date(b.fechaHora));
             const primero = lista[0];
             const ultimo = lista[lista.length-1];
-            const duracion = Math.round((new Date(ultimo.fechaHora) - new Date(primero.fechaHora))/60000);
-            const formatear = (d)=>new Date(d).toLocaleTimeString([],{hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const duracion = Math.round((new Date(ultimo.fechaHora) - new Date(primero.fechaHora)) / 60000);
+            const formatear = (d) => new Date(d).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
             html += `<tr>
-                <td>${fecha}</td>
+                <td class="text-center">${fecha}</td>
                 <td class="text-center">${lista.length}</td>
                 <td class="text-center">${formatear(primero.fechaHora)}</td>
                 <td class="text-center">${formatear(ultimo.fechaHora)}</td>
@@ -1481,7 +1593,6 @@
             tiempoDatosCache.push({ fecha, totalMachs: lista.length, horaPrimero: formatear(primero.fechaHora), horaUltimo: formatear(ultimo.fechaHora), duracion });
         }
         
-        // Calcular totales
         let totalMachs = 0, totalDuracion = 0;
         for(let item of tiempoDatosCache) {
             totalMachs += item.totalMachs;
@@ -1490,11 +1601,11 @@
         const promedioDuracion = tiempoDatosCache.length > 0 ? Math.round(totalDuracion / tiempoDatosCache.length) : 0;
         
         html += `<tr style="background:#e2e8f0; font-weight:bold;">
-            <td><strong>📊 TOTALES</strong></td>
+            <td class="text-center"><strong>📊 TOTALES</strong></td>
             <td class="text-center"><strong>${totalMachs}</strong></td>
             <td colspan="2" class="text-center"><strong>${tiempoDatosCache.length} días</strong></td>
             <td class="text-center"><strong>${totalDuracion}</strong> min (promedio ${promedioDuracion} min/día)</td>
-         </tr>`;
+          </tr>`;
         
         html += `</tbody></table></div>`;
         container.innerHTML = html;
@@ -1554,7 +1665,7 @@
     // ---------- IMPORTAR / EXPORTAR ----------
     function exportarDatos() {
         const data = { jugadores: datosActuales.jugadores, dias: datosActuales.dias, participaciones: datosActuales.participaciones, machs: datosActuales.machs, fechaExportacion: new Date().toISOString(), version: "6.0.6" };
-        const json = JSON.stringify(data,null,2);
+        const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], {type:'application/json'});
         const a = document.createElement('a');
         a.download = `pintintin_backup_${new Date().toISOString().slice(0,19)}.json`;
@@ -1610,23 +1721,26 @@
     }
 
     function mostrarTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`tab${tab.charAt(0).toUpperCase()+tab.slice(1)}`).classList.add('active');
         if(event && event.target) event.target.classList.add('active');
-        if(tab==='reporte') renderizarReporteGeneral();
-        if(tab==='tiempo') cargarEstadisticasTiempo();
+        if(tab === 'reporte') renderizarReporteGeneral();
+        if(tab === 'tiempo') cargarEstadisticasTiempo();
     }
 
-    function mostrarMensaje(texto,tipo) {
+    function mostrarMensaje(texto, tipo) {
         const div = document.getElementById('mensajeImportacion');
-        div.style.display='block';
-        div.className=`mensaje-importacion mensaje-${tipo}`;
-        div.innerHTML=texto;
-        setTimeout(()=>div.style.display='none',3000);
+        div.style.display = 'block';
+        div.className = `mensaje-importacion mensaje-${tipo}`;
+        div.innerHTML = texto;
+        setTimeout(() => div.style.display = 'none', 3000);
     }
 
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+    function escapeHtml(str) { 
+        if(!str) return ''; 
+        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+    }
 
     function inicializarEventos() {
         const btnReporteCSV = document.getElementById('btnExportarReporteCSV');
